@@ -149,7 +149,8 @@ social-network/
    - For the frontend:
      ```bash
      cd frontend
-     npm run dev
+     npm run build
+     npm start
      ```
    - For the backend:
      ```bash
