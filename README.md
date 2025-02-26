@@ -79,31 +79,32 @@ The Social Network application includes the following features:
 ---
 
 ## Project Structure
-
 ```
 social-network/
-├── backend/
-│   ├── db/
-│   │   ├── migrations/
-│   │   └── sqlite.js
-│   ├── models/
-│   ├── controllers/
-│   ├── routes/
-│   └── server.js
-├── frontend/
-│   ├── pages/
-│   │   ├── api/          # Next.js API routes
-│   │   ├── index.js      # Home page
-│   │   └── _app.js       # Custom App component
-│   ├── public/           # Static files (images, fonts, etc.)
-│   ├── styles/           # CSS or SCSS files
-│   ├── components/       # Reusable React components
-│   └── package.json
-├── docker-compose.yml
-├── Dockerfile
-└── README.md
+├── public/                  # Static assets (images, fonts, etc.)
+├── src/
+│   ├── components/          # Reusable UI components (e.g., Navbar, Footer)
+│   ├── pages/               # Next.js pages (each file corresponds to a route)
+│   │   ├── api/             # API routes (backend logic)
+│   │   ├── auth/            # Authentication pages (login, register)
+│   │   ├── profile/         # User profile pages
+│   │   ├── posts/           # Post-related pages
+│   │   ├── groups/          # Group-related pages
+│   │   ├── chat/            # Chat pages
+│   │   ├── notifications/   # Notifications page
+│   │   ├── index.js         # Home page
+│   │   └── _app.js          # Custom App component (for global styles, state)
+│   ├── styles/              # CSS or SCSS files
+│   ├── utils/               # Utility functions (e.g., API calls, helpers)
+│   ├── hooks/               # Custom React hooks
+│   ├── context/             # React context for global state (e.g., auth, notifications)
+│   ├── lib/                 # Library functions (e.g., database connection)
+│   └── types/               # TypeScript types (if using TypeScript)
+├── .env.local               # Environment variables (e.g., API keys, secrets)
+├── next.config.js           # Next.js configuration
+├── package.json             # Project dependencies and scripts
+└── README.md                # Project documentation
 ```
-
 ---
 
 ## Setup and Installation
