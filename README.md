@@ -1,36 +1,222 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Social Network - A Facebook-like Application
 
-## Getting Started
+Welcome to the **Social Network** project! This is a Facebook-like social network application built using **Next.js** for the frontend and backend, **SQLite** for the database, and **Docker** for containerization. The application includes features like user profiles, followers, posts, groups, notifications, and real-time chat.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Table of Contents
+
+1. [Features](#features)
+2. [Technologies Used](#technologies-used)
+3. [Project Structure](#project-structure)
+4. [Setup and Installation](#setup-and-installation)
+   - [Prerequisites](#prerequisites)
+   - [Local Development](#local-development)
+   - [Docker Setup](#docker-setup)
+5. [Running the Application](#running-the-application)
+6. [API Documentation](#api-documentation)
+7. [Contributing](#contributing)
+8. [License](#license)
+
+---
+
+## Features
+
+The Social Network application includes the following features:
+
+1. **User Authentication**:
+   - Register and login with email, password, and optional fields like avatar, nickname, and bio.
+   - Session management using cookies.
+
+2. **Profiles**:
+   - Public and private profiles.
+   - Display user information, posts, followers, and following.
+
+3. **Followers**:
+   - Follow and unfollow other users.
+   - Follow requests for private profiles.
+
+4. **Posts**:
+   - Create posts with text, images, or GIFs.
+   - Set post privacy (public, followers-only, or private).
+
+5. **Groups**:
+   - Create and join groups.
+   - Post and comment within groups.
+   - Create and RSVP to group events.
+
+6. **Real-Time Chat**:
+   - Private messaging between users.
+   - Group chat for members of a group.
+
+7. **Notifications**:
+   - Notifications for follow requests, group invitations, and event updates.
+
+---
+
+## Technologies Used
+
+- **Frontend**:
+  - Next.js (React framework)
+  - Tailwind CSS (for styling)
+  - Socket.IO (for real-time chat)
+
+- **Backend**:
+  - Next.js API Routes
+  - SQLite (database)
+  - Bcrypt (password hashing)
+  - Express-session (session management)
+
+- **DevOps**:
+  - Docker (containerization)
+  - Docker Compose (orchestration)
+
+- **Other Tools**:
+  - Turbopack (Next.js dev bundler for faster builds)
+  - SQLite3 (database library)
+  - UUID (for generating unique IDs)
+
+---
+
+## Project Structure
+
+```
+social-network/
+├── backend/
+│   ├── db/
+│   │   ├── migrations/
+│   │   └── sqlite.js
+│   ├── models/
+│   ├── controllers/
+│   ├── routes/
+│   └── server.js
+├── frontend/
+│   ├── pages/
+│   │   ├── api/          # Next.js API routes
+│   │   ├── index.js      # Home page
+│   │   └── _app.js       # Custom App component
+│   ├── public/           # Static files (images, fonts, etc.)
+│   ├── styles/           # CSS or SCSS files
+│   ├── components/       # Reusable React components
+│   └── package.json
+├── docker-compose.yml
+├── Dockerfile
+└── README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Setup and Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- Node.js (v14 or higher)
+- npm (Node Package Manager)
+- Docker (optional, for containerization)
+- SQLite (for the database)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Local Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-username/social-network.git
+   cd social-network
+   ```
 
-## Deploy on Vercel
+2. **Install Dependencies**:
+   - For the frontend:
+     ```bash
+     cd frontend
+     npm install
+     ```
+   - For the backend:
+     ```bash
+     cd backend
+     npm install
+     ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Set Up the Database**:
+   - Run the SQLite migrations to create the necessary tables:
+     ```bash
+     cd backend
+     npm run migrate
+     ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Start the Development Server**:
+   - For the frontend:
+     ```bash
+     cd frontend
+     npm run dev
+     ```
+   - For the backend:
+     ```bash
+     cd backend
+     npm start
+     ```
+
+5. **Access the Application**:
+   - Open your browser and navigate to `http://localhost:3000`.
+
+---
+
+### Docker Setup
+
+1. **Build and Run the Docker Containers**:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Access the Application**:
+   - Open your browser and navigate to `http://localhost:3000`.
+
+---
+
+## Running the Application
+
+- **Development Mode**:
+  - Use `npm run dev` in the `frontend` folder to start the Next.js development server with Turbopack.
+  - Use `npm start` in the `backend` folder to start the backend server.
+
+- **Production Mode**:
+  - Build the application using `npm run build` in the `frontend` folder.
+  - Start the production server using `npm start`.
+
+---
+
+## API Documentation
+
+The backend API routes are documented using Swagger. To access the API documentation:
+
+1. Start the backend server.
+2. Navigate to `http://localhost:3000/api-docs`.
+
+---
+
+## Contributing
+
+We welcome contributions to the Social Network project! If you'd like to contribute, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+3. Commit your changes and push them to your fork.
+4. Submit a pull request with a detailed description of your changes.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- **Next.js** for providing a powerful framework for building React applications.
+- **SQLite** for offering a lightweight and efficient database solution.
+- **Docker** for simplifying containerization and deployment.
+
+---
+
+Thank you for checking out the Social Network project! If you have any questions or feedback, feel free to open an issue or reach out to the maintainers. Happy coding! 🚀
