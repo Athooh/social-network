@@ -1,7 +1,7 @@
 import "@/styles/globals.css";
 
 export const metadata = {
-  title: "My Social Network",
+  title: "NoteBook",
   description: "A Facebook-like application",
 };
 
