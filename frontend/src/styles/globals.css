@@ -35,6 +35,17 @@ a {
   text-decoration: none;
 }
 
+header {
+  background-color: #333;
+  color: white;
+  padding: 1rem;
+}
+
+footer {
+  bottom: 0;
+  left: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
