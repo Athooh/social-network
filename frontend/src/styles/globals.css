@@ -90,6 +90,11 @@ button {
   color: var(--fb-white);
 }
 
+.btn-tertiary {
+  background-color: var(--fb-green);
+  color: var(--fb-white);
+}
+
 /* Cards */
 .card {
   background-color: var(--background-card);
