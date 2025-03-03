@@ -64,14 +64,12 @@
   }
   
   .authForm button {
-    background-color: var(--primary-color);
-    color: white;
     padding: var(--spacing-md);
     border-radius: var(--border-radius);
     font-weight: bold;
     margin-top: var(--spacing-md);
   }
-  
+
   .authLink {
     text-align: center;
     margin-top: var(--spacing-lg);
