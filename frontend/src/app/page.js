@@ -24,7 +24,7 @@ export default function Login() {
           <button type="submit" className="btn-tertiary">Login</button>
         </form>
         <p className={styles.authLink}>
-          New to Social Network? <Link href="/auth/register">Create Account</Link>
+          New to NoteBook? <Link href="/auth/register">Create Account</Link>
         </p>
       </div>
     </div>
