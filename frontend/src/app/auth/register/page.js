@@ -15,7 +15,7 @@ export default function Register() {
 
   return (
     <div className={styles.authContainer}>
-        <h1 className="forumName">Notebook</h1>
+        <h1 className="forumName">NoteBook</h1>
       <div className={styles.authCard}>
         <h1>Create a new Account</h1>
         <p>Its quick and easy</p>
