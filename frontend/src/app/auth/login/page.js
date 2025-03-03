@@ -9,7 +9,7 @@ export default function Login() {
         <form className={styles.authForm}>
           <input type="email" placeholder="Email" required />
           <input type="password" placeholder="Password" required />
-          <button type="submit" className="btn-primary">Login</button>
+          <button type="submit" className="btn-tertiary">Login</button>
         </form>
         <p>
           Don't have an account? <Link href="/auth/register">Register</Link>
