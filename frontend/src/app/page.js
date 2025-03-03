@@ -15,7 +15,7 @@ export default function Login() {
 
   return (
     <div className={styles.authContainer}>
-      <h1 className="forumName">Notebook</h1>
+      <h1 className="forumName">NoteBook</h1>
       <div className={styles.authCard}>
         <h1>Login to Notebook</h1>
         <form className={styles.authForm} onSubmit={handleSubmit}>
