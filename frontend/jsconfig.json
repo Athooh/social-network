@@ -2,6 +2,9 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "checkJs": false,
+    "maxNodeModuleJsDepth": 0,
+    "allowJs": true
   }
 }

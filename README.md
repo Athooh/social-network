@@ -81,29 +81,35 @@ The Social Network application includes the following features:
 ## Project Structure
 ```
 social-network/
-├── public/                  # Static assets (images, fonts, etc.)
-├── src/
-│   ├── components/          # Reusable UI components (e.g., Navbar, Footer)
-│   ├── pages/               # Next.js pages (each file corresponds to a route)
-│   │   ├── api/             # API routes (backend logic)
-│   │   ├── auth/            # Authentication pages (login, register)
-│   │   ├── profile/         # User profile pages
-│   │   ├── posts/           # Post-related pages
-│   │   ├── groups/          # Group-related pages
-│   │   ├── chat/            # Chat pages
-│   │   ├── notifications/   # Notifications page
-│   │   ├── index.js         # Home page
-│   │   └── _app.js          # Custom App component (for global styles, state)
-│   ├── styles/              # CSS or SCSS files
-│   ├── utils/               # Utility functions (e.g., API calls, helpers)
-│   ├── hooks/               # Custom React hooks
-│   ├── context/             # React context for global state (e.g., auth, notifications)
-│   ├── lib/                 # Library functions (e.g., database connection)
-│   └── types/               # TypeScript types (if using TypeScript)
-├── .env.local               # Environment variables (e.g., API keys, secrets)
-├── next.config.js           # Next.js configuration
-├── package.json             # Project dependencies and scripts
-└── README.md                # Project documentation
+├── frontend/                # Frontend application
+│   ├── public/             # Static assets (images, fonts, etc.)
+│   ├── src/
+│   │   ├── app/           # Next.js 13+ App Router pages
+│   │   │   ├── auth/      # Authentication pages (login, register)
+│   │   │   ├── profile/   # User profile pages
+│   │   │   ├── posts/     # Post-related pages
+│   │   │   ├── groups/    # Group-related pages
+│   │   │   ├── messages/  # Chat/messages pages
+│   │   │   ├── layout.js  # Root layout component
+│   │   │   └── page.js    # Home page
+│   │   ├── components/    # Reusable UI components
+│   │   │   ├── header/    # Header components
+│   │   │   ├── chat/      # Chat components
+│   │   │   ├── events/    # Event components
+│   │   │   ├── groups/    # Group components
+│   │   │   └── sideBar/   # Sidebar components
+│   │   ├── styles/        # CSS files and modules
+│   │   ├── utils/         # Utility functions
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── context/       # React context providers
+│   │   ├── lib/           # Library functions
+│   │   └── types/         # TypeScript types
+│   ├── .env.local         # Environment variables
+│   ├── next.config.mjs    # Next.js configuration
+│   ├── package.json       # Frontend dependencies
+│   └── eslint.config.mjs  # ESLint configuration
+├── backend/               # Backend application (to be implemented)
+└── README.md             # Project documentation
 ```
 ---
 
