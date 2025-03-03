@@ -1,53 +1,115 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Facebook Colors */
+  --fb-blue: #1877f2;
+  --fb-green: #42b72a;
+  --fb-black: #050505;
+  --fb-grey: #65676b;
+  --fb-light-grey: #f0f2f5;
+  --fb-white: #ffffff;
+  --fb-red: #ff0000;
+  
+  /* Semantic Colors */
+  --primary-color: var(--fb-blue);
+  --secondary-color: var(--fb-green);
+  --text-primary: var(--fb-black);
+  --text-secondary: var(--fb-grey);
+  --background-main: var(--fb-light-grey);
+  --background-card: var(--fb-white);
+  --border-color: #dddfe2;
+  --error-color: var(--fb-red);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Layout */
+  --header-height: 56px;
+  --sidebar-width: 360px;
+  --border-radius: 8px;
+  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
+/* Reset & Base Styles */
 * {
-  box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
+body {
+  font-family: var(--font-family);
+  background-color: var(--background-main);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Layout */
+.app-container {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+  min-height: 100vh;
+}
+
+.main-content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+/* Common Elements */
 a {
-  color: inherit;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
-header {
-  background-color: #333;
-  color: white;
-  padding: 1rem;
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: inherit;
 }
 
-footer {
-  bottom: 0;
-  left: 0;
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--fb-white);
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: var(--fb-white);
 }
+
+/* Cards */
+.card {
+  background-color: var(--background-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Forms */
+input, textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-family: inherit;
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-primary { color: var(--primary-color); }
+.text-secondary { color: var(--text-secondary); }
+.bg-white { background-color: var(--background-card); }

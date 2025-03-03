@@ -1,0 +1,84 @@
+.authContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: var(--spacing-xl);
+    background-color: var(--background-main);
+  }
+  
+  .authCard {
+    background-color: var(--background-card);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .authCard h1 {
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+  }
+  
+  .authForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .formGroup label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+  
+  .nameGroup {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .authForm input,
+  .authForm textarea {
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-family: inherit;
+  }
+  
+  .authForm input[type="file"] {
+    padding: var(--spacing-sm);
+  }
+  
+  .authForm textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .authForm button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-weight: bold;
+    margin-top: var(--spacing-md);
+  }
+  
+  .authLink {
+    text-align: center;
+    margin-top: var(--spacing-lg);
+    color: var(--text-secondary);
+  }
+  
+  .authLink a {
+    color: var(--primary-color);
+    font-weight: bold;
+  }

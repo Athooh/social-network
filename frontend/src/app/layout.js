@@ -10,9 +10,6 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <main>{children}</main>
-        <footer>
-          <p>&copy; 2023 My Social Network</p>
-        </footer>
       </body>
     </html>
   );
