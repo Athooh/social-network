@@ -1,12 +1,23 @@
+'use client';
+
 import styles from '@/styles/auth.module.css';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Register() {
+  const router = useRouter();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Add registration logic here
+    router.push('/home');
+  };
+
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
         <h1>Create Account</h1>
-        <form className={styles.authForm}>
+        <form className={styles.authForm} onSubmit={handleSubmit}>
           {/* Required Fields */}
           <div className={styles.formGroup}>
             <input type="email" placeholder="Email" required />
@@ -43,7 +54,7 @@ export default function Register() {
           </button>
         </form>
         <p className={styles.authLink}>
-          Already have an account? <Link href="/auth/login">Login</Link>
+          Already have an account? <Link href="/">Login</Link>
         </p>
       </div>
     </div>
