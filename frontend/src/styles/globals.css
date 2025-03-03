@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
   /* Facebook Colors */
   --fb-blue: #1877f2;
@@ -37,6 +39,9 @@
   --sidebar-width: 360px;
   --border-radius: 8px;
   --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Add this to your existing variables */
+  --font-gummy: 'Sour Gummy', system-ui;
 }
 
 /* Reset & Base Styles */
@@ -119,3 +124,13 @@ input, textarea {
 .text-primary { color: var(--primary-color); }
 .text-secondary { color: var(--text-secondary); }
 .bg-white { background-color: var(--background-card); }
+
+/* Add this to your existing styles */
+.forumName {
+  font-family: var(--font-gummy);
+  font-size: 4rem;
+  color: var(--primary-color);
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
