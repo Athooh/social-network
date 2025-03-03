@@ -15,8 +15,10 @@ export default function Register() {
 
   return (
     <div className={styles.authContainer}>
+        <h1 className="forumName">Notebook</h1>
       <div className={styles.authCard}>
-        <h1>Create Account</h1>
+        <h1>Create a new Account</h1>
+        <p>Its quick and easy</p>
         <form className={styles.authForm} onSubmit={handleSubmit}>
           {/* Required Fields */}
           <div className={styles.formGroup}>
