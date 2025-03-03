@@ -1,15 +1,16 @@
 .authContainer {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: var(--spacing-xl);
+    padding-inline: var(--spacing-lg);
     background-color: var(--background-main);
   }
   
   .authCard {
     background-color: var(--background-card);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     width: 100%;
@@ -19,10 +20,16 @@
   .authCard h1 {
     color: var(--text-primary);
     font-size: var(--font-size-xl);
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
     text-align: center;
   }
   
+  .authCard p {
+    text-align: center;
+    font-weight: 300;
+    color: var(--text-secondary);
+  }
+
   .authForm {
     display: flex;
     flex-direction: column;
@@ -79,4 +86,8 @@
   .authLink a {
     color: var(--primary-color);
     font-weight: bold;
+  }
+
+  .forumName {
+    font-family: 'Sour Gummy', serif;
   }
