@@ -91,3 +91,36 @@
   .forumName {
     font-family: 'Sour Gummy', serif;
   }
+
+  .passwordContainer {
+    position: relative;
+    width: 100%;
+  }
+
+  .passwordContainer input {
+    width: 100%;
+    padding-right: 40px;
+  }
+
+  .passwordToggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .passwordToggle:hover {
+    color: #333;
+  }
+
+  button.passwordToggle {
+    margin: 0;
+  }
