@@ -143,6 +143,10 @@
   margin-bottom: var(--spacing-md);
 }
 
+.requestCard:last-child {
+    margin: 0;
+}
+
 .requestProfile {
   display: flex;
   align-items: center;
