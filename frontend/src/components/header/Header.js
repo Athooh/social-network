@@ -3,10 +3,13 @@
 
 import styles from '@/styles/Header.module.css';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import ProfileDropdown from './ProfileDropdown';
+import SearchBar from './SearchBar';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     // Add logout logic here
@@ -16,17 +19,44 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.headerContent}>
-        <div className={styles.logo}>
+        <div className={styles.leftSection}>
           <Link href="/home">
-            <h1>My Social Network</h1>
+            <h1 className="headerForumName">Notebook</h1>
           </Link>
+          <SearchBar />
         </div>
         <nav className={styles.nav}>
-          <Link href="/home">Home</Link>
-          <Link href="/posts">Posts</Link>
-          <Link href="/profile/1">Profile</Link>
-          <Link href="/messages">Messages</Link>
-          <button onClick={handleLogout}>Logout</button>
+          <Link 
+            href="/home" 
+            className={`${styles.iconLink} ${pathname === '/home' ? styles.active : ''}`}
+          >
+            <i className="fas fa-home"></i>
+          </Link>
+          <Link 
+            href="/posts" 
+            className={`${styles.iconLink} ${pathname === '/posts' ? styles.active : ''}`}
+          >
+            <i className="fas fa-newspaper"></i>
+          </Link>
+          <Link 
+            href="/profile/1" 
+            className={`${styles.iconLink} ${pathname.startsWith('/profile') ? styles.active : ''}`}
+          >
+            <i className="fas fa-user"></i>
+          </Link>
+          <Link 
+            href="/messages" 
+            className={`${styles.iconLink} ${pathname === '/messages' ? styles.active : ''}`}
+          >
+            <i className="fas fa-envelope"></i>
+          </Link>
+          <Link 
+            href="/notification" 
+            className={`${styles.iconLink} ${pathname === '/notification' ? styles.active : ''}`}
+          >
+            <i className="fas fa-bell"></i>
+          </Link>
+          <ProfileDropdown />
         </nav>
       </div>
     </header>
