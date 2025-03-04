@@ -12,13 +12,13 @@
 
 
 .headerContent {
-  max-width: calc(1920px - 500px); /* 300px gap on each side */
+  max-width: calc(1920px - 400px); /* 300px gap on each side */
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 0 auto;
-  padding: 0 var(--spacing-md);
+  padding: 0;
 }
 
 .logo {
