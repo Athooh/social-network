@@ -1,5 +1,6 @@
 import Header from '@/components/header/Header';
-import Image from 'next/image';
+import LeftSidebar from '@/components/sidebar/LeftSidebar';
+import RightSidebar from '@/components/sidebar/RightSidebar';
 import styles from '@/styles/page.module.css';
 
 export default function Home() {
@@ -7,21 +8,17 @@ export default function Home() {
     <>
       <Header />
       <div className={styles.container}>
-        <aside></aside>
+        <aside>
+          <LeftSidebar />
+        </aside>
         <main className={styles.mainContent}>
           <section className={styles.welcomeSection}>
             <h1>Welcome to My Social Network</h1>
-            <Image 
-              src="/logo.png" 
-              alt="Logo" 
-              width={180} 
-              height={37} 
-              className={styles.logo}
-              priority
-            />
           </section>
         </main>
-        <aside></aside>
+        <aside>
+          <RightSidebar />
+        </aside>
       </div>
     </>
   );
