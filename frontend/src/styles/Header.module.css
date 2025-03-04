@@ -190,7 +190,7 @@
   margin: var(--spacing-sm) 0;
 }
 
-.dropdownItem {
+.dropdownItem, a.dropdownItem {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);

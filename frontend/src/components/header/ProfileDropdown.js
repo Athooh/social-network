@@ -44,6 +44,8 @@ export default function ProfileDropdown() {
             View Profile
           </Link>
           
+          <div className={styles.dropdownDivider} />
+          
           <button onClick={toggleDarkMode} className={styles.dropdownItem}>
             <i className={isDarkMode ? "fas fa-sun" : "fas fa-moon"}></i>
             {isDarkMode ? "Light Mode" : "Dark Mode"}
