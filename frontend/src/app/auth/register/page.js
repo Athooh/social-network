@@ -3,9 +3,32 @@
 import styles from '@/styles/auth.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import PasswordInput from '@/components/inputs/PasswordInput';
 
 export default function Register() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    nickname: '',
+    aboutMe: '',
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,25 +38,56 @@ export default function Register() {
 
   return (
     <div className={styles.authContainer}>
-        <h1 className="forumName">NoteBook</h1>
+      <h1 className="forumName">Notebook</h1>
       <div className={styles.authCard}>
         <h1>Create a new Account</h1>
         <p>Its quick and easy</p>
         <form className={styles.authForm} onSubmit={handleSubmit}>
           {/* Required Fields */}
           <div className={styles.formGroup}>
-            <input type="email" placeholder="Email" required />
+            <input 
+              type="email" 
+              name="email"
+              placeholder="Email" 
+              value={formData.email}
+              onChange={handleChange}
+              required 
+            />
           </div>
           <div className={styles.formGroup}>
-            <input type="password" placeholder="Password" required />
-          </div>
+            <PasswordInput 
+                value={formData.password}
+                onChange={handleChange}
+            />
+            </div>
+          {/* Rest of the form fields */}
           <div className={styles.nameGroup}>
-            <input type="text" placeholder="First Name" required />
-            <input type="text" placeholder="Last Name" required />
+            <input 
+              type="text" 
+              name="firstName"
+              placeholder="First Name" 
+              value={formData.firstName}
+              onChange={handleChange}
+              required 
+            />
+            <input 
+              type="text" 
+              name="lastName"
+              placeholder="Last Name" 
+              value={formData.lastName}
+              onChange={handleChange}
+              required 
+            />
           </div>
           <div className={styles.formGroup}>
             <label>Date of Birth</label>
-            <input type="date" required />
+            <input 
+              type="date" 
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              required 
+            />
           </div>
 
           {/* Optional Fields */}
@@ -42,12 +96,21 @@ export default function Register() {
             <input type="file" accept="image/*" />
           </div>
           <div className={styles.formGroup}>
-            <input type="text" placeholder="Nickname (Optional)" />
+            <input 
+              type="text" 
+              name="nickname"
+              placeholder="Nickname (Optional)" 
+              value={formData.nickname}
+              onChange={handleChange}
+            />
           </div>
           <div className={styles.formGroup}>
             <textarea 
+              name="aboutMe"
               placeholder="About Me (Optional)"
               rows={3}
+              value={formData.aboutMe}
+              onChange={handleChange}
             ></textarea>
           </div>
 
