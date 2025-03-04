@@ -63,7 +63,7 @@ body {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
   min-height: 100vh;
-  max-width: calc(1920px - 600px);
+  max-width: calc(1920px - 460px);
   margin: 0 auto;
   padding: 0 var(--spacing-md);
 }
