@@ -8,9 +8,9 @@
   margin: 0 auto;
 }
 
-.mainContent {
+/* .mainContent {
   padding: var(--spacing-md);
-}
+} */
 
 .welcomeSection {
   background-color: var(--background-card);
