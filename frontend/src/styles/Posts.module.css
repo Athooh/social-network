@@ -3,7 +3,7 @@
   border-radius: var(--border-radius);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .createPostHeader {
@@ -27,7 +27,7 @@
 
 .createPostInput input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md);
   border: none;
   background-color: var(--background-main);
   border-radius: 20px;
@@ -325,4 +325,301 @@
 
 .postButton:not(:disabled):hover {
   opacity: 0.9;
+}
+
+/* Post section */
+
+.post {
+  background-color: var(--background-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--spacing-md);
+}
+
+.postAuthor {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.authorAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.authorInfo h3 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.postMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.dot {
+  font-size: 4px;
+  vertical-align: middle;
+}
+
+.postOptionsContainer {
+  position: relative;
+}
+
+.optionsDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--background-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  min-width: 200px;
+  z-index: 1000;
+  padding: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.optionsDropdown button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+}
+
+.optionsDropdown button:hover {
+  background-color: var(--background-main);
+}
+
+.optionsDropdown i {
+  width: 20px;
+  color: var(--text-secondary);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: var(--spacing-xs) 0;
+}
+
+.postOptions {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.postOptions:hover {
+  background-color: var(--background-main);
+}
+
+.postContent {
+  padding: 0 var(--spacing-md) var(--spacing-md);
+  color: var(--text-primary);
+}
+
+.postMedia {
+  margin: var(--spacing-md) -16px 0;
+}
+
+.postMedia img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+}
+
+.postStats {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.reactions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.reactionIcons {
+  display: flex;
+  gap: 10px;
+}
+
+.engagement {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.postActions {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.actionButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.actionButton:hover {
+  background-color: var(--background-main);
+}
+
+.actionButton.liked {
+  color: var(--primary-color);
+}
+
+.commentsSection {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.commentForm {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.commentAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.commentInput {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: var(--background-main);
+  border-radius: 20px;
+  padding: 8px var(--spacing-md);
+}
+
+.commentInput input {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 0;
+  outline: none;
+  font-size: var(--font-size-base);
+}
+
+.commentInput button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.commentInput button:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.commentInput button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.comment {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.commentContent {
+  flex: 1;
+}
+
+.commentBubble {
+  background-color: var(--background-main);
+  border-radius: 18px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: 4px;
+}
+
+.commentBubble h4 {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.commentActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-left: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.commentActions button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.commentActions button:hover {
+  text-decoration: underline;
+}
+
+.commentActions span {
+  color: var(--text-secondary);
 } 
