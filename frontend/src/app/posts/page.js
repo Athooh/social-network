@@ -1,6 +1,7 @@
 'use client';
 
 import Header from '@/components/header/Header';
+import CreatePost from '@/components/posts/CreatePost';
 import styles from '@/styles/page.module.css';
 
 export default function Posts() {
@@ -10,9 +11,8 @@ export default function Posts() {
       <div className={styles.container}>
         <aside></aside>
         <main className={styles.mainContent}>
-          <section className={styles.welcomeSection}>
-            <h1>Posts Feed</h1>
-          </section>
+          <CreatePost />
+          {/* Posts list will go here */}
         </main>
         <aside></aside>
       </div>
