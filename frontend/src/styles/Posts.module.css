@@ -1,0 +1,328 @@
+.createPostCard {
+  background-color: var(--background-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow);
+  margin-bottom: var(--spacing-lg);
+}
+
+.createPostHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.profilePic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.createPostInput {
+  flex: 1;
+  cursor: pointer;
+}
+
+.createPostInput input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background-color: var(--background-main);
+  border-radius: 20px;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+}
+
+.createPostInput input:focus {
+  outline: none;
+}
+
+.form {
+  margin-bottom: var(--spacing-md);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--background-main);
+  font-size: var(--font-size-base);
+  resize: none;
+  margin-bottom: var(--spacing-md);
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.createPostActions {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.postButton {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.postButton:hover {
+  background-color: #1668d9;
+}
+
+.createPostFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+}
+
+.mediaButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: none;
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex: 1;
+  justify-content: center;
+}
+
+.mediaButton:hover {
+  background-color: var(--background-main);
+}
+
+.mediaButton i {
+  font-size: 1.2em;
+}
+
+.mediaButton:nth-child(1) i {
+  color: #f02849;
+}
+
+.mediaButton:nth-child(2) i {
+  color: #45bd62;
+}
+
+.mediaButton:nth-child(3) i {
+  color: #f7b928;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--background-card);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: var(--background-card);
+  z-index: 1;
+}
+
+.modalHeader h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: var(--background-main);
+}
+
+.modalContent {
+  padding: var(--spacing-md);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.userInfo h3 {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.privacyButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--background-main);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modalContent textarea {
+  width: 100%;
+  min-height: 150px;
+  border: none;
+  resize: none;
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+  background: none;
+}
+
+.modalContent textarea:focus {
+  outline: none;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.previewItem {
+  position: relative;
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.previewItem img,
+.previewItem video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removePreview {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.removePreview:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.addToPost {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.addToPost h4 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
+.mediaButtons {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.mediaButtons button,
+.mediaLabel {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.mediaButtons button:hover,
+.mediaLabel:hover {
+  background-color: var(--background-main);
+}
+
+.postButton {
+  width: 100%;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-md);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.postButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.postButton:not(:disabled):hover {
+  opacity: 0.9;
+} 
