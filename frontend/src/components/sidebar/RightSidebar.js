@@ -1,6 +1,8 @@
 'use client';
 
 import styles from '@/styles/Sidebar.module.css';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function RightSidebar() {
   const friendRequests = [
@@ -21,6 +23,12 @@ export default function RightSidebar() {
     { id: 9, name: 'Ivy Clark', image: '/avatar3.png', isOnline: true },
     { id: 10, name: 'Jack Lewis', image: '/avatar.png', isOnline: false },
   ];
+
+  const groups = [
+    { id: 1, name: 'React Developers', image: '/react.png', members: 45 },
+    { id: 2, name: 'Vue.js Enthusiasts', image: '/vue.png', members: 32 },
+    { id: 3, name: 'Angular Developers', image: '/angular.png', members: 28 },
+  ]
 
   return (
     <div className={styles.rightSidebar}>
@@ -56,6 +64,29 @@ export default function RightSidebar() {
             </div>
           </div>
         ))}
+      </section>
+
+      <section className={styles.groups}>
+        <h2>Groups</h2>
+        {groups.map((group) => (
+          <div key={group.id} className={styles.groupItem}>
+            <div className={styles.groupProfile}>
+              <img src={group.image} alt={group.name} />
+              <div className={styles.groupInfo}>
+                <h3>{group.name}</h3>
+                <span>{group.members} members</span>
+              </div>
+            </div>
+            <div className={styles.joinActions}>
+              <button className={styles.joinButton}>Join</button>
+            </div>
+          </div>
+        ))}
+        <Link href="/groups">
+        <div className={styles.viewGroup}>
+          <button className={styles.viewButton}>View Groups <i className="fa-solid fa-users-line"></i></button>
+        </div>
+        </Link>
       </section>
     </div>
   );
