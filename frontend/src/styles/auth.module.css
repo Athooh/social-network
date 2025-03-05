@@ -10,7 +10,7 @@
   
   .authCard {
     background-color: var(--background-card);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-sm) var(--spacing-lg);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     width: 100%;
