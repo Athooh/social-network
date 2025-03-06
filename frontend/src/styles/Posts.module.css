@@ -614,6 +614,7 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0;
+  font-size: var(--font-size-sm);
 }
 
 .commentActions button:hover {
