@@ -34,10 +34,10 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.removeItem("userData");
       localStorage.removeItem("token");
-      
+
       // Clear the token cookie
       document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      
+
       setCurrentUser(null);
       setToken(null);
       setLoading(false);
@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await fetch(`${API_URL}/auth/validate_token`, {
           method: "GET",
+          credentials: "include",
           headers: { Authorization: `Bearer ${currentToken}` },
         });
 
