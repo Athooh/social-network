@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import styles from '@/styles/auth.module.css';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import PasswordInput from '@/components/inputs/PasswordInput';
+import styles from "@/styles/auth.module.css";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import PasswordInput from "@/components/inputs/PasswordInput";
 
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
@@ -24,13 +24,16 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
+    setError("");
+    router.push("/home");
     // Dummy credentials
-    if (formData.email === 'test@example.com' && formData.password === 'password123') {
-      router.push('/home');
+    if (
+      formData.email === "test@example.com" &&
+      formData.password === "password123"
+    ) {
+      router.push("/home");
     } else {
-      setError('Invalid email or password');
+      setError("Invalid email or password");
     }
   };
 
@@ -45,19 +48,18 @@ export default function Login() {
         <h1>Login to Notebook</h1>
         {error && <p className={styles.error}>{error}</p>}
         <form className={styles.authForm} onSubmit={handleSubmit}>
-          <input 
-            type="email" 
+          <input
+            type="email"
             name="email"
-            placeholder="Email" 
+            placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            required 
+            required
           />
-          <PasswordInput 
-            value={formData.password}
-            onChange={handleChange}
-          />
-          <button type="submit" className="btn-tertiary">Login</button>
+          <PasswordInput value={formData.password} onChange={handleChange} />
+          <button type="submit" className="btn-tertiary">
+            Login
+          </button>
         </form>
         <p className={styles.authLink}>
           New to Notebook? <Link href="/auth/register">Create Account</Link>
@@ -66,4 +68,3 @@ export default function Login() {
     </div>
   );
 }
-
