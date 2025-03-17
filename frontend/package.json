@@ -16,14 +16,16 @@
     "build": "npm run build && npm run backend:build"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
+    "next": "15.1.7",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.1.7"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "eslint": "^9",
-    "eslint-config-next": "15.1.7",
     "@eslint/eslintrc": "^3",
-    "concurrently": "^8.2.2"
+    "@types/estree": "^1.0.6",
+    "concurrently": "^8.2.2",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.7"
   }
 }
