@@ -35,6 +35,8 @@ type AuthConfig struct {
 	SessionCookieDomain string
 	SessionCookieSecure bool
 	SessionMaxAge       int
+	JWTSecretKey        string
+	JWTTokenDuration    int // in seconds
 }
 
 // LogConfig holds the logging configuration
@@ -65,6 +67,8 @@ func Load() Config {
 			SessionCookieDomain: getEnv("SESSION_COOKIE_DOMAIN", ""),
 			SessionCookieSecure: getEnvAsBool("SESSION_COOKIE_SECURE", false),
 			SessionMaxAge:       getEnvAsInt("SESSION_MAX_AGE", 86400), // 24 hours
+			JWTSecretKey:        getEnv("JWT_SECRET_KEY", "your-secret-key-change-in-production"),
+			JWTTokenDuration:    getEnvAsInt("JWT_TOKEN_DURATION", 86400), // 24 hours
 		},
 		Log: LogConfig{
 			Level:      getEnv("LOG_LEVEL", "info"),
