@@ -45,7 +45,6 @@ export function middleware(request) {
 
   // If no token is found and this is a protected route, redirect to login
   if (!token && isProtectedRoute) {
-    console.log("No token found, redirecting to login middleware");
 
     // Create a response object
     const response = NextResponse.redirect(new URL("/login", request.url));
