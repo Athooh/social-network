@@ -1,10 +1,13 @@
-import Header from '@/components/header/Header';
-import LeftSidebar from '@/components/sidebar/LeftSidebar';
-import RightSidebar from '@/components/sidebar/RightSidebar';
-import CreatePost from '@/components/posts/CreatePost';
-import Post from '@/components/posts/Post';
-import styles from '@/styles/page.module.css';
-import postStyles from '@/styles/Posts.module.css';
+"use client";
+
+import Header from "@/components/header/Header";
+import LeftSidebar from "@/components/sidebar/LeftSidebar";
+import RightSidebar from "@/components/sidebar/RightSidebar";
+import CreatePost from "@/components/posts/CreatePost";
+import Post from "@/components/posts/Post";
+import styles from "@/styles/page.module.css";
+import postStyles from "@/styles/Posts.module.css";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const samplePosts = [
   {
@@ -23,9 +26,9 @@ const samplePosts = [
         authorName: "Jane Smith",
         authorImage: "/avatar1.png",
         content: "That's awesome! Can't wait to see it.",
-        timestamp: "1 hour ago"
-      }
-    ]
+        timestamp: "1 hour ago",
+      },
+    ],
   },
   {
     id: 2,
@@ -36,13 +39,13 @@ const samplePosts = [
     likes: 24,
     commentCount: 3,
     shares: 1,
-    comments: []
-  }
+    comments: [],
+  },
 ];
 
 export default function Home() {
   return (
-    <>
+    <ProtectedRoute>
       <Header />
       <div className={styles.container}>
         <aside>
@@ -62,6 +65,6 @@ export default function Home() {
           <RightSidebar />
         </aside>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }
