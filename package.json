@@ -9,7 +9,7 @@
     "frontend:lint": "cd frontend && npm run lint",
     
     "backend:build": "cd backend && make build",
-    "backend:run": "cd backend && make run",
+    "backend:dev": "cd backend && make run",
     "backend:test": "cd backend && make test",
     "backend:migrate-up": "cd backend && make migrate-up",
     "backend:migrate-down": "cd backend && make migrate-down",
