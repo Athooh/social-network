@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/authcontext";
 import PasswordInput from "@/components/inputs/PasswordInput";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import styles from "@/styles/auth.module.css";
 
 export default function Login() {
@@ -16,10 +17,17 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading } = useAuth();
 
   // Get the 'from' parameter to redirect after login
   const from = searchParams.get("from") || "/home";
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push("/home");
+    }
+  }, [isAuthenticated, loading, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,6 +55,11 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return <LoadingSpinner size="large" fullPage={true} />;
+  }
 
   return (
     <div className={styles.authContainer}>
@@ -82,7 +95,13 @@ export default function Login() {
             className={styles.primaryButton}
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Log In"}
+            {isLoading ? (
+              <>
+                <LoadingSpinner size="small" color="light" /> Logging in...
+              </>
+            ) : (
+              "Log In"
+            )}
           </button>
         </form>
 
