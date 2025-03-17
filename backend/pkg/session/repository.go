@@ -1,0 +1,80 @@
+package session
+
+import (
+	"database/sql"
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// SQLiteRepository implements Repository for SQLite
+type SQLiteRepository struct {
+	db *sql.DB
+}
+
+// NewSQLiteRepository creates a new SQLite repository
+func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
+	return &SQLiteRepository{db: db}
+}
+
+// CreateSession adds a new session to the database
+func (r *SQLiteRepository) CreateSession(userID string, expiresAt time.Time) (string, error) {
+	sessionID := uuid.New().String()
+	now := time.Now()
+
+	query := `
+		INSERT INTO sessions (id, user_id, expires_at, created_at)
+		VALUES (?, ?, ?, ?)
+	`
+
+	_, err := r.db.Exec(query, sessionID, userID, expiresAt, now)
+	if err != nil {
+		return "", err
+	}
+
+	return sessionID, nil
+}
+
+// GetSession retrieves a session by ID
+func (r *SQLiteRepository) GetSession(sessionID string) (string, time.Time, error) {
+	query := `
+		SELECT user_id, expires_at
+		FROM sessions
+		WHERE id = ?
+	`
+
+	var userID string
+	var expiresAt time.Time
+
+	err := r.db.QueryRow(query, sessionID).Scan(&userID, &expiresAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", time.Time{}, errors.New("session not found")
+		}
+		return "", time.Time{}, err
+	}
+
+	return userID, expiresAt, nil
+}
+
+// DeleteSession removes a session from the database
+func (r *SQLiteRepository) DeleteSession(sessionID string) error {
+	query := `DELETE FROM sessions WHERE id = ?`
+	_, err := r.db.Exec(query, sessionID)
+	return err
+}
+
+// DeleteUserSessions removes all sessions for a user
+func (r *SQLiteRepository) DeleteUserSessions(userID string) error {
+	query := `DELETE FROM sessions WHERE user_id = ?`
+	_, err := r.db.Exec(query, userID)
+	return err
+}
+
+// CleanExpired removes all expired sessions
+func (r *SQLiteRepository) CleanExpired() error {
+	query := `DELETE FROM sessions WHERE expires_at < ?`
+	_, err := r.db.Exec(query, time.Now())
+	return err
+}
