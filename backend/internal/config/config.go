@@ -52,7 +52,7 @@ type LogConfig struct {
 func Load() Config {
 	return Config{
 		Server: ServerConfig{
-			Host:         getEnv("SERVER_HOST", "0.0.0.0"),
+			Host:         getEnv("SERVER_HOST", "localhost"),
 			Port:         getEnvAsInt("SERVER_PORT", 8080),
 			ReadTimeout:  getEnvAsDuration("SERVER_READ_TIMEOUT", 5*time.Second),
 			WriteTimeout: getEnvAsDuration("SERVER_WRITE_TIMEOUT", 10*time.Second),
