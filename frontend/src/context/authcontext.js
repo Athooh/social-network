@@ -25,7 +25,11 @@ export const AuthProvider = ({ children }) => {
         try {
           await fetch(`${API_URL}/auth/logout`, {
             method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           });
         } catch (error) {
           console.error("Logout error:", error);
@@ -43,7 +47,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
 
       if (sendRequest) {
-        console.log("Redirecting to login handleLogout");
         router.push("/login");
       }
     },
@@ -166,6 +169,9 @@ export const AuthProvider = ({ children }) => {
       if (data && data.user && data.token) {
         localStorage.setItem("userData", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
+
+        document.cookie = `token=${data.token}; path=/; max-age=${data.expires_in}; samesite=strict`;
+
         setCurrentUser(data.user);
         setToken(data.token);
         return true;
