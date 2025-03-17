@@ -43,9 +43,13 @@ func (rg *RouteGroup) Register(mux *http.ServeMux) {
 }
 
 // Router sets up the HTTP routes
-func Router(authHandler *auth.Handler, authMiddleware, jwtMiddleware func(http.Handler) http.Handler, logger *logger.Logger) http.Handler {
+func Router(authHandler *auth.Handler, authMiddleware, jwtMiddleware func(http.Handler) http.Handler, logger *logger.Logger, uploadDir string) http.Handler {
 	// Create a new router
 	mux := http.NewServeMux()
+
+	uploadDirectory := http.Dir(uploadDir)
+	fileServer := http.FileServer(uploadDirectory)
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", fileServer))
 
 	// Define middleware chains with more descriptive names
 	loggingMiddleware := logger.HTTPMiddleware
@@ -56,6 +60,7 @@ func Router(authHandler *auth.Handler, authMiddleware, jwtMiddleware func(http.H
 	publicAuthGroup := NewRouteGroup("/api/auth", publicRouteMiddleware)
 	publicAuthGroup.HandleFunc("/register", authHandler.Register)
 	publicAuthGroup.HandleFunc("/login", authHandler.LoginJWT)
+	publicAuthGroup.HandleFunc("/validate_token", authHandler.ValidateToken)
 
 	protectedAuthGroup := NewRouteGroup("/api/auth", authenticatedRouteMiddleware)
 	protectedAuthGroup.HandleFunc("/logout", authHandler.Logout)
