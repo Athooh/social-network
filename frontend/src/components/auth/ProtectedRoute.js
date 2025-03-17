@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authcontext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -16,9 +17,9 @@ export default function ProtectedRoute({ children }) {
     }
   }, [isAuthenticated, loading, router]);
 
-  // Show nothing while loading
+  // Show loading spinner while loading
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <LoadingSpinner size="large" fullPage={true} />;
   }
 
   // If authenticated, show the children components
