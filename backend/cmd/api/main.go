@@ -9,6 +9,7 @@ import (
 	"github.com/Athooh/social-network/internal/server"
 	"github.com/Athooh/social-network/pkg/auth"
 	"github.com/Athooh/social-network/pkg/db/sqlite"
+	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/session"
 	"github.com/Athooh/social-network/pkg/user"
@@ -87,11 +88,16 @@ func main() {
 	// Set up services
 	authService := auth.NewService(userRepo, sessionManager, jwtConfig)
 
+	fileStore, err := filestore.New(cfg.FileStore.UploadDir)
+	if err != nil {
+		log.Fatal("Failed to create file store: %v", err)
+	}
+
 	// Set up handlers
-	authHandler := auth.NewHandler(authService)
+	authHandler := auth.NewHandler(authService, fileStore)
 
 	// Set up router with both session and JWT middleware
-	router := server.Router(authHandler, authService.RequireAuth, authService.RequireJWTAuth, log)
+	router := server.Router(authHandler, authService.RequireAuth, authService.RequireJWTAuth, log, cfg.FileStore.UploadDir)
 
 	// Set up server
 	serverConfig := server.Config{
