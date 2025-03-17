@@ -177,7 +177,7 @@ export default function Register() {
         </form>
 
         <div className={styles.authLink}>
-          Already have an account? <Link href="/login">Log In</Link>
+          Already have an account? <Link href="/">Log In</Link>
         </div>
       </div>
     </div>
