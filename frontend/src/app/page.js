@@ -65,7 +65,7 @@ export default function Login() {
           </button>
         </form>
         <p className={styles.authLink}>
-          New to Notebook? <Link href="/auth/register">Create Account</Link>
+          New to Notebook? <Link href="/register">Create Account</Link>
         </p>
       </div>
     </div>

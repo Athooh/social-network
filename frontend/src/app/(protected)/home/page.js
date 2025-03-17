@@ -8,6 +8,7 @@ import Post from "@/components/posts/Post";
 import styles from "@/styles/page.module.css";
 import postStyles from "@/styles/Posts.module.css";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ChatSidebarFloat from "@/components/chat/ChatSidebarFloat";
 
 const samplePosts = [
   {
@@ -43,6 +44,29 @@ const samplePosts = [
   },
 ];
 
+const contacts = [
+  {
+    id: 1,
+    name: "Jane Smith",
+    avatar: "/avatar1.png",
+    online: true,
+    unreadCount: 2,
+    messages: [
+      { id: 1, content: "Hey there!", isSent: false },
+      { id: 2, content: "Hi! How are you?", isSent: true },
+    ]
+  },
+  {
+    id: 2,
+    name: "John Doe",
+    avatar: "/avatar4.png",
+    online: false,
+    unreadCount: 0,
+    messages: []
+  },
+  // Add more contacts as needed
+];
+
 export default function Home() {
   return (
     <ProtectedRoute>
@@ -65,6 +89,7 @@ export default function Home() {
           <RightSidebar />
         </aside>
       </div>
+      <ChatSidebarFloat contacts={contacts} />
     </ProtectedRoute>
   );
 }
