@@ -14,7 +14,7 @@ const protectedRoutes = [
 ];
 
 // Add these to your unprotected routes
-const publicRoutes = ["/login", "/register", "/forgot-password", "/"];
+const publicRoutes = ["/", "/register", "/forgot-password"];
 
 export function middleware(request) {
   // Get the pathname from the URL
@@ -47,7 +47,7 @@ export function middleware(request) {
   if (!token && isProtectedRoute) {
 
     // Create a response object
-    const response = NextResponse.redirect(new URL("/login", request.url));
+    const response = NextResponse.redirect(new URL("/", request.url));
 
     // Add a custom header to indicate this was a middleware redirect
     // This can be used by client-side code to handle the redirect properly
