@@ -24,7 +24,7 @@ func NewService(userRepo user.Repository, sessionManager *SessionManager, jwtCon
 }
 
 // Register creates a new user account
-func (s *Service) Register(req RegisterRequest) (*UserResponse, error) {
+func (s *Service) Register(req RegisterRequest) (*TokenResponse, error) {
 	// Check if user already exists
 	existingUser, err := s.userRepo.GetByEmail(req.Email)
 	if err == nil && existingUser != nil {
@@ -54,18 +54,28 @@ func (s *Service) Register(req RegisterRequest) (*UserResponse, error) {
 		return nil, err
 	}
 
-	// Return user data without sensitive information
-	return &UserResponse{
-		ID:          newUser.ID,
-		Email:       newUser.Email,
-		FirstName:   newUser.FirstName,
-		LastName:    newUser.LastName,
-		DateOfBirth: newUser.DateOfBirth,
-		Avatar:      newUser.Avatar,
-		Nickname:    newUser.Nickname,
-		AboutMe:     newUser.AboutMe,
-		IsPublic:    newUser.IsPublic,
-		CreatedAt:   newUser.CreatedAt,
+	// Generate JWT token
+	token, err := GenerateToken(newUser.ID, s.jwtConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the token
+	return &TokenResponse{
+		Token:     token,
+		ExpiresIn: int(s.jwtConfig.TokenDuration.Seconds()),
+		User: UserResponse{
+			ID:          newUser.ID,
+			Email:       newUser.Email,
+			FirstName:   newUser.FirstName,
+			LastName:    newUser.LastName,
+			DateOfBirth: newUser.DateOfBirth,
+			Avatar:      newUser.Avatar,
+			Nickname:    newUser.Nickname,
+			AboutMe:     newUser.AboutMe,
+			IsPublic:    newUser.IsPublic,
+			CreatedAt:   newUser.CreatedAt,
+		},
 	}, nil
 }
 
