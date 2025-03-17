@@ -9,7 +9,6 @@ export default function SearchBar() {
   const handleSearch = (e) => {
     e.preventDefault();
     // Add search logic here
-    console.log('Searching for:', searchQuery);
   };
 
   return (
