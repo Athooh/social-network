@@ -11,7 +11,6 @@ export default function CreatePost() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Creating post:', { postText, files: selectedFiles });
     setPostText('');
     setSelectedFiles([]);
     setPreviewUrls([]);
