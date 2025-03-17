@@ -5,6 +5,7 @@ import (
 
 	"github.com/Athooh/social-network/pkg/auth"
 	"github.com/Athooh/social-network/pkg/logger"
+	"github.com/Athooh/social-network/pkg/middleware"
 )
 
 // RouteGroup represents a group of routes with shared middleware
@@ -48,8 +49,8 @@ func Router(authHandler *auth.Handler, authMiddleware, jwtMiddleware func(http.H
 
 	// Define middleware chains with more descriptive names
 	loggingMiddleware := logger.HTTPMiddleware
-	publicRouteMiddleware := middlewareChain(loggingMiddleware)
-	authenticatedRouteMiddleware := middlewareChain(jwtMiddleware, authMiddleware, loggingMiddleware)
+	publicRouteMiddleware := middlewareChain(loggingMiddleware, middleware.CorsMiddleware)
+	authenticatedRouteMiddleware := middlewareChain(jwtMiddleware, authMiddleware, loggingMiddleware, middleware.CorsMiddleware)
 
 	// Create route groups
 	publicAuthGroup := NewRouteGroup("/api/auth", publicRouteMiddleware)
