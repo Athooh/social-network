@@ -17,6 +17,11 @@ const UserIDKey contextKey = "userID"
 // RequireAuth is a middleware that requires authentication
 func (s *Service) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip authentication for OPTIONS requests
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
 		// Get user ID from session
 		userID, err := s.sessionManager.GetUserFromSession(r)
 		if err != nil {
@@ -44,6 +49,12 @@ func GetUserIDFromContext(ctx context.Context) (string, bool) {
 // RequireJWTAuth is a middleware that requires JWT authentication
 func (s *Service) RequireJWTAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip authentication for OPTIONS requests
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Extract token from request
 		tokenString, err := ExtractTokenFromRequest(r)
 		if err != nil {
