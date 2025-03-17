@@ -6,14 +6,15 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import ProfileDropdown from './ProfileDropdown';
 import SearchBar from './SearchBar';
+import { useAuth } from '@/context/authcontext';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // Add logout logic here
-    router.push('/');
+    logout();
   };
 
   return (
