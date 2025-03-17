@@ -8,10 +8,11 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Auth     AuthConfig
-	Log      LogConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	Auth      AuthConfig
+	Log       LogConfig
+	FileStore FileStoreConfig
 }
 
 // ServerConfig holds the server configuration
@@ -27,6 +28,11 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	Path           string
 	MigrationsPath string
+}
+
+// FileStoreConfig holds the file store configuration
+type FileStoreConfig struct {
+	UploadDir string
 }
 
 // AuthConfig holds the authentication configuration
@@ -51,6 +57,9 @@ type LogConfig struct {
 // Load loads the configuration from environment variables
 func Load() Config {
 	return Config{
+		FileStore: FileStoreConfig{
+			UploadDir: getEnv("FILE_STORE_UPLOAD_DIR", "./data/uploads"),
+		},
 		Server: ServerConfig{
 			Host:         getEnv("SERVER_HOST", "localhost"),
 			Port:         getEnvAsInt("SERVER_PORT", 8080),
