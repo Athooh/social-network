@@ -73,62 +73,6 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-// Login handles user login
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST method
-	if r.Method != http.MethodPost {
-		logger.Error("Method not allowed: %s", map[string]interface{}{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"status": http.StatusMethodNotAllowed,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
-		return
-	}
-
-	// Parse request body
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("Invalid request body: %v", map[string]interface{}{
-			"status": http.StatusBadRequest,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
-		return
-	}
-
-	// Validate required fields
-	if req.Email == "" || req.Password == "" {
-		logger.Error("Missing email or password: %v", map[string]interface{}{
-			"status": http.StatusBadRequest,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Missing email or password"})
-		return
-	}
-
-	// Login the user
-	user, err := h.service.Login(w, req)
-	if err != nil {
-		logger.Error("Failed to login user: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	// Return the user data
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
-}
-
 // Logout handles user logout
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
@@ -192,4 +136,70 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
+}
+
+// LoginJWT handles user login with JWT authentication
+func (h *Handler) LoginJWT(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST method
+	if r.Method != http.MethodPost {
+		logger.Error("Method not allowed: %s", map[string]interface{}{
+			"method": r.Method,
+			"path":   r.URL.Path,
+			"status": http.StatusMethodNotAllowed,
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
+		return
+	}
+
+	// Parse request body
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("Invalid request body: %v", map[string]interface{}{
+			"status": http.StatusBadRequest,
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate required fields
+	if req.Email == "" || req.Password == "" {
+		logger.Error("Missing email or password: %v", map[string]interface{}{
+			"status": http.StatusBadRequest,
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Missing email or password"})
+		return
+	}
+
+	// Login the user with JWT
+	tokenResponse, err := h.service.LoginWithJWT(req)
+	if err != nil {
+		logger.Error("Failed to login user: %v", map[string]interface{}{
+			"error": err.Error(),
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+	// Create a session
+	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
+		logger.Error("Failed to create session: %v", map[string]interface{}{
+			"error": err.Error(),
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
+		return
+	}
+
+	// Return the token
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tokenResponse)
 }
