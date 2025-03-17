@@ -1,14 +1,16 @@
-'use client';
+"use client";
 
 import styles from '@/styles/auth.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import {  useAuth } from '@/context/authcontext'; // Import AuthContext
 import PasswordInput from '@/components/inputs/PasswordInput';
 
 export default function Register() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
+  const { signUp } = useAuth(); // Access signUp function
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,14 +28,27 @@ export default function Register() {
     });
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add registration logic here
-    router.push('/home');
+    setError(null);
+
+    const requiredFields = ['firstname', 'lastname', 'email', 'password'];
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        setError(`Missing required field: ${field}`);
+      }
+    }
+    try {
+      const success = await signUp(formData); 
+
+      if (success) {
+        router.push('/home'); 
+      }
+    } catch (err) {
+      console.error("Registration Failed: ",err);
+      setError(err.message || "Registration failed"); // Handle errors
+    }
   };
 
   return (
@@ -41,9 +56,9 @@ export default function Register() {
       <h1 className="forumName">Notebook</h1>
       <div className={styles.authCard}>
         <h1>Create a new Account</h1>
-        <p>Its quick and easy</p>
+        <p>It&apos;s quick and easy</p>
+        {error && <p className={styles.error}>{error}</p>} {/* Show error if exists */}
         <form className={styles.authForm} onSubmit={handleSubmit}>
-          {/* Required Fields */}
           <div className={styles.formGroup}>
             <input 
               type="email" 
@@ -56,11 +71,10 @@ export default function Register() {
           </div>
           <div className={styles.formGroup}>
             <PasswordInput 
-                value={formData.password}
-                onChange={handleChange}
+              value={formData.password}
+              onChange={handleChange}
             />
-            </div>
-          {/* Rest of the form fields */}
+          </div>
           <div className={styles.nameGroup}>
             <input 
               type="text" 
@@ -89,8 +103,6 @@ export default function Register() {
               required 
             />
           </div>
-
-          {/* Optional Fields */}
           <div className={styles.formGroup}>
             <label>Profile Picture (Optional)</label>
             <input type="file" accept="image/*" />
