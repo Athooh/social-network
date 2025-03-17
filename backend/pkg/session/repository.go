@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Athooh/social-network/pkg/auth"
 	"github.com/google/uuid"
 )
 
@@ -77,4 +78,36 @@ func (r *SQLiteRepository) CleanExpired() error {
 	query := `DELETE FROM sessions WHERE expires_at < ?`
 	_, err := r.db.Exec(query, time.Now())
 	return err
+}
+
+// GetUserSessions retrieves all sessions for a user
+func (r *SQLiteRepository) GetUserSessions(userID string) ([]auth.Session, error) {
+	query := `
+		SELECT id, user_id, expires_at
+		FROM sessions
+		WHERE user_id = ?
+		ORDER BY expires_at DESC
+	`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sessions []auth.Session
+	for rows.Next() {
+		var session auth.Session
+		err := rows.Scan(&session.ID, &session.UserID, &session.ExpiresAt)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, session)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return sessions, nil
 }
