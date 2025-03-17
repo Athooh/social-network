@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
 
       if (sendRequest) {
-        router.push("/login");
+        router.push("/");
       }
     },
     [token, router]
