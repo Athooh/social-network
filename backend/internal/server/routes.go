@@ -54,7 +54,7 @@ func Router(authHandler *auth.Handler, authMiddleware, jwtMiddleware func(http.H
 	// Define middleware chains with more descriptive names
 	loggingMiddleware := logger.HTTPMiddleware
 	publicRouteMiddleware := middlewareChain(loggingMiddleware, middleware.CorsMiddleware)
-	authenticatedRouteMiddleware := middlewareChain(jwtMiddleware, authMiddleware, loggingMiddleware, middleware.CorsMiddleware)
+	authenticatedRouteMiddleware := middlewareChain(middleware.CorsMiddleware, jwtMiddleware, authMiddleware, loggingMiddleware)
 
 	// Create route groups
 	publicAuthGroup := NewRouteGroup("/api/auth", publicRouteMiddleware)
@@ -75,8 +75,8 @@ func Router(authHandler *auth.Handler, authMiddleware, jwtMiddleware func(http.H
 
 func middlewareChain(middlewares ...func(http.Handler) http.Handler) func(http.Handler) http.Handler {
 	return func(final http.Handler) http.Handler {
-		for i := len(middlewares) - 1; i >= 0; i-- {
-			final = middlewares[i](final)
+		for _, middleware := range middlewares {
+			final = middleware(final)
 		}
 		return final
 	}
