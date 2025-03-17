@@ -12,7 +12,6 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     // If authentication check is complete and user is not authenticated
     if (!loading && !isAuthenticated) {
-      console.log("Not authenticated, redirecting to login protected route");
       router.push("/login");
     }
   }, [isAuthenticated, loading, router]);
