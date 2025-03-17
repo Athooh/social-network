@@ -64,10 +64,9 @@ export default function Register() {
 
   return (
     <div className={styles.authContainer}>
+      <h1 className={styles.forumName}>Notebook</h1>
       <div className={styles.authCard}>
-        <h1 className={styles.forumName}>Notebook</h1>
-        <p>Create a new account</p>
-
+        <h1>Create Account</h1>
         {error && <div className={styles.errorMessage}>{error}</div>}
 
         <form className={styles.authForm} onSubmit={handleSubmit}>
