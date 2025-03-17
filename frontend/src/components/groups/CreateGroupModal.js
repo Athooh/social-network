@@ -1,0 +1,161 @@
+"use client";
+
+import { useState } from 'react';
+import styles from '@/styles/CreateGroupModal.module.css';
+
+const CreateGroupModal = ({ isOpen, onClose }) => {
+  const [groupData, setGroupData] = useState({
+    name: '',
+    description: '',
+    privacy: 'public',
+    banner: null,
+    profilePic: null
+  });
+
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [profilePreview, setProfilePreview] = useState(null);
+
+  const handleImageChange = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === 'banner') {
+          setBannerPreview(reader.result);
+          setGroupData(prev => ({ ...prev, banner: file }));
+        } else {
+          setProfilePreview(reader.result);
+          setGroupData(prev => ({ ...prev, profilePic: file }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted:', groupData);
+    // Handle form submission here
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <h2>Create New Group</h2>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Banner Upload */}
+          <div className={styles.imageUpload}>
+            <div 
+              className={`${styles.bannerUpload} ${bannerPreview ? styles.hasImage : ''}`}
+              style={bannerPreview ? { backgroundImage: `url(${bannerPreview})` } : {}}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange(e, 'banner')}
+                id="banner-upload"
+              />
+              <label htmlFor="banner-upload">
+                <i className="fas fa-camera"></i>
+                <span>Add Cover Photo</span>
+              </label>
+            </div>
+
+            {/* Profile Picture Upload */}
+            <div 
+              className={`${styles.profileUpload} ${profilePreview ? styles.hasImage : ''}`}
+              style={profilePreview ? { backgroundImage: `url(${profilePreview})` } : {}}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange(e, 'profile')}
+                id="profile-upload"
+              />
+              <label htmlFor="profile-upload">
+                <i className="fas fa-camera"></i>
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.formFields}>
+            <div className={styles.inputGroup}>
+              <label htmlFor="group-name">Group Name</label>
+              <input
+                type="text"
+                id="group-name"
+                value={groupData.name}
+                onChange={(e) => setGroupData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter group name"
+                required
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label htmlFor="group-description">Description</label>
+              <textarea
+                id="group-description"
+                value={groupData.description}
+                onChange={(e) => setGroupData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="What's your group about?"
+                rows="3"
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label>Privacy</label>
+              <div className={styles.privacyOptions}>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="public"
+                    checked={groupData.privacy === 'public'}
+                    onChange={(e) => setGroupData(prev => ({ ...prev, privacy: e.target.value }))}
+                  />
+                  <i className="fas fa-globe"></i>
+                  <div>
+                    <span>Public</span>
+                    <small>Anyone can see who's in the group and what they post.</small>
+                  </div>
+                </label>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="private"
+                    checked={groupData.privacy === 'private'}
+                    onChange={(e) => setGroupData(prev => ({ ...prev, privacy: e.target.value }))}
+                  />
+                  <i className="fas fa-lock"></i>
+                  <div>
+                    <span>Private</span>
+                    <small>Only members can see who's in the group and what they post.</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.modalFooter}>
+            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className={styles.createBtn}>
+              Create Group
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default CreateGroupModal; 

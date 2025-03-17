@@ -5,6 +5,8 @@ import LeftSidebar from "@/components/sidebar/LeftSidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import pageStyles from "@/styles/page.module.css";
 import styles from "@/styles/Groups.module.css";
+import CreateGroupModal from "@/components/groups/CreateGroupModal";
+import { useState } from 'react';
 
 const sampleGroups = [
   {
@@ -89,6 +91,8 @@ const sampleGroups = [
 ];
 
 export default function Groups() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <ProtectedRoute>
       <Header />
@@ -99,7 +103,10 @@ export default function Groups() {
         <main className={styles.mainContent}>
           <div className={styles.groupsHeader}>
             <h1>Groups</h1>
-            <button className={styles.createGroupBtn}>
+            <button 
+              className={styles.createGroupBtn}
+              onClick={() => setIsModalOpen(true)}
+            >
               <i className="fas fa-plus"></i> Create New Group
             </button>
           </div>
@@ -151,6 +158,11 @@ export default function Groups() {
           </div>
         </main>
       </div>
+
+      <CreateGroupModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </ProtectedRoute>
   );
 } 
