@@ -4,10 +4,12 @@ import styles from "@/styles/auth.module.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/context/authcontext";
 import PasswordInput from "@/components/inputs/PasswordInput";
 
 export default function Login() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -25,16 +27,17 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    router.push("/home");
-    // Dummy credentials
-    if (
-      formData.email === "test@example.com" &&
-      formData.password === "password123"
-    ) {
-      router.push("/home");
-    } else {
-      setError("Invalid email or password");
+
+    try {
+      const success = await login(formData)
+      if (success) {
+        router.push("/home");
+      }
+    } catch (err) {
+      console.error("Login Failed: ", err);
+      setError(err.message || "Login failed");
     }
+   
   };
 
   const togglePasswordVisibility = () => {
