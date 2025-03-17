@@ -9,6 +9,7 @@ type SessionStore interface {
 	DeleteSession(sessionID string) error
 	DeleteUserSessions(userID string) error
 	CleanExpired() error
+	GetUserSessions(userID string) ([]Session, error)
 }
 
 // RegisterRequest represents the data needed for user registration
@@ -48,4 +49,11 @@ type TokenResponse struct {
 	Token     string       `json:"token"`
 	ExpiresIn int          `json:"expires_in"`
 	User      UserResponse `json:"user"`
+}
+
+// Add a new Session struct
+type Session struct {
+	ID        string
+	UserID    string
+	ExpiresAt time.Time
 }
