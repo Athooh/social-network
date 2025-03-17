@@ -124,3 +124,55 @@
   button.passwordToggle {
     margin: 0;
   }
+
+  .errorMessage {
+    color: var(--error-color);
+    background-color: rgba(255, 0, 0, 0.1);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+  }
+
+  .primaryButton {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .primaryButton:hover {
+    background-color: #1464cf;
+  }
+
+  .primaryButton:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .avatarLabel {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .fileInput {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .avatarPreview {
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .previewImage {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
