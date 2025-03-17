@@ -11,13 +11,15 @@ import (
 type Service struct {
 	userRepo       user.Repository
 	sessionManager *SessionManager
+	jwtConfig      JWTConfig
 }
 
 // NewService creates a new authentication service
-func NewService(userRepo user.Repository, sessionManager *SessionManager) *Service {
+func NewService(userRepo user.Repository, sessionManager *SessionManager, jwtConfig JWTConfig) *Service {
 	return &Service{
 		userRepo:       userRepo,
 		sessionManager: sessionManager,
+		jwtConfig:      jwtConfig,
 	}
 }
 
@@ -67,39 +69,6 @@ func (s *Service) Register(req RegisterRequest) (*UserResponse, error) {
 	}, nil
 }
 
-// Login authenticates a user and creates a session
-func (s *Service) Login(w http.ResponseWriter, req LoginRequest) (*UserResponse, error) {
-	// Find the user by email
-	user, err := s.userRepo.GetByEmail(req.Email)
-	if err != nil {
-		return nil, errors.New("invalid email or password")
-	}
-
-	// Check the password
-	if !CheckPassword(user.Password, req.Password) {
-		return nil, errors.New("invalid email or password")
-	}
-
-	// Create a session
-	if err := s.sessionManager.CreateSession(w, user.ID); err != nil {
-		return nil, err
-	}
-
-	// Return user data without sensitive information
-	return &UserResponse{
-		ID:          user.ID,
-		Email:       user.Email,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		DateOfBirth: user.DateOfBirth,
-		Avatar:      user.Avatar,
-		Nickname:    user.Nickname,
-		AboutMe:     user.AboutMe,
-		IsPublic:    user.IsPublic,
-		CreatedAt:   user.CreatedAt,
-	}, nil
-}
-
 // Logout ends a user's session
 func (s *Service) Logout(w http.ResponseWriter, r *http.Request) error {
 	return s.sessionManager.ClearSession(w, r)
@@ -131,5 +100,43 @@ func (s *Service) GetCurrentUser(r *http.Request) (*UserResponse, error) {
 		AboutMe:     user.AboutMe,
 		IsPublic:    user.IsPublic,
 		CreatedAt:   user.CreatedAt,
+	}, nil
+}
+
+// LoginWithJWT authenticates a user and generates a JWT token
+func (s *Service) LoginWithJWT(req LoginRequest) (*TokenResponse, error) {
+	// Find the user by email
+	user, err := s.userRepo.GetByEmail(req.Email)
+	if err != nil {
+		return nil, errors.New("invalid email or password")
+	}
+
+	// Check the password
+	if !CheckPassword(user.Password, req.Password) {
+		return nil, errors.New("invalid email or password")
+	}
+
+	// Generate JWT token
+	token, err := GenerateToken(user.ID, s.jwtConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the token
+	return &TokenResponse{
+		Token:     token,
+		ExpiresIn: int(s.jwtConfig.TokenDuration.Seconds()),
+		User: UserResponse{
+			ID:          user.ID,
+			Email:       user.Email,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			DateOfBirth: user.DateOfBirth,
+			Avatar:      user.Avatar,
+			Nickname:    user.Nickname,
+			AboutMe:     user.AboutMe,
+			IsPublic:    user.IsPublic,
+			CreatedAt:   user.CreatedAt,
+		},
 	}, nil
 }
