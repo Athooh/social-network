@@ -1,0 +1,35 @@
+{
+  "name": "social-network-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "frontend:dev": "cd frontend && npm run dev:frontend",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:start": "cd frontend && npm run start",
+    "frontend:lint": "cd frontend && npm run lint",
+    
+    "backend:build": "cd backend && make build",
+    "backend:run": "cd backend && make run",
+    "backend:test": "cd backend && make test",
+    "backend:migrate-up": "cd backend && make migrate-up",
+    "backend:migrate-down": "cd backend && make migrate-down",
+    "backend:clean": "cd backend && make clean",
+    "backend:data": "cd backend && make data",
+    
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:run\"",
+    "build": "npm run frontend:build && npm run backend:build",
+    "start": "concurrently \"npm run frontend:start\" \"npm run backend:run\"",
+    
+    "setup": "npm install && cd frontend && npm install",
+    "clean": "npm run backend:clean"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "frontend"
+  ]
+}
