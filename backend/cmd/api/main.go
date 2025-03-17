@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/Athooh/social-network/internal/config"
 	"github.com/Athooh/social-network/internal/server"
@@ -76,14 +77,21 @@ func main() {
 		cfg.Auth.SessionMaxAge,
 	)
 
+	// Set up JWT configuration
+	jwtConfig := auth.JWTConfig{
+		SecretKey:     cfg.Auth.JWTSecretKey,
+		TokenDuration: time.Duration(cfg.Auth.JWTTokenDuration) * time.Second,
+		Issuer:        "social-network",
+	}
+
 	// Set up services
-	authService := auth.NewService(userRepo, sessionManager)
+	authService := auth.NewService(userRepo, sessionManager, jwtConfig)
 
 	// Set up handlers
 	authHandler := auth.NewHandler(authService)
 
-	// Set up router
-	router := server.Router(authHandler, authService.RequireAuth, log)
+	// Set up router with both session and JWT middleware
+	router := server.Router(authHandler, authService.RequireAuth, authService.RequireJWTAuth, log)
 
 	// Set up server
 	serverConfig := server.Config{
