@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"net/http"
 	"time"
@@ -20,8 +18,6 @@ type SessionManager struct {
 	cookieMaxAge  int
 	sessionMaxAge time.Duration
 }
-
-
 
 // NewSessionManager creates a new session manager
 func NewSessionManager(store SessionStore, cookieName, cookieDomain string, cookieSecure bool, maxAge int) *SessionManager {
@@ -125,15 +121,6 @@ func HashPassword(password string) (string, error) {
 func CheckPassword(hashedPassword, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
-}
-
-// GenerateToken generates a random token
-func GenerateToken(length int) (string, error) {
-	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 // GenerateUUID generates a new UUID
