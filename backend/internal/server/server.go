@@ -30,7 +30,7 @@ type Config struct {
 // DefaultConfig returns the default server configuration
 func DefaultConfig() Config {
 	return Config{
-		Host:         "0.0.0.0",
+		Host:         "localhost",
 		Port:         8080,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -63,7 +63,7 @@ func (s *Server) Start() error {
 
 	// Start the server in a goroutine
 	go func() {
-		s.logger.Info("Starting server on %s", s.server.Addr)
+		s.logger.Info("Starting server on http://%s", s.server.Addr)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errCh <- err
 		}
