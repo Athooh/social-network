@@ -1,8 +1,14 @@
-'use client'
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+"use client";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 
-const API_URL = process.env.API_URL ;
+const API_URL = process.env.API_URL;
 
 const AuthContext = createContext(null);
 
@@ -12,63 +18,76 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-   // Memoize handleLogout to prevent unnecessary re-renders
-   const handleLogout = useCallback(async (sendRequest = true) => {
-    if (sendRequest && token) {
-      try {
-        await fetch(`${API_URL}/auth/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } catch (error) {
-        console.error("Logout error:", error);
+  // Memoize handleLogout to prevent unnecessary re-renders
+  const handleLogout = useCallback(
+    async (sendRequest = true) => {
+      if (sendRequest && token) {
+        try {
+          await fetch(`${API_URL}/auth/logout`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (error) {
+          console.error("Logout error:", error);
+        }
       }
-    }
 
-    localStorage.removeItem("userData");
-    localStorage.removeItem("token");
-    setCurrentUser(null);
-    setToken(null);
-    setLoading(false);
-
-    if (sendRequest) {
-      router.push('/login');
-    }
-  }, [token, router]); // Dependencies: token and router
-
-  const validateToken = useCallback(async (currentToken) => {
-    try {
-      const response = await fetch(`${API_URL}/auth/validate_token`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${currentToken}` },
-      });
-
-      if (!response.ok) {
-        handleLogout(false);
-        return;
-      }
+      localStorage.removeItem("userData");
+      localStorage.removeItem("token");
+      
+      // Clear the token cookie
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      
+      setCurrentUser(null);
+      setToken(null);
       setLoading(false);
-    } catch (error) {
-      console.error("Token validation error:", error);
-      handleLogout(false);
-    }
-  }, [handleLogout]); // Depend on memoized handleLogout
+
+      if (sendRequest) {
+        console.log("Redirecting to login handleLogout");
+        router.push("/login");
+      }
+    },
+    [token, router]
+  ); // Dependencies: token and router
+
+  const validateToken = useCallback(
+    async (currentToken) => {
+      try {
+        const response = await fetch(`${API_URL}/auth/validate_token`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+
+        if (!response.ok) {
+          handleLogout(false);
+          return;
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Token validation error:", error);
+        handleLogout(false);
+      }
+    },
+    [handleLogout]
+  ); // Depend on memoized handleLogout
 
   useEffect(() => {
     const storedUser = localStorage.getItem("userData");
     const storedToken = localStorage.getItem("token");
 
-   
     if (storedUser && storedToken) {
-      
       setCurrentUser(JSON.parse(storedUser));
       setToken(storedToken);
       validateToken(storedToken);
+
+      // router.push("/home");
     } else {
       setLoading(false);
+      handleLogout(false);
     }
   }, [validateToken]);
- // Depend on memoized validateToken
+  // Depend on memoized validateToken
 
   const login = async (formData) => {
     try {
@@ -77,6 +96,7 @@ export const AuthProvider = ({ children }) => {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -95,20 +115,19 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("token", data.token);
         setCurrentUser(data.user);
         setToken(data.token);
+
+        document.cookie = `token=${data.token}; path=/; max-age=86400; samesite=strict`;
+
+        return true;
       } else {
         throw new Error("Login failed");
       }
-
-
-      return true;
     } catch (error) {
       console.error("Login error:", error);
       setLoading(false);
       return false;
     }
   };
-
-  
 
   const getAuthHeader = () => {
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -117,52 +136,48 @@ export const AuthProvider = ({ children }) => {
   const signUp = async (signUpData) => {
     try {
       setLoading(true);
-  
-        console.log(signUpData);
-        console.log(signUpData.firstName);
-        console.log(signUpData.lastName);
-        console.log(JSON.stringify(signUpData));
+
+      const formData = new FormData();
+      formData.append("email", signUpData.email);
+      formData.append("password", signUpData.password);
+      formData.append("firstName", signUpData.firstName);
+      formData.append("lastName", signUpData.lastName);
+      formData.append("dateOfBirth", signUpData.dateOfBirth);
+      formData.append("nickname", signUpData.nickname || "");
+      formData.append("aboutMe", signUpData.aboutMe || "");
+
+      if (signUpData.avatar) {
+        formData.append("avatar", signUpData.avatar);
+      }
+
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: signUpData.firstName,
-          lastName: signUpData.lastName,
-          email: signUpData.email,
-          password: signUpData.password,
-          dateOfBirth: signUpData.dateOfBirth,
-          nickname: signUpData.nickname,
-          aboutMe: signUpData.aboutMe,
-        }),
+        body: formData,
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Signup failed");
       }
-  
+
       const data = await response.json();
 
-      console.log("Data from signup", data);
       if (data && data.user && data.token) {
         localStorage.setItem("userData", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
         setCurrentUser(data.user);
         setToken(data.token);
-      } else {
-        
-        throw new Error("Signup failed invalid data from backend");
+        return true;
       }
 
-  
-      return true;
+      throw new Error("Signup failed: invalid data from backend");
     } catch (error) {
       console.error("Signup error:", error);
+      throw error;
+    } finally {
       setLoading(false);
-      return false;
     }
   };
-  
 
   const fetchUserProfile = async (token) => {
     try {
@@ -217,14 +232,17 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
-  
 
   const value = {
     login,
     logout: () => handleLogout(true),
     signUp,
     getAuthHeader,
-    authenticatedFetch, 
+    authenticatedFetch,
+    currentUser,
+    token,
+    loading,
+    isAuthenticated: !!token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
