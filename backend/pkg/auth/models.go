@@ -42,3 +42,10 @@ type UserResponse struct {
 	IsPublic    bool      `json:"isPublic"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+// TokenResponse represents the JWT token response
+type TokenResponse struct {
+	Token     string       `json:"token"`
+	ExpiresIn int          `json:"expires_in"`
+	User      UserResponse `json:"user"`
+}
