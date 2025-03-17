@@ -45,10 +45,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate required fields
-	if req.Email == "" || req.Password == "" || req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
-		logger.Error("Missing required fields: %v", map[string]interface{}{
-			"status": http.StatusBadRequest,
-		})
+	if req.Email == "" || req.Password == "" ||
+		req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
+		logger.Error("Missing required fields: Email=%q, Password=%q, FirstName=%q, LastName=%q, DateOfBirth=%q",
+			req.Email, req.Password, req.FirstName, req.LastName, req.DateOfBirth)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Missing required fields"})
@@ -56,7 +57,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Register the user
-	user, err := h.service.Register(req)
+	tokenResponse, err := h.service.Register(req)
 	if err != nil {
 		logger.Error("Failed to register user: %v", map[string]interface{}{
 			"error": err.Error(),
@@ -66,11 +67,22 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
+	// Create a session
+	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
+		logger.Error("Failed to create session: %v", map[string]interface{}{
+			"error": err.Error(),
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
+		return
+	}
 
+	logger.Info("User registerd succesfuly")
 	// Return the user data
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(tokenResponse)
 }
 
 // Logout handles user logout
@@ -187,6 +199,9 @@ func (h *Handler) LoginJWT(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
+	logger.Info("creating session: %s", map[string]interface{}{
+		"email": req.Email,
+	})
 	// Create a session
 	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
 		logger.Error("Failed to create session: %v", map[string]interface{}{
