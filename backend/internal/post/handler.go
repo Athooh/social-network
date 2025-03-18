@@ -37,7 +37,7 @@ type CreatePostRequest struct {
 // PostResponse represents the response for a post
 type PostResponse struct {
 	ID        int64  `json:"id"`
-	UserID    int64  `json:"userId"`
+	UserID    string `json:"userId"`
 	Content   string `json:"content"`
 	ImageURL  string `json:"imageUrl,omitempty"`
 	Privacy   string `json:"privacy"`
@@ -49,7 +49,7 @@ type PostResponse struct {
 type CommentResponse struct {
 	ID        int64  `json:"id"`
 	PostID    int64  `json:"postId"`
-	UserID    int64  `json:"userId"`
+	UserID    string `json:"userId"`
 	Content   string `json:"content"`
 	ImageURL  string `json:"imageUrl,omitempty"`
 	CreatedAt string `json:"createdAt"`
@@ -60,8 +60,8 @@ type CommentResponse struct {
 func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 
@@ -122,8 +122,8 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %s", userID))
 		return
 	}
 
@@ -168,8 +168,8 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %s", userID))
 		return
 	}
 
@@ -179,9 +179,9 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
-	viewerID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
-	if err != nil {
-		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Viewer ID: %d", userID))
+	viewerID := pathParts[len(pathParts)-1]
+	if viewerID == "" {
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Viewer ID: %s", viewerID))
 		return
 	}
 
@@ -219,8 +219,8 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %s", userID))
 		return
 	}
 
@@ -278,8 +278,8 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 
@@ -348,7 +348,7 @@ func (h *Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 
@@ -378,8 +378,8 @@ func (h *Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SetPostViewers(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 
@@ -397,7 +397,7 @@ func (h *Handler) SetPostViewers(w http.ResponseWriter, r *http.Request) {
 
 	// Parse request body
 	var request struct {
-		ViewerIDs []int64 `json:"viewerIds"`
+		ViewerIDs []string `json:"viewerIds"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -419,8 +419,8 @@ func (h *Handler) SetPostViewers(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 
@@ -487,8 +487,8 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 
@@ -538,8 +538,8 @@ func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
 		return
 	}
 

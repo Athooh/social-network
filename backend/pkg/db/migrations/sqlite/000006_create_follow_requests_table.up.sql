@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS follow_requests (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     follower_id TEXT NOT NULL,
     following_id TEXT NOT NULL,
     status TEXT NOT NULL,

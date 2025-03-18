@@ -11,20 +11,20 @@ import (
 
 // Service defines the post service interface
 type Service interface {
-	CreatePost(userID int64, content, privacy string, image *multipart.FileHeader) (*models.Post, error)
-	GetPost(postID, userID int64) (*models.Post, error)
-	GetUserPosts(userID, viewerID int64) ([]*models.Post, error)
+	CreatePost(userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error)
+	GetPost(postID int64, userID string) (*models.Post, error)
+	GetUserPosts(userID, viewerID string) ([]*models.Post, error)
 	GetPublicPosts(limit, offset int) ([]*models.Post, error)
-	UpdatePost(postID, userID int64, content, privacy string, image *multipart.FileHeader) (*models.Post, error)
-	DeletePost(postID, userID int64) error
+	UpdatePost(postID int64, userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error)
+	DeletePost(postID int64, userID string) error
 
 	// Privacy management
-	SetPostViewers(postID, userID int64, viewerIDs []int64) error
+	SetPostViewers(postID int64, userID string, viewerIDs []string) error
 
 	// Comments
-	CreateComment(postID, userID int64, content string, image *multipart.FileHeader) (*models.Comment, error)
-	GetPostComments(postID, userID int64) ([]*models.Comment, error)
-	DeleteComment(commentID, userID int64) error
+	CreateComment(postID int64, userID string, content string, image *multipart.FileHeader) (*models.Comment, error)
+	GetPostComments(postID int64, userID string) ([]*models.Comment, error)
+	DeleteComment(commentID int64, userID string) error
 }
 
 // PostService implements the Service interface
@@ -44,7 +44,7 @@ func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Log
 }
 
 // CreatePost creates a new post
-func (s *PostService) CreatePost(userID int64, content, privacy string, image *multipart.FileHeader) (*models.Post, error) {
+func (s *PostService) CreatePost(userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error) {
 	// Validate privacy setting
 	if privacy != models.PrivacyPublic && privacy != models.PrivacyAlmostPrivate && privacy != models.PrivacyPrivate {
 		return nil, errors.New("invalid privacy setting")
@@ -77,7 +77,7 @@ func (s *PostService) CreatePost(userID int64, content, privacy string, image *m
 }
 
 // GetPost retrieves a post by ID if the user has permission to view it
-func (s *PostService) GetPost(postID, userID int64) (*models.Post, error) {
+func (s *PostService) GetPost(postID int64, userID string) (*models.Post, error) {
 	// Check if the user can view this post
 	canView, err := s.repo.CanViewPost(postID, userID)
 	if err != nil {
@@ -103,7 +103,7 @@ func (s *PostService) GetPost(postID, userID int64) (*models.Post, error) {
 }
 
 // GetUserPosts retrieves all posts by a user that the viewer has permission to see
-func (s *PostService) GetUserPosts(userID, viewerID int64) ([]*models.Post, error) {
+func (s *PostService) GetUserPosts(userID, viewerID string) ([]*models.Post, error) {
 	// Get all posts by the user
 	posts, err := s.repo.GetPostsByUserID(userID)
 	if err != nil {
@@ -147,7 +147,7 @@ func (s *PostService) GetPublicPosts(limit, offset int) ([]*models.Post, error) 
 }
 
 // UpdatePost updates an existing post
-func (s *PostService) UpdatePost(postID, userID int64, content, privacy string, image *multipart.FileHeader) (*models.Post, error) {
+func (s *PostService) UpdatePost(postID int64, userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error) {
 	// Get the existing post
 	post, err := s.repo.GetPostByID(postID)
 	if err != nil {
@@ -201,7 +201,7 @@ func (s *PostService) UpdatePost(postID, userID int64, content, privacy string, 
 }
 
 // DeletePost deletes a post
-func (s *PostService) DeletePost(postID, userID int64) error {
+func (s *PostService) DeletePost(postID int64, userID string) error {
 	// Get the post
 	post, err := s.repo.GetPostByID(postID)
 	if err != nil {
@@ -235,7 +235,7 @@ func (s *PostService) DeletePost(postID, userID int64) error {
 }
 
 // SetPostViewers sets the users who can view a private post
-func (s *PostService) SetPostViewers(postID, userID int64, viewerIDs []int64) error {
+func (s *PostService) SetPostViewers(postID int64, userID string, viewerIDs []string) error {
 	// Get the post
 	post, err := s.repo.GetPostByID(postID)
 	if err != nil {
@@ -265,12 +265,12 @@ func (s *PostService) SetPostViewers(postID, userID int64, viewerIDs []int64) er
 	}
 
 	// Create maps for efficient lookup
-	currentViewerMap := make(map[int64]bool)
+	currentViewerMap := make(map[string]bool)
 	for _, id := range currentViewers {
 		currentViewerMap[id] = true
 	}
 
-	newViewerMap := make(map[int64]bool)
+	newViewerMap := make(map[string]bool)
 	for _, id := range viewerIDs {
 		newViewerMap[id] = true
 	}
@@ -299,7 +299,7 @@ func (s *PostService) SetPostViewers(postID, userID int64, viewerIDs []int64) er
 }
 
 // CreateComment creates a new comment on a post
-func (s *PostService) CreateComment(postID, userID int64, content string, image *multipart.FileHeader) (*models.Comment, error) {
+func (s *PostService) CreateComment(postID int64, userID string, content string, image *multipart.FileHeader) (*models.Comment, error) {
 	// Check if the user can view the post (and thus comment on it)
 	canView, err := s.repo.CanViewPost(postID, userID)
 	if err != nil {
@@ -338,7 +338,7 @@ func (s *PostService) CreateComment(postID, userID int64, content string, image 
 }
 
 // GetPostComments retrieves all comments for a post if the user has permission to view the post
-func (s *PostService) GetPostComments(postID, userID int64) ([]*models.Comment, error) {
+func (s *PostService) GetPostComments(postID int64, userID string) ([]*models.Comment, error) {
 	// Check if the user can view the post
 	canView, err := s.repo.CanViewPost(postID, userID)
 	if err != nil {
@@ -361,7 +361,7 @@ func (s *PostService) GetPostComments(postID, userID int64) ([]*models.Comment, 
 }
 
 // DeleteComment deletes a comment
-func (s *PostService) DeleteComment(commentID, userID int64) error {
+func (s *PostService) DeleteComment(commentID int64, userID string) error {
 	// Get the comment (would need to add this method to repository)
 	// For now, we'll just delete if the user is the comment author
 	// In a real implementation, you'd check if the user is either the comment author or the post owner

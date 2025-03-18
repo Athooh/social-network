@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }) => {
 
         setLoading(false);
       } catch (error) {
-        console.error("Token validation error:", error);
         await handleApiError(error, "Token validation error");
         handleLogout(false);
       }
@@ -110,12 +109,6 @@ export const AuthProvider = ({ children }) => {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        await handleApiError(errorData, "Login failed");
-        throw new Error(errorData.error || "Login failed");
-      }
-
       const data = await response.json();
 
       if (data && data.user && data.token) {
@@ -128,10 +121,12 @@ export const AuthProvider = ({ children }) => {
         showToast("Logged in successfully!", "success");
         return true;
       } else {
-        throw new Error("Login failed");
+        const errorMessage = data.message || data.error || "Login failed";
+        await handleApiError({ message: errorMessage }, errorMessage);
+        setLoading(false);
+        return false;
       }
     } catch (error) {
-      console.error("Login error  =:", error);
       setLoading(false);
       await handleApiError(error, "Login failed");
       return false;
@@ -160,21 +155,18 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await fetch(`${API_URL}/auth/register`, {
+        credentials: "include",
         method: "POST",
         body: formData,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        await handleApiError(errorData, "Signup failed");
-        throw new Error(errorData.error || "Signup failed");
-      }
 
       const data = await response.json();
 
       if (data && data.user && data.token) {
         localStorage.setItem("userData", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
+
+        console.log("data", data);
 
         document.cookie = `token=${data.token}; path=/; max-age=${data.expires_in}; samesite=strict`;
 
@@ -183,10 +175,12 @@ export const AuthProvider = ({ children }) => {
         showToast("Signed up successfully!", "success");
         return true;
       }
-
-      throw new Error("Signup failed: invalid data from backend");
+      const errorMessage = data.message || data.error || "Signup failed";
+      await handleApiError({ message: errorMessage }, errorMessage);
+      setLoading(false);
+      return false;
     } catch (error) {
-      console.error("Signup error:", error);
+      setLoading(false);
       await handleApiError(error, "Signup failed");
       throw error;
     } finally {

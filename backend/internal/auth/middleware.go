@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/Athooh/social-network/pkg/httputil"
 )
@@ -23,6 +22,7 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
 		// Get user ID from session
 		userID, err := s.sessionManager.GetUserFromSession(r)
 		if err != nil {
@@ -37,10 +37,9 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 }
 
 // GetUserIDFromContext retrieves the user ID from the request context
-func GetUserIDFromContext(ctx context.Context) (int64, bool) {
+func GetUserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(UserIDKey).(string)
-	userIDInt, _ := strconv.Atoi(userID)
-	return int64(userIDInt), ok
+	return userID, ok
 }
 
 // RequireJWTAuth is a middleware that requires JWT authentication

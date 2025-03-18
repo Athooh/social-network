@@ -575,13 +575,21 @@ func (db *DB) checkAndUpdateSchema(modelStruct interface{}) error {
 		return fmt.Errorf("failed to extract table info from struct: %w", err)
 	}
 
+	// Check if table exists in database
+	var count int
+	err = db.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", tableName).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check if table exists: %w", err)
+	}
+
+	// If table doesn't exist yet, no need to create update migration
+	if count == 0 {
+		return nil
+	}
+
 	// Get current table schema from database
 	currentTableInfo, err := db.getTableInfoFromDB(tableName)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such table") {
-			// Table doesn't exist yet, no need to update
-			return nil
-		}
 		return fmt.Errorf("failed to get table info from database: %w", err)
 	}
 

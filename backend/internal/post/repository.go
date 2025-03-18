@@ -12,16 +12,16 @@ import (
 type Repository interface {
 	CreatePost(post *models.Post) error
 	GetPostByID(id int64) (*models.Post, error)
-	GetPostsByUserID(userID int64) ([]*models.Post, error)
+	GetPostsByUserID(userID string) ([]*models.Post, error)
 	GetPublicPosts(limit, offset int) ([]*models.Post, error)
 	UpdatePost(post *models.Post) error
 	DeletePost(id int64) error
 
 	// Privacy related methods
-	AddPostViewer(postID, userID int64) error
-	RemovePostViewer(postID, userID int64) error
-	GetPostViewers(postID int64) ([]int64, error)
-	CanViewPost(postID, userID int64) (bool, error)
+	AddPostViewer(postID int64, userID string) error
+	RemovePostViewer(postID int64, userID string) error
+	GetPostViewers(postID int64) ([]string, error)
+	CanViewPost(postID int64, userID string) (bool, error)
 
 	// Comment methods
 	CreateComment(comment *models.Comment) error
@@ -101,7 +101,7 @@ func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 }
 
 // GetPostsByUserID retrieves all posts by a user
-func (r *SQLiteRepository) GetPostsByUserID(userID int64) ([]*models.Post, error) {
+func (r *SQLiteRepository) GetPostsByUserID(userID string) ([]*models.Post, error) {
 	query := `
 		SELECT id, user_id, content, image_path, privacy, created_at, updated_at
 		FROM posts
@@ -211,7 +211,7 @@ func (r *SQLiteRepository) DeletePost(id int64) error {
 }
 
 // AddPostViewer adds a user who can view a private post
-func (r *SQLiteRepository) AddPostViewer(postID, userID int64) error {
+func (r *SQLiteRepository) AddPostViewer(postID int64, userID string) error {
 	query := `
 		INSERT INTO post_viewers (post_id, user_id)
 		VALUES (?, ?)
@@ -221,14 +221,14 @@ func (r *SQLiteRepository) AddPostViewer(postID, userID int64) error {
 }
 
 // RemovePostViewer removes a user from viewing a private post
-func (r *SQLiteRepository) RemovePostViewer(postID, userID int64) error {
+func (r *SQLiteRepository) RemovePostViewer(postID int64, userID string) error {
 	query := "DELETE FROM post_viewers WHERE post_id = ? AND user_id = ?"
 	_, err := r.db.Exec(query, postID, userID)
 	return err
 }
 
 // GetPostViewers gets all users who can view a private post
-func (r *SQLiteRepository) GetPostViewers(postID int64) ([]int64, error) {
+func (r *SQLiteRepository) GetPostViewers(postID int64) ([]string, error) {
 	query := "SELECT user_id FROM post_viewers WHERE post_id = ?"
 	rows, err := r.db.Query(query, postID)
 	if err != nil {
@@ -236,9 +236,9 @@ func (r *SQLiteRepository) GetPostViewers(postID int64) ([]int64, error) {
 	}
 	defer rows.Close()
 
-	var userIDs []int64
+	var userIDs []string
 	for rows.Next() {
-		var userID int64
+		var userID string
 		if err := rows.Scan(&userID); err != nil {
 			return nil, err
 		}
@@ -253,7 +253,7 @@ func (r *SQLiteRepository) GetPostViewers(postID int64) ([]int64, error) {
 }
 
 // CanViewPost checks if a user can view a post based on privacy settings
-func (r *SQLiteRepository) CanViewPost(postID, userID int64) (bool, error) {
+func (r *SQLiteRepository) CanViewPost(postID int64, userID string) (bool, error) {
 	// Get the post to check its privacy setting
 	post, err := r.GetPostByID(postID)
 	if err != nil {
