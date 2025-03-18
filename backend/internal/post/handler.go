@@ -12,7 +12,6 @@ import (
 	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
-	models "github.com/Athooh/social-network/pkg/models/dbTables"
 )
 
 // Handler handles HTTP requests for posts
@@ -83,7 +82,8 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if privacy == "" {
-		privacy = models.PrivacyPublic // Default to public
+		h.sendError(w, http.StatusBadRequest, "Privacy field is missing")
+		return
 	}
 
 	// Get image file if provided
