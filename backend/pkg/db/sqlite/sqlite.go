@@ -216,6 +216,9 @@ func CreateMigrations(db *DB) error {
 	if err := db.CreateMigrationFromStruct(models.PostViewer{}, "create_post_viewers_table"); err != nil {
 		logger.Fatal("Failed to create post viewers migration: %v", err)
 	}
+	if err := db.CreateMigrationFromStruct(models.Comment{}, "create_comments_table"); err != nil {
+		logger.Fatal("Failed to create comments migration: %v", err)
+	}
 	if err := db.CreateMigrationFromStruct(models.FollowRequest{}, "create_follow_requests_table"); err != nil {
 		logger.Fatal("Failed to create follow requests migration: %v", err)
 	}
