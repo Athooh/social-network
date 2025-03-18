@@ -7,6 +7,7 @@ const CreateEventModal = ({ isOpen, onClose }) => {
   const [eventData, setEventData] = useState({
     name: '',
     description: '',
+    date: '',
     privacy: 'public',
     banner: null,
     profilePic: null
@@ -86,19 +87,30 @@ const CreateEventModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className={styles.formFields}>
-            <div className={styles.inputEvent}>
+            <div className={styles.inputGroup}>
               <label htmlFor="event-name">Event Name</label>
               <input
                 type="text"
                 id="event-name"
                 value={eventData.name}
                 onChange={(e) => setEventData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter Event name"
+                placeholder="Enter event name"
                 required
               />
             </div>
 
-            <div className={styles.inputEvent}>
+            <div className={styles.inputGroup}>
+              <label htmlFor="event-date">Event Date</label>
+              <input
+                type="datetime-local"
+                id="event-date"
+                value={eventData.date}
+                onChange={(e) => setEventData(prev => ({ ...prev, date: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
               <label htmlFor="event-description">Description</label>
               <textarea
                 id="event-description"
