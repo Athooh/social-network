@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -110,7 +111,7 @@ func Init(cfg Config) {
 		}
 
 		if config.TimeFormat == "" {
-			config.TimeFormat = time.RFC3339
+			config.TimeFormat = "2006-01-02 15:04:05"
 		}
 
 		// Set default console output if not provided
@@ -118,32 +119,27 @@ func Init(cfg Config) {
 			config.ConsoleOutput = os.Stdout
 		}
 
-		if config.FileOutput == nil && (config.OutputType == FileOutput || config.OutputType == BothOutput) {
-			config.FileOutput = setupFileWriter(config)
+		// Configure the output based on OutputType
+		var output io.Writer
+		switch config.OutputType {
+		case ConsoleOutput:
+			output = config.ConsoleOutput
+		case FileOutput:
+			output = config.FileOutput
+		case BothOutput:
+			output = io.MultiWriter(config.ConsoleOutput, config.FileOutput)
 		}
 
-		// For backward compatibility
-		if config.Output == nil {
-			switch config.OutputType {
-			case ConsoleOutput:
-				config.Output = config.ConsoleOutput
-			case FileOutput:
-				config.Output = config.FileOutput
-			case BothOutput:
-				// For BothOutput, we'll handle the writing separately in writeLog
-				// This prevents double writing to console
-				config.Output = io.Discard
-			}
-		}
+		config.Output = output
 
 		flags := 0
 		prefix := ""
 
-		debugLogger = log.New(config.Output, prefix, flags)
-		infoLogger = log.New(config.Output, prefix, flags)
-		warnLogger = log.New(config.Output, prefix, flags)
-		errorLogger = log.New(config.Output, prefix, flags)
-		fatalLogger = log.New(config.Output, prefix, flags)
+		debugLogger = log.New(output, prefix, flags)
+		infoLogger = log.New(output, prefix, flags)
+		warnLogger = log.New(output, prefix, flags)
+		errorLogger = log.New(output, prefix, flags)
+		fatalLogger = log.New(output, prefix, flags)
 		level = config.Level
 	})
 }
@@ -172,7 +168,24 @@ func formatMessage(level Level, message string, config Config) string {
 
 	var caller string
 	if config.ShowCaller {
-		_, file, line, ok := runtime.Caller(4) 
+		// Start with a reasonable depth and search for the actual caller
+		var file string
+		var line int
+		var ok bool
+
+		// Try different call depths to find the first non-logger caller
+		for depth := 3; depth <= 10; depth++ {
+			_, file, line, ok = runtime.Caller(depth)
+			if !ok {
+				break // No more callers available
+			}
+
+			// Skip calls from within the logger package
+			if !filepath.HasPrefix(file, runtime.GOROOT()) && !strings.Contains(file, "logger.go") {
+				break // Found a caller outside the logger package
+			}
+		}
+
 		if ok {
 			file = filepath.Base(file)
 			caller = fmt.Sprintf(" [%s:%d]", file, line)
@@ -187,8 +200,11 @@ func formatMessage(level Level, message string, config Config) string {
 		if writer, ok := config.Output.(io.Writer); ok &&
 			(writer == config.ConsoleOutput ||
 				(config.OutputType == BothOutput && config.Output == io.MultiWriter(config.ConsoleOutput, config.FileOutput))) {
-			color := getLevelColor(level)
-			levelStr = fmt.Sprintf("%s%s%s", color, levelStr, ColorReset)
+			levelColor := getLevelColor(level)
+			levelStr = fmt.Sprintf("%s%s%s", levelColor, levelStr, ColorReset)
+
+			// Color the message content as well
+			message = fmt.Sprintf("%s%s%s", levelColor, message, ColorReset)
 		}
 	}
 
@@ -197,30 +213,10 @@ func formatMessage(level Level, message string, config Config) string {
 
 // writeLog writes a log message to the appropriate outputs
 func writeLog(logger *log.Logger, level Level, msg string) {
-	// If we're using both outputs, handle each output separately
-	if config.OutputType == BothOutput {
-		// Write colored version to console if colors are enabled
-		consoleConfig := config
-		if config.EnableColor {
-			coloredMsg := formatMessage(level, msg, consoleConfig)
-			fmt.Fprintln(config.ConsoleOutput, coloredMsg)
-		} else {
-			plainMsg := formatMessage(level, msg, consoleConfig)
-			fmt.Fprintln(config.ConsoleOutput, plainMsg)
-		}
+	formattedMsg := formatMessage(level, msg, config)
 
-		// Write non-colored version to file
-		fileConfig := config
-		fileConfig.EnableColor = false
-		plainMsg := formatMessage(level, msg, fileConfig)
-		if config.FileOutput != nil {
-			fmt.Fprintln(config.FileOutput, plainMsg)
-		}
-	} else {
-		// Normal logging through the logger for single output
-		formattedMsg := formatMessage(level, msg, config)
-		logger.Println(formattedMsg)
-	}
+	// Simply use the logger which already has the correct output configured
+	logger.Println(formattedMsg)
 }
 
 // Debug logs a debug message
@@ -276,21 +272,24 @@ func SetOutput(outputType OutputType, consoleOutput, fileOutput io.Writer) {
 		config.FileOutput = fileOutput
 	}
 
+	var output io.Writer
 	switch outputType {
 	case ConsoleOutput:
-		config.Output = config.ConsoleOutput
+		output = config.ConsoleOutput
 	case FileOutput:
-		config.Output = config.FileOutput
+		output = config.FileOutput
 	case BothOutput:
-		config.Output = io.MultiWriter(config.ConsoleOutput, config.FileOutput)
+		output = io.MultiWriter(config.ConsoleOutput, config.FileOutput)
 	}
 
+	config.Output = output
+
 	// Update all loggers with the new output
-	debugLogger.SetOutput(config.Output)
-	infoLogger.SetOutput(config.Output)
-	warnLogger.SetOutput(config.Output)
-	errorLogger.SetOutput(config.Output)
-	fatalLogger.SetOutput(config.Output)
+	debugLogger.SetOutput(output)
+	infoLogger.SetOutput(output)
+	warnLogger.SetOutput(output)
+	errorLogger.SetOutput(output)
+	fatalLogger.SetOutput(output)
 }
 
 // SetColorEnabled enables or disables colored output
@@ -348,6 +347,26 @@ func (l *Logger) Fatal(format string, v ...interface{}) {
 	Fatal(format, v...)
 }
 
+// getMethodColor returns a color based on the HTTP method
+func getMethodColor(method string) Color {
+	switch method {
+	case http.MethodGet:
+		return ColorGreen
+	case http.MethodPost:
+		return ColorBlue
+	case http.MethodPut:
+		return ColorYellow
+	case http.MethodDelete:
+		return ColorRed
+	case http.MethodPatch:
+		return ColorPurple
+	case http.MethodOptions:
+		return ColorCyan
+	default:
+		return ColorWhite
+	}
+}
+
 // HTTPMiddleware creates a middleware for logging HTTP requests
 func (l *Logger) HTTPMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -364,13 +383,22 @@ func (l *Logger) HTTPMiddleware(next http.Handler) http.Handler {
 
 		// Log the request
 		duration := time.Since(start)
+
+		// Format method with color
+		method := r.Method
+		if config.EnableColor {
+			methodColor := getMethodColor(method)
+			method = fmt.Sprintf("%s[%s%s%s]", ColorReset, methodColor, method, ColorReset)
+		} else {
+			method = fmt.Sprintf("[%s]", method)
+		}
+
 		Info(
-			"%s %s %s %d %s",
-			r.Method,
+			"%s %s %d (%.2fms)",
+			method,
 			r.RequestURI,
-			r.RemoteAddr,
 			rw.statusCode,
-			duration,
+			float64(duration.Microseconds())/1000,
 		)
 	})
 }
@@ -403,13 +431,22 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 
 		// Log the request
 		duration := time.Since(start)
+
+		// Format method with color
+		method := r.Method
+		if config.EnableColor {
+			methodColor := getMethodColor(method)
+			method = fmt.Sprintf("%s[%s]%s", methodColor, method, ColorReset)
+		} else {
+			method = fmt.Sprintf("[%s]", method)
+		}
+
 		Info(
-			"%s %s %s %d %s",
-			r.Method,
+			"%s %s %d (%.2fms)",
+			method,
 			r.RequestURI,
-			r.RemoteAddr,
 			rw.statusCode,
-			duration,
+			float64(duration.Microseconds())/1000,
 		)
 	})
 }
