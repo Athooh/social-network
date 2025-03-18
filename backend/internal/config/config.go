@@ -81,7 +81,7 @@ func Load() Config {
 		},
 		Log: LogConfig{
 			Level:      getEnv("LOG_LEVEL", "info"),
-			TimeFormat: getEnv("LOG_TIME_FORMAT", time.RFC3339),
+			TimeFormat: getEnv("LOG_TIME_FORMAT", "2006-01-02 15:04:05"),
 			ShowCaller: getEnvAsBool("LOG_SHOW_CALLER", true),
 			// FilePath:   getEnv("LOG_FILE_PATH", "./data/logs/social_network.log"),
 			EnableColor: getEnvAsBool("LOG_ENABLE_COLOR", true),
