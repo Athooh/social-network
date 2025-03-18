@@ -48,10 +48,9 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 	query := `
 		INSERT INTO posts (user_id, content, image_path, privacy, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?)
-		RETURNING id
 	`
 
-	err := r.db.QueryRow(
+	result, err := r.db.Exec(
 		query,
 		post.UserID,
 		post.Content,
@@ -59,9 +58,18 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 		post.Privacy,
 		post.CreatedAt,
 		post.UpdatedAt,
-	).Scan(&post.ID)
+	)
+	if err != nil {
+		return err
+	}
 
-	return err
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	post.ID = id
+	return nil
 }
 
 // GetPostByID retrieves a post by ID
