@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/internal/config"
 	"github.com/Athooh/social-network/internal/server"
-	"github.com/Athooh/social-network/pkg/auth"
 	"github.com/Athooh/social-network/pkg/db/sqlite"
 	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
@@ -65,12 +65,16 @@ func main() {
 
 	log.Info("Connected to database")
 
+	if err := sqlite.CreateMigrations(db); err != nil {
+		log.Fatal("Failed to create migrations: %v", err)
+	}
+
 	// Set up repositories
 	userRepo := user.NewSQLiteRepository(db.DB)
 	sessionRepo := session.NewSQLiteRepository(db.DB)
 
 	// Set up session manager
-	sessionManager := auth.NewSessionManager(
+	sessionManager := session.NewSessionManager(
 		sessionRepo,
 		cfg.Auth.SessionCookieName,
 		cfg.Auth.SessionCookieDomain,
