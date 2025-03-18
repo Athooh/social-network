@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 )
 
@@ -25,12 +26,8 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 		// Get user ID from session
 		userID, err := s.sessionManager.GetUserFromSession(r)
 		if err != nil {
-			logger.Warn("Unauthorized: %v", map[string]interface{}{
-				"error": err.Error(),
-			})
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
+			logger.Warn("Unauthorized attempt from user: %s", userID)
+			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()))
 			return
 		}
 
@@ -58,24 +55,15 @@ func (s *Service) RequireJWTAuth(next http.Handler) http.Handler {
 		// Extract token from request
 		tokenString, err := ExtractTokenFromRequest(r)
 		if err != nil {
-			logger.Warn("JWT Authentication failed: %v", map[string]interface{}{
-				"error": err.Error(),
-			})
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
+			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()))
 			return
 		}
 
 		// Validate token
 		claims, err := ValidateToken(tokenString, s.jwtConfig)
 		if err != nil {
-			logger.Warn("Invalid JWT token: %v", map[string]interface{}{
-				"error": err.Error(),
-			})
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
+			logger.Warn("Invalid JWT token: %s", tokenString)
+			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()))
 			return
 		}
 
