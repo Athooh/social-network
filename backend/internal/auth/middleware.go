@@ -26,7 +26,7 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 		// Get user ID from session
 		userID, err := s.sessionManager.GetUserFromSession(r)
 		if err != nil {
-			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()), true)
+			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(GetUserFromSession) Unauthorized: %s", err.Error()), true)
 			return
 		}
 
@@ -55,14 +55,14 @@ func (s *Service) RequireJWTAuth(next http.Handler) http.Handler {
 		// Extract token from request
 		tokenString, err := ExtractTokenFromRequest(r)
 		if err != nil {
-			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()), true)
+			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(ExtractTokenFromRequest) Unauthorized: %s", err.Error()), true)
 			return
 		}
 
 		// Validate token
 		claims, err := ValidateToken(tokenString, s.jwtConfig)
 		if err != nil {
-			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()), true)
+			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(ValidateToken) Unauthorized: %s", err.Error()), true)
 			return
 		}
 
