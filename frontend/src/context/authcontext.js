@@ -188,7 +188,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/me`, {
+      const res = await fetch(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -219,13 +219,16 @@ export const AuthProvider = ({ children }) => {
       }
 
       const authHeader = { Authorization: `Bearer ${storedToken}` };
-      const response = await fetch(url, {
+
+      console.log("Auth fetch", `${API_URL}/${url}`, options);
+      const response = await fetch(`${API_URL}/${url}`, {
         ...options,
         headers: {
           "Content-Type": "application/json",
           ...authHeader,
           ...options.headers,
         },
+        credentials:"include",
       });
 
       if (response.status === 401) {
