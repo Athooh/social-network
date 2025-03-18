@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Athooh/social-network/pkg/auth"
+	models "github.com/Athooh/social-network/pkg/models/dbTables"
 	"github.com/google/uuid"
 )
 
@@ -81,7 +81,7 @@ func (r *SQLiteRepository) CleanExpired() error {
 }
 
 // GetUserSessions retrieves all sessions for a user
-func (r *SQLiteRepository) GetUserSessions(userID string) ([]auth.Session, error) {
+func (r *SQLiteRepository) GetUserSessions(userID string) ([]models.Session, error) {
 	query := `
 		SELECT id, user_id, expires_at
 		FROM sessions
@@ -95,9 +95,9 @@ func (r *SQLiteRepository) GetUserSessions(userID string) ([]auth.Session, error
 	}
 	defer rows.Close()
 
-	var sessions []auth.Session
+	var sessions []models.Session
 	for rows.Next() {
-		var session auth.Session
+		var session models.Session
 		err := rows.Scan(&session.ID, &session.UserID, &session.ExpiresAt)
 		if err != nil {
 			return nil, err
