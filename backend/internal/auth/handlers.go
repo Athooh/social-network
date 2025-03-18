@@ -186,18 +186,24 @@ func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract token from request
+	// First try to extract token from request
 	tokenString, err := ExtractTokenFromRequest(r)
 	if err != nil {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Token validation failed: %s", err.Error()), true)
+
+		// If no token in header, try to get user from session
+		userID, err := h.service.sessionManager.GetUserFromSession(r)
+		if err != nil {
+			h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Authentication failed: %s", err.Error()), true)
+			return
+		}
+
+		// If we have a user ID from session, token is valid
+		h.sendJSON(w, http.StatusOK, map[string]string{"message": "Token is valid", "userId": userID})
 		return
 	}
 
-	// Get the session store from the service
-	sessionStore := h.service.sessionManager.GetSessionStore()
-
 	// Validate token
-	_, err = ValidateToken(tokenString, h.service.jwtConfig, sessionStore)
+	_, err = ValidateToken(tokenString, h.service.jwtConfig)
 	if err != nil {
 		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Invalid token: %s", err.Error()), true)
 		return
