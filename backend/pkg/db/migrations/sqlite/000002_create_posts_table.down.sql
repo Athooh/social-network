@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS post_viewers;
-DROP TABLE IF EXISTS posts; 
