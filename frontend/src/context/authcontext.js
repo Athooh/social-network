@@ -7,6 +7,8 @@ import {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
+import { showToast } from "@/components/ui/ToastContainer";
+import { handleApiError } from "@/utils/errorHandler";
 
 const API_URL = process.env.API_URL;
 
@@ -32,7 +34,7 @@ export const AuthProvider = ({ children }) => {
             },
           });
         } catch (error) {
-          console.error("Logout error:", error);
+          await handleApiError(error, "Logout failed");
         }
       }
 
@@ -70,6 +72,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       } catch (error) {
         console.error("Token validation error:", error);
+        await handleApiError(error, "Token validation error");
         handleLogout(false);
       }
     },
@@ -109,6 +112,7 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        await handleApiError(errorData, "Login failed");
         throw new Error(errorData.error || "Login failed");
       }
 
@@ -121,14 +125,15 @@ export const AuthProvider = ({ children }) => {
         setToken(data.token);
 
         document.cookie = `token=${data.token}; path=/; max-age=86400; samesite=strict`;
-
+        showToast("Logged in successfully!", "success");
         return true;
       } else {
         throw new Error("Login failed");
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error  =:", error);
       setLoading(false);
+      await handleApiError(error, "Login failed");
       return false;
     }
   };
@@ -161,6 +166,7 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        await handleApiError(errorData, "Signup failed");
         throw new Error(errorData.error || "Signup failed");
       }
 
@@ -174,12 +180,14 @@ export const AuthProvider = ({ children }) => {
 
         setCurrentUser(data.user);
         setToken(data.token);
+        showToast("Signed up successfully!", "success");
         return true;
       }
 
       throw new Error("Signup failed: invalid data from backend");
     } catch (error) {
       console.error("Signup error:", error);
+      await handleApiError(error, "Signup failed");
       throw error;
     } finally {
       setLoading(false);
@@ -203,7 +211,7 @@ export const AuthProvider = ({ children }) => {
         handleLogout(true);
       }
     } catch (error) {
-      console.error("Failed to fetch user:", error);
+      await handleApiError(error, "Failed to fetch user");
       handleLogout(true);
     } finally {
       setLoading(false);
@@ -224,21 +232,22 @@ export const AuthProvider = ({ children }) => {
       const response = await fetch(`${API_URL}/${url}`, {
         ...options,
         headers: {
-          "Content-Type": "application/json",
           ...authHeader,
           ...options.headers,
         },
-        credentials:"include",
+        credentials: "include",
       });
 
       if (response.status === 401) {
         handleLogout(true);
+        const errorData = await response.json();
+        await handleApiError(errorData, "Unauthorized - Please log in again.");
         throw new Error("Unauthorized - Please log in again.");
       }
 
       return response;
     } catch (error) {
-      console.error("Authenticated fetch error:", error);
+      await handleApiError(error, "Authenticated fetch error");
       throw error;
     }
   };
