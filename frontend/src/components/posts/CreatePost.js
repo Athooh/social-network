@@ -1,53 +1,83 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { usePostService } from '@/services/postService'; // Adjust the import path
-import styles from '@/styles/Posts.module.css';
+import { useState } from "react";
+import { usePostService } from "@/services/postService"; // Adjust the import path
+import styles from "@/styles/Posts.module.css";
+import { showToast } from "@/components/ui/ToastContainer";
 
 export default function CreatePost() {
-  const { createPost } = usePostService(); // Use the hook
-  const [postText, setPostText] = useState('');
+  const { createPost } = usePostService();
+  const [postText, setPostText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [privacy, setPrivacy] = useState("public");
+  const [showPrivacyDropdown, setShowPrivacyDropdown] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  const formData = new FormData();
-    formData.append('text', postText);
+    const formData = new FormData();
+    formData.append("content", postText);
+    formData.append("privacy", privacy);
     selectedFiles.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
 
     if (!postText && !selectedFiles.length) {
-      console
+      showToast("Please enter a post content or add media", "error");
       return;
     }
 
     try {
-      await createPost(formData); 
+      await createPost(formData);
 
-      setPostText('');
+      setPostText("");
       setSelectedFiles([]);
       setPreviewUrls([]);
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Error submitting post:', error);
+      console.error("Error submitting post:", error);
     }
-   }
+  };
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles(files);
 
     // Create preview URLs
-    const urls = files.map(file => URL.createObjectURL(file));
+    const urls = files.map((file) => URL.createObjectURL(file));
     setPreviewUrls(urls);
   };
 
   const removeFile = (index) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const getPrivacyIcon = () => {
+    switch (privacy) {
+      case "public":
+        return "fas fa-globe";
+      case "private":
+        return "fas fa-lock";
+      case "almost_private":
+        return "fas fa-user-friends";
+      default:
+        return "fas fa-globe";
+    }
+  };
+
+  const getPrivacyText = () => {
+    switch (privacy) {
+      case "public":
+        return "Public";
+      case "private":
+        return "Private";
+      case "almost_private":
+        return "Almost Private";
+      default:
+        return "Public";
+    }
   };
 
   return (
@@ -55,7 +85,7 @@ export default function CreatePost() {
       <div className={styles.createPostCard}>
         <div className={styles.createPostHeader}>
           <img src="/avatar4.png" alt="Profile" className={styles.profilePic} />
-          <div 
+          <div
             className={styles.createPostInput}
             onClick={() => setIsModalOpen(true)}
           >
@@ -87,7 +117,7 @@ export default function CreatePost() {
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h2>Create Post</h2>
-              <button 
+              <button
                 className={styles.closeButton}
                 onClick={() => setIsModalOpen(false)}
               >
@@ -97,14 +127,69 @@ export default function CreatePost() {
 
             <div className={styles.modalContent}>
               <div className={styles.userInfo}>
-                <img src="/avatar4.png" alt="Profile" className={styles.profilePic} />
+                <img
+                  src="/avatar4.png"
+                  alt="Profile"
+                  className={styles.profilePic}
+                />
                 <div>
                   <h3>John Doe</h3>
-                  <button className={styles.privacyButton}>
-                    <i className="fas fa-globe"></i>
-                    Public
-                    <i className="fas fa-caret-down"></i>
-                  </button>
+                  <div className={styles.privacySelector}>
+                    <button
+                      className={styles.privacyButton}
+                      onClick={() =>
+                        setShowPrivacyDropdown(!showPrivacyDropdown)
+                      }
+                    >
+                      <i className={getPrivacyIcon()}></i>
+                      {getPrivacyText()}
+                      <i className="fas fa-caret-down"></i>
+                    </button>
+
+                    {showPrivacyDropdown && (
+                      <div className={styles.privacyDropdown}>
+                        <div
+                          className={`${styles.privacyOption} ${privacy === "public" ? styles.selected : ""}`}
+                          onClick={() => {
+                            setPrivacy("public");
+                            setShowPrivacyDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-globe"></i>
+                          <div>
+                            <span>Public</span>
+                            <p className={styles.privacyDescription}>Anyone can see this post</p>
+                          </div>
+                        </div>
+                        <div
+                          className={`${styles.privacyOption} ${privacy === "private" ? styles.selected : ""}`}
+                          onClick={() => {
+                            setPrivacy("private");
+                            setShowPrivacyDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-lock"></i>
+                          <div>
+                            <span>Private</span>
+                            <p className={styles.privacyDescription}>Only you can see this post</p>
+                          </div>
+                        </div>
+                        <div
+                          className={`${styles.privacyOption} ${privacy === "almost_private" ? styles.selected : ""}`}
+                          onClick={() => {
+                            setPrivacy("almost_private");
+                            setShowPrivacyDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-user-friends"></i>
+                          <div>
+                            <span>Almost Private</span>
+                            <p className={styles.privacyDescription}>Only friends can see this post</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -120,13 +205,13 @@ export default function CreatePost() {
                   <div className={styles.previewGrid}>
                     {previewUrls.map((url, index) => (
                       <div key={index} className={styles.previewItem}>
-                        {url.includes('image') ? (
+                        {url.includes("image") ? (
                           <img src={url} alt="Preview" />
                         ) : (
                           <video src={url} controls />
                         )}
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => removeFile(index)}
                           className={styles.removePreview}
                         >
@@ -148,16 +233,28 @@ export default function CreatePost() {
                         onChange={handleFileSelect}
                         hidden
                       />
-                      <i className="fas fa-images" style={{color: '#45bd62'}}></i>
+                      <i
+                        className="fas fa-images"
+                        style={{ color: "#45bd62" }}
+                      ></i>
                     </label>
                     <button type="button">
-                      <i className="fas fa-user-tag" style={{color: '#1877f2'}}></i>
+                      <i
+                        className="fas fa-user-tag"
+                        style={{ color: "#1877f2" }}
+                      ></i>
                     </button>
                     <button type="button">
-                      <i className="fas fa-face-smile" style={{color: '#f7b928'}}></i>
+                      <i
+                        className="fas fa-face-smile"
+                        style={{ color: "#f7b928" }}
+                      ></i>
                     </button>
                     <button type="button">
-                      <i className="fas fa-map-marker-alt" style={{color: '#f5533d'}}></i>
+                      <i
+                        className="fas fa-map-marker-alt"
+                        style={{ color: "#f5533d" }}
+                      ></i>
                     </button>
                     <button type="button">
                       <i className="fas fa-ellipsis-h"></i>
@@ -165,8 +262,8 @@ export default function CreatePost() {
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   onClick={handleSubmit}
                   className={styles.postButton}
                   disabled={!postText && !selectedFiles.length}
@@ -180,4 +277,4 @@ export default function CreatePost() {
       )}
     </>
   );
-} 
+}
