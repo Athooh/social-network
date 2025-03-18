@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "@/styles/Header.module.css";
 import { useAuth } from "@/context/authcontext";
+import { showToast } from "@/components/ui/ToastContainer";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
@@ -20,7 +21,7 @@ export default function ProfileDropdown() {
 
   const handleLogout = () => {
     logout();
-    // The router.push is handled in the logout function
+    showToast("Logged out successfully!", "success");
   };
 
   // Use currentUser data if available, otherwise fallback to sample data
