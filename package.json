@@ -14,7 +14,7 @@
     "backend:migrate-down": "cd backend && make migrate-down",
     "backend:clean": "cd backend && make clean",
     "backend:data": "cd backend && make data",
-    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:run\"",
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
     "build": "npm run frontend:build && npm run backend:build",
     "start": "concurrently \"npm run frontend:start\" \"npm run backend:run\"",
     "setup": "cd frontend && npm install",
