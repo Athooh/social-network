@@ -29,13 +29,13 @@ func NewHandler(service *Service, fileStore *filestore.FileStore) *Handler {
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method), false)
 		return
 	}
 
 	// Parse multipart form with 10MB max memory
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		h.sendError(w, http.StatusBadRequest, "Failed to parse form data")
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to parse form data: %s", err.Error()), false)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
 		h.sendError(w, http.StatusBadRequest,
 			fmt.Sprintf("Missing required fields: email: %s, password: %s, firstName: %s, lastName: %s, dateOfBirth: %s",
-				req.Email, req.Password, req.FirstName, req.LastName, req.DateOfBirth))
+				req.Email, req.Password, req.FirstName, req.LastName, req.DateOfBirth), true)
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 		filename, err := h.fileStore.SaveFile(header, "avatars")
 		if err != nil {
-			h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to save avatar: %s", err.Error()))
+			h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to save avatar: %s", err.Error()), false)
 			return
 		}
 		req.Avatar = filename
@@ -74,13 +74,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Register the user
 	tokenResponse, err := h.service.Register(req)
 	if err != nil {
-		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to register user: %s", err.Error()))
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to register user: %s", err.Error()), false)
 		return
 	}
 
 	// Create a session
 	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
-		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create session: %s", err.Error()))
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create session: %s", err.Error()), false)
 		return
 	}
 
@@ -97,21 +97,21 @@ func (h *Handler) sendJSON(w http.ResponseWriter, status int, data interface{}) 
 }
 
 // Helper method to send error responses
-func (h *Handler) sendError(w http.ResponseWriter, status int, message string) {
-	httputil.SendError(w, status, message)
+func (h *Handler) sendError(w http.ResponseWriter, status int, message string, isWarning bool) {
+	httputil.SendError(w, status, message, isWarning)
 }
 
 // Logout handles user logout
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method), false)
 		return
 	}
 
 	// Logout the user
 	if err := h.service.Logout(w, r); err != nil {
-		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to logout user: %s", err.Error()))
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to logout user: %s", err.Error()), false)
 		return
 	}
 
@@ -123,14 +123,14 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
-		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method), false)
 		return
 	}
 
 	// Get the current user
 	user, err := h.service.GetCurrentUser(r)
 	if err != nil {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Failed to get current user: %s", err.Error()))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Failed to get current user: %s", err.Error()), false)
 		return
 	}
 
@@ -142,33 +142,33 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) LoginJWT(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method), false)
 		return
 	}
 
 	// Parse request body
 	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %s", err.Error()))
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %s", err.Error()), false)
 		return
 	}
 
 	// Validate required fields
 	if req.Email == "" || req.Password == "" {
-		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Missing required fields: email: %s, password: %s", req.Email, req.Password))
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Missing required fields: email: %s, password: %s", req.Email, req.Password), true)
 		return
 	}
 
 	// Login the user with JWT
 	tokenResponse, err := h.service.LoginWithJWT(req)
 	if err != nil {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Failed to login user: %s", err.Error()))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Failed to login user: %s", err.Error()), true)
 		return
 	}
 
 	// Create a session
 	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
-		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create session: %s", err.Error()))
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create session: %s", err.Error()), false)
 		return
 	}
 
@@ -182,14 +182,14 @@ func (h *Handler) LoginJWT(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
-		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method), false)
 		return
 	}
 
 	// Extract token from request
 	tokenString, err := ExtractTokenFromRequest(r)
 	if err != nil {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Token validation failed: %s", err.Error()))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Token validation failed: %s", err.Error()), true)
 		return
 	}
 
@@ -199,8 +199,7 @@ func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	// Validate token
 	_, err = ValidateToken(tokenString, h.service.jwtConfig, sessionStore)
 	if err != nil {
-		logger.Warn("Invalid token : %s", tokenString)
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Invalid token: %s", err.Error()))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Invalid token: %s", err.Error()), true)
 		return
 	}
 

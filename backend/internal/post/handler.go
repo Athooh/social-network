@@ -2,12 +2,15 @@ package post
 
 import (
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Athooh/social-network/internal/auth"
+	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
 )
@@ -57,16 +60,15 @@ type CommentResponse struct {
 // CreatePost handles the creation of a new post
 func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Parse multipart form
 	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
-		h.log.Error("Failed to parse multipart form: %v", err)
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to parse form data: %s", err.Error()))
 		return
 	}
 
@@ -76,7 +78,7 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	// Validate required fields
 	if content == "" {
-		http.Error(w, "Content is required", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, "Content field is missing")
 		return
 	}
 
@@ -94,8 +96,7 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Create post
 	post, err := h.service.CreatePost(userID, content, privacy, imageFile)
 	if err != nil {
-		h.log.Error("Failed to create post: %v", err)
-		http.Error(w, "Failed to create post", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create post: %s", err.Error()))
 		return
 	}
 
@@ -114,37 +115,34 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusCreated, response)
 }
 
 // GetPost handles retrieving a post by ID
 func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %d", userID))
 		return
 	}
 
 	// Get post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
 	}
 
 	// Get post
 	post, err := h.service.GetPost(postID, userID)
 	if err != nil {
-		h.log.Error("Failed to get post: %v", err)
-		http.Error(w, "Failed to get post", http.StatusNotFound)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get post: %v", err))
 		return
 	}
 
@@ -163,36 +161,34 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusOK, response)
 }
 
 // GetUserPosts handles retrieving all posts by a user
 func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	viewerID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %d", userID))
 		return
 	}
 
 	// Get target user ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
-	userID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
+	viewerID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Viewer ID: %d", userID))
 		return
 	}
 
 	// Get posts
 	posts, err := h.service.GetUserPosts(userID, viewerID)
 	if err != nil {
-		h.log.Error("Failed to get user posts: %v", err)
-		http.Error(w, "Failed to get posts", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get user posts: %s", err.Error()))
 		return
 	}
 
@@ -216,16 +212,15 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusOK, response)
 }
 
 // GetPublicPosts handles retrieving public posts with pagination
 func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	_, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %d", userID))
 		return
 	}
 
@@ -252,8 +247,7 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	// Get posts
 	posts, err := h.service.GetPublicPosts(limit, offset)
 	if err != nil {
-		h.log.Error("Failed to get public posts: %v", err)
-		http.Error(w, "Failed to get posts", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get public posts: %v", err))
 		return
 	}
 
@@ -277,35 +271,33 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusOK, response)
 }
 
 // UpdatePost handles updating an existing post
 func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Get post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
 	}
 
 	// Parse multipart form
 	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
-		h.log.Error("Failed to parse multipart form: %v", err)
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to parse form data: %s", err.Error()))
 		return
 	}
 
@@ -315,7 +307,7 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	// Validate required fields
 	if content == "" {
-		http.Error(w, "Content is required", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, "Content field is missing")
 		return
 	}
 
@@ -329,8 +321,7 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	// Update post
 	post, err := h.service.UpdatePost(postID, userID, content, privacy, imageFile)
 	if err != nil {
-		h.log.Error("Failed to update post: %v", err)
-		http.Error(w, "Failed to update post", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update post: %s", err.Error()))
 		return
 	}
 
@@ -349,35 +340,33 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusOK, response)
 }
 
 // DeletePost handles deleting a post
 func (h *Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Get post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
 	}
 
 	// Delete post
 	if err := h.service.DeletePost(postID, userID); err != nil {
-		h.log.Error("Failed to delete post: %v", err)
-		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to Delete post: %s", err.Error()))
 		return
 	}
 
@@ -388,21 +377,21 @@ func (h *Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 // SetPostViewers handles setting the users who can view a private post
 func (h *Handler) SetPostViewers(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Get post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
 	}
 
@@ -412,14 +401,13 @@ func (h *Handler) SetPostViewers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		h.sendError(w, http.StatusInternalServerError, "Invalid Request Body")
 		return
 	}
 
 	// Set post viewers
 	if err := h.service.SetPostViewers(postID, userID, request.ViewerIDs); err != nil {
-		h.log.Error("Failed to set post viewers: %v", err)
-		http.Error(w, "Failed to set post viewers", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to set Post viewers: %s", err.Error()))
 		return
 	}
 
@@ -430,28 +418,27 @@ func (h *Handler) SetPostViewers(w http.ResponseWriter, r *http.Request) {
 // CreateComment handles creating a new comment on a post
 func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Get post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 4 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	postID, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
 	}
 
 	// Parse multipart form
 	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
-		h.log.Error("Failed to parse multipart form: %v", err)
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to parse form data: %s", err.Error()))
 		return
 	}
 
@@ -460,7 +447,7 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 
 	// Validate required fields
 	if content == "" {
-		http.Error(w, "Content is required", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, "Content field is missing")
 		return
 	}
 
@@ -474,8 +461,7 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	// Create comment
 	comment, err := h.service.CreateComment(postID, userID, content, imageFile)
 	if err != nil {
-		h.log.Error("Failed to create comment: %v", err)
-		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create comment: %s", err.Error()))
 		return
 	}
 
@@ -494,37 +480,34 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusCreated, response)
 }
 
 // GetPostComments handles retrieving all comments for a post
 func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Get post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 4 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	postID, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
 	}
 
 	// Get comments
 	comments, err := h.service.GetPostComments(postID, userID)
 	if err != nil {
-		h.log.Error("Failed to get post comments: %v", err)
-		http.Error(w, "Failed to get comments", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get post comments: %v", err))
 		return
 	}
 
@@ -548,23 +531,22 @@ func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.sendJSON(w, http.StatusOK, response)
 }
 
 // DeleteComment handles deleting a comment
 func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := r.Context().Value("userID").(int64)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %d", userID))
 		return
 	}
 
 	// Get comment ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
 	commentID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
@@ -575,8 +557,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 
 	// Delete comment
 	if err := h.service.DeleteComment(commentID, userID); err != nil {
-		h.log.Error("Failed to delete comment: %v", err)
-		http.Error(w, "Failed to delete comment", http.StatusInternalServerError)
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to delete comment: %s", err.Error()))
 		return
 	}
 
@@ -594,6 +575,20 @@ func (h *Handler) HandleComments(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		h.DeleteComment(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 	}
+}
+
+// Helper method to send JSON responses
+func (h *Handler) sendJSON(w http.ResponseWriter, status int, data interface{}) {
+	httputil.SendJSON(w, status, data)
+}
+
+// Helper method to send error responses
+func (h *Handler) sendError(w http.ResponseWriter, status int, message string) {
+	var isWarning bool = false
+	if status >= 500 {
+		isWarning = true
+	}
+	httputil.SendError(w, status, message, isWarning)
 }

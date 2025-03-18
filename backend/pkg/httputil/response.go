@@ -15,7 +15,11 @@ func SendJSON(w http.ResponseWriter, status int, data interface{}) {
 }
 
 // SendError is a helper function to send error responses
-func SendError(w http.ResponseWriter, status int, message string) {
-	logger.Error("%s (status: %d)", message, status)
+func SendError(w http.ResponseWriter, status int, message string, isWarning bool) {
+	if isWarning {
+		logger.Warn("%s (status: %d)", message, status)
+	} else {
+		logger.Error("%s (status: %d)", message, status)
+	}
 	SendJSON(w, status, map[string]string{"error": message})
 }
