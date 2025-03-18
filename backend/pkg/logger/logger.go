@@ -163,60 +163,76 @@ func getLevelColor(level Level) Color {
 }
 
 // formatMessage formats a log message with timestamp, level, and caller information
-func formatMessage(level Level, message string, config Config) string {
+func formatMessage(level Level, message string, config Config, forConsole bool) string {
 	timestamp := time.Now().Format(config.TimeFormat)
 
 	var caller string
 	if config.ShowCaller {
-		// Start with a reasonable depth and search for the actual caller
-		var file string
-		var line int
-		var ok bool
-
-		// Try different call depths to find the first non-logger caller
-		for depth := 3; depth <= 10; depth++ {
-			_, file, line, ok = runtime.Caller(depth)
-			if !ok {
-				break // No more callers available
-			}
-
-			// Skip calls from within the logger package
-			if !filepath.HasPrefix(file, runtime.GOROOT()) && !strings.Contains(file, "logger.go") {
-				break // Found a caller outside the logger package
-			}
-		}
-
-		if ok {
-			file = filepath.Base(file)
-			caller = fmt.Sprintf(" [%s:%d]", file, line)
-		}
+		// Get the caller information
+		caller = getCaller()
 	}
 
 	levelStr := level.String()
 
 	// Apply colors only for console output and if enabled
-	if config.EnableColor && (config.OutputType == ConsoleOutput || config.OutputType == BothOutput) {
-		// Only apply color when writing to console
-		if writer, ok := config.Output.(io.Writer); ok &&
-			(writer == config.ConsoleOutput ||
-				(config.OutputType == BothOutput && config.Output == io.MultiWriter(config.ConsoleOutput, config.FileOutput))) {
-			levelColor := getLevelColor(level)
-			levelStr = fmt.Sprintf("%s%s%s", levelColor, levelStr, ColorReset)
-
-			// Color the message content as well
-			message = fmt.Sprintf("%s%s%s", levelColor, message, ColorReset)
-		}
+	if forConsole && config.EnableColor {
+		levelColor := getLevelColor(level)
+		levelStr = fmt.Sprintf("%s%s%s", levelColor, levelStr, ColorReset)
+		message = fmt.Sprintf("%s%s%s", levelColor, message, ColorReset)
 	}
 
 	return fmt.Sprintf("[%s] [%s]%s %s", timestamp, levelStr, caller, message)
 }
 
+// getCaller returns the file and line number of the actual caller
+func getCaller() string {
+	// We need to skip the logger package and any wrapper functions
+	for i := 1; i < 15; i++ { // Check up to 15 levels deep in the stack
+		pc, file, line, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+
+		// Skip any calls from the logger package itself
+		if !strings.Contains(file, "logger/logger.go") {
+			// Get the function name
+			funcName := runtime.FuncForPC(pc).Name()
+
+			// Skip calls from known wrapper packages
+			if strings.Contains(funcName, "github.com/Athooh/social-network/pkg/httputil") {
+				continue
+			}
+
+			// We found the real caller
+			file = filepath.Base(file)
+			return fmt.Sprintf(" [%s:%d]", file, line)
+		}
+	}
+
+	return ""
+}
+
 // writeLog writes a log message to the appropriate outputs
 func writeLog(logger *log.Logger, level Level, msg string) {
-	formattedMsg := formatMessage(level, msg, config)
+	// For BothOutput, we need to handle console and file separately
+	if config.OutputType == BothOutput {
+		// Format message for console (with colors if enabled)
+		consoleMsg := formatMessage(level, msg, config, true)
 
-	// Simply use the logger which already has the correct output configured
-	logger.Println(formattedMsg)
+		// Format message for file (without colors)
+		fileMsg := formatMessage(level, msg, config, false)
+
+		// Write to console
+		fmt.Fprintln(config.ConsoleOutput, consoleMsg)
+
+		// Write to file
+		fmt.Fprintln(config.FileOutput, fileMsg)
+	} else {
+		// For single output types, use the normal approach
+		forConsole := config.OutputType == ConsoleOutput
+		formattedMsg := formatMessage(level, msg, config, forConsole)
+		logger.Println(formattedMsg)
+	}
 }
 
 // Debug logs a debug message
@@ -384,22 +400,98 @@ func (l *Logger) HTTPMiddleware(next http.Handler) http.Handler {
 		// Log the request
 		duration := time.Since(start)
 
-		// Format method with color
+		// Format method with color only for console output
 		method := r.Method
-		if config.EnableColor {
-			methodColor := getMethodColor(method)
-			method = fmt.Sprintf("%s[%s%s%s]", ColorReset, methodColor, method, ColorReset)
-		} else {
-			method = fmt.Sprintf("[%s]", method)
-		}
 
-		Info(
+		// Create log message without caller information (we'll add it manually)
+		logMsg := fmt.Sprintf(
 			"%s %s %d (%.2fms)",
 			method,
 			r.RequestURI,
 			rw.statusCode,
 			float64(duration.Microseconds())/1000,
 		)
+
+		// For BothOutput, we need to handle the method formatting separately
+		if config.OutputType == BothOutput {
+			// Format for console (with colors)
+			consoleMethod := method
+			if config.EnableColor {
+				methodColor := getMethodColor(method)
+				consoleMethod = fmt.Sprintf("%s[%s%s%s]", ColorReset, methodColor, method, ColorReset)
+			} else {
+				consoleMethod = fmt.Sprintf("[%s]", method)
+			}
+
+			// Format for file (without colors)
+			fileMethod := fmt.Sprintf("[%s]", method)
+
+			// Log messages separately
+			consoleMsg := fmt.Sprintf(
+				"%s %s %d (%.2fms)",
+				consoleMethod,
+				r.RequestURI,
+				rw.statusCode,
+				float64(duration.Microseconds())/1000,
+			)
+
+			fileMsg := fmt.Sprintf(
+				"%s %s %d (%.2fms)",
+				fileMethod,
+				r.RequestURI,
+				rw.statusCode,
+				float64(duration.Microseconds())/1000,
+			)
+
+			// Get timestamp
+			timestamp := time.Now().Format(config.TimeFormat)
+			
+			// Format messages manually without caller information
+			consoleFormattedMsg := fmt.Sprintf("[%s] [%s] %s", timestamp, INFO.String(), consoleMsg)
+			fileFormattedMsg := fmt.Sprintf("[%s] [%s] %s", timestamp, INFO.String(), fileMsg)
+			
+			// Apply colors to console message if enabled
+			if config.EnableColor {
+				levelColor := getLevelColor(INFO)
+				consoleFormattedMsg = fmt.Sprintf("[%s] [%s%s%s] %s", 
+					timestamp, 
+					levelColor, INFO.String(), ColorReset,
+					consoleMsg)
+			}
+
+			fmt.Fprintln(config.ConsoleOutput, consoleFormattedMsg)
+			fmt.Fprintln(config.FileOutput, fileFormattedMsg)
+		} else {
+			// Create a custom log entry without using the standard Info function
+			timestamp := time.Now().Format(config.TimeFormat)
+			levelStr := INFO.String()
+			
+			// Apply colors if enabled and for console output
+			if config.EnableColor && config.OutputType == ConsoleOutput {
+				levelColor := getLevelColor(INFO)
+				levelStr = fmt.Sprintf("%s%s%s", levelColor, levelStr, ColorReset)
+				
+				// Also color the method
+				methodColor := getMethodColor(method)
+				method = fmt.Sprintf("[%s%s%s]", methodColor, method, ColorReset)
+			} else {
+				method = fmt.Sprintf("[%s]", method)
+			}
+			
+			// Recreate the message with the formatted method
+			logMsg = fmt.Sprintf(
+				"%s %s %d (%.2fms)",
+				method,
+				r.RequestURI,
+				rw.statusCode,
+				float64(duration.Microseconds())/1000,
+			)
+			
+			// Format the final message without caller information
+			formattedMsg := fmt.Sprintf("[%s] [%s] %s", timestamp, levelStr, logMsg)
+			
+			fmt.Fprintln(config.Output, formattedMsg)
+		}
 	})
 }
 
@@ -413,42 +505,6 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
-}
-
-// HTTPMiddleware creates a global middleware for logging HTTP requests
-func HTTPMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		// Create a response writer wrapper to capture the status code
-		rw := &responseWriter{
-			ResponseWriter: w,
-			statusCode:     http.StatusOK,
-		}
-
-		// Process the request
-		next.ServeHTTP(rw, r)
-
-		// Log the request
-		duration := time.Since(start)
-
-		// Format method with color
-		method := r.Method
-		if config.EnableColor {
-			methodColor := getMethodColor(method)
-			method = fmt.Sprintf("%s[%s]%s", methodColor, method, ColorReset)
-		} else {
-			method = fmt.Sprintf("[%s]", method)
-		}
-
-		Info(
-			"%s %s %d (%.2fms)",
-			method,
-			r.RequestURI,
-			rw.statusCode,
-			float64(duration.Microseconds())/1000,
-		)
-	})
 }
 
 // setupFileWriter creates and returns a file writer for logging
