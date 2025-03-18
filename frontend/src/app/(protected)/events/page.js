@@ -13,6 +13,7 @@ const sampleEvents = [
     id: 1,
     name: "Community Cleanup Drive – Join Us Today!",
     banner: "/banner1.jpg",
+    date: "2024-04-15",
     isPublic: true,
     memberCount: 5234,
     members: [
@@ -25,7 +26,7 @@ const sampleEvents = [
     id: 2,
     name: "Tech Meetup – Innovate, Connect, Grow!",
     banner: "/banner2.jpg",
-    // profilePic: "/avatar4.png",
+    date: "2024-10-10",
     isPublic: false,
     memberCount: 3122,
     members: [
@@ -38,6 +39,7 @@ const sampleEvents = [
     id: 3,
     name: "Charity Run – Run for a Cause!",
     banner: "/banner3.jpg", 
+    date: "2024-06-19",
     isPublic: true,
     memberCount: 8433,
     members: [
@@ -50,6 +52,7 @@ const sampleEvents = [
     id: 4,
     name: "Entrepreneurship Workshop – Learn, Network, Succeed!",
     banner: "/banner4.jpg",
+    date: "2025-01-01",
     isPublic: true,
     memberCount: 2891,
     members: [
@@ -62,6 +65,7 @@ const sampleEvents = [
     id: 5,
     name: "Food Donation Event – Make a Difference!",
     banner: "/banner5.jpg",
+    date: "2025-10-05",
     isPublic: false,
     memberCount: 4567,
     members: [
@@ -74,6 +78,7 @@ const sampleEvents = [
     id: 6,
     name: "Health Awareness Campaign – Stay Informed, Stay Safe!",
     banner: "/banner6.jpg",
+    date: "2024-07-10",
     isPublic: true,
     memberCount: 6789,
     members: [
@@ -111,6 +116,14 @@ export default function Events() {
               <div key={event.id} className={styles.eventCard}>
                 <div className={styles.eventBanner}>
                   <img src={event.banner} alt="" className={styles.bannerImg} />
+                  <div className={styles.dateBadge}>
+                    <span className={styles.month}>
+                      {new Date(event.date).toLocaleString('default', { month: 'short' })}
+                    </span>
+                    <span className={styles.day}>
+                      {new Date(event.date).getDate()}
+                    </span>
+                  </div>
                 </div>
                 <div className={styles.eventInfo}>
                   {/* <img src={event.profilePic} alt="" className={styles.profilePic} /> */}

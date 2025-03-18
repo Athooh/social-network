@@ -250,4 +250,35 @@
     .privacyOptions {
       gap: 8px;
     }
+  }
+  
+  .inputGroup input[type="text"],
+  .inputGroup input[type="datetime-local"],
+  .inputGroup textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e4e6eb;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  
+  .inputGroup input[type="text"]:focus,
+  .inputGroup input[type="datetime-local"]:focus,
+  .inputGroup textarea:focus {
+    outline: none;
+    border-color: #1877f2;
+  }
+  
+  .inputGroup input[type="datetime-local"] {
+    color: #1c1e21;
+    background-color: white;
+  }
+  
+  .inputGroup input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+  }
+  
+  .inputGroup input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
   } 
