@@ -76,6 +76,8 @@ func Router(
 
 	protectedAuthGroup := NewRouteGroup("/api/auth", authenticatedRouteMiddleware)
 	protectedAuthGroup.HandleFunc("/logout", authHandler.Logout)
+	protectedAuthGroup.HandleFunc("/validate_token", authHandler.ValidateToken)
+
 	protectedAuthGroup.HandleFunc("/me", authHandler.Me)
 
 	protectedPostGroup := NewRouteGroup("/api/posts", authenticatedRouteMiddleware)
