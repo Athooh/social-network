@@ -3,7 +3,8 @@
 import Header from '@/components/header/Header';
 import styles from '@/styles/Messages.module.css';
 import { useState } from 'react';
-import NewMessageModal from '@/app/messages/NewMessageModal';
+import NewMessageModal from './NewMessageModal';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function Messages() {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -31,7 +32,7 @@ export default function Messages() {
   ];
 
   return (
-    <>
+    <ProtectedRoute>
       <Header />
       <div className={styles.messagesContainer}>
         <aside className={styles.conversationsList}>
@@ -134,6 +135,6 @@ export default function Messages() {
       {showNewMessageModal && (
         <NewMessageModal onClose={() => setShowNewMessageModal(false)} />
       )}
-    </>
+    </ProtectedRoute>
   );
 }
