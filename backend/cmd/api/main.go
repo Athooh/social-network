@@ -46,7 +46,7 @@ func main() {
 		ShowCaller:  cfg.Log.ShowCaller,
 		FilePath:    cfg.Log.FilePath,
 		EnableColor: cfg.Log.EnableColor,
-		OutputType:  logger.FileOutput,
+		OutputType:  logger.ConsoleOutput,
 	})
 
 	log.Info("Starting social network API server")
