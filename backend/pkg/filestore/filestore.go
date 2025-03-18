@@ -24,10 +24,19 @@ func New(uploadDir string) (*FileStore, error) {
 	return &FileStore{uploadDir: uploadDir}, nil
 }
 
-func (fs *FileStore) SaveFile(file *multipart.FileHeader) (string, error) {
+func (fs *FileStore) SaveFile(file *multipart.FileHeader, subdir string) (string, error) {
 	// Validate file type
 	if !isAllowedFileType(file.Header.Get("Content-Type")) {
 		return "", fmt.Errorf("unsupported file type: %s", file.Header.Get("Content-Type"))
+	}
+
+	// Create subdirectory if it doesn't exist
+	uploadPath := fs.uploadDir
+	if subdir != "" {
+		uploadPath = filepath.Join(fs.uploadDir, subdir)
+		if err := os.MkdirAll(uploadPath, 0o755); err != nil {
+			return "", fmt.Errorf("failed to create upload subdirectory: %w", err)
+		}
 	}
 
 	// Generate unique filename
@@ -38,7 +47,7 @@ func (fs *FileStore) SaveFile(file *multipart.FileHeader) (string, error) {
 		ext)
 
 	// Create file path
-	filepath := filepath.Join(fs.uploadDir, filename)
+	filePath := filepath.Join(uploadPath, filename)
 
 	// Open source file
 	src, err := file.Open()
@@ -48,7 +57,7 @@ func (fs *FileStore) SaveFile(file *multipart.FileHeader) (string, error) {
 	defer src.Close()
 
 	// Create destination file
-	dst, err := os.Create(filepath)
+	dst, err := os.Create(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to create destination file: %w", err)
 	}
@@ -59,7 +68,10 @@ func (fs *FileStore) SaveFile(file *multipart.FileHeader) (string, error) {
 		return "", fmt.Errorf("failed to copy file: %w", err)
 	}
 
-	// Return relative path
+	// Return relative path (including subdirectory)
+	if subdir != "" {
+		return filepath.Join(subdir, filename), nil
+	}
 	return filename, nil
 }
 
@@ -70,4 +82,13 @@ func isAllowedFileType(contentType string) bool {
 		"image/gif":  true,
 	}
 	return allowedTypes[strings.ToLower(contentType)]
+}
+
+// DeleteFile deletes a file from the upload directory
+func (fs *FileStore) DeleteFile(filename string) error {
+	filePath := filepath.Join(fs.uploadDir, filename)
+	if err := os.Remove(filePath); err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+	return nil
 }
