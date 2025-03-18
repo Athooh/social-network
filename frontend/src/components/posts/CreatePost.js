@@ -1,22 +1,41 @@
 'use client';
 
 import { useState } from 'react';
+import { usePostService } from '@/services/postService'; // Adjust the import path
 import styles from '@/styles/Posts.module.css';
 
 export default function CreatePost() {
+  const { createPost } = usePostService(); // Use the hook
   const [postText, setPostText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setPostText('');
-    setSelectedFiles([]);
-    setPreviewUrls([]);
-    setIsModalOpen(false);
-  };
 
+  const formData = new FormData();
+    formData.append('text', postText);
+    selectedFiles.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    if (!postText && !selectedFiles.length) {
+      console
+      return;
+    }
+
+    try {
+      await createPost(formData); 
+
+      setPostText('');
+      setSelectedFiles([]);
+      setPreviewUrls([]);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting post:', error);
+    }
+   }
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles(files);
@@ -148,6 +167,7 @@ export default function CreatePost() {
 
                 <button 
                   type="submit" 
+                  onClick={handleSubmit}
                   className={styles.postButton}
                   disabled={!postText && !selectedFiles.length}
                 >
