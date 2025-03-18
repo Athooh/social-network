@@ -47,7 +47,6 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Login Failed: ", err);
-      setError(err.message || "Login failed");
     }
   };
 
