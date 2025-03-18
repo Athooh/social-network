@@ -226,6 +226,11 @@ func CreateMigrations(db *DB) error {
 		logger.Fatal("Failed to create followers migration: %v", err)
 	}
 
+	// Check for schema updates
+	if err := db.UpdateMigrations(); err != nil {
+		logger.Fatal("Failed to update migrations: %v", err)
+	}
+
 	// Run migrations
 	if err := runMigrations(db.DB, db.config.DBPath, db.config.MigrationsPath); err != nil {
 		db.DB.Close()
@@ -409,7 +414,11 @@ func generateCreateTableSQL(table TableInfo) string {
 		sb.WriteString(fmt.Sprintf("    %s %s", col.Name, col.Type))
 
 		if col.PrimaryKey {
-			sb.WriteString(" PRIMARY KEY")
+			if strings.ToUpper(col.Type) == "INTEGER" {
+				sb.WriteString(" PRIMARY KEY AUTOINCREMENT")
+			} else {
+				sb.WriteString(" PRIMARY KEY")
+			}
 		}
 
 		if col.NotNull {
@@ -524,5 +533,427 @@ func (db *DB) AutoMigrate(modelStructs ...interface{}) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// UpdateMigrations checks for schema changes and creates migration files if needed
+func (db *DB) UpdateMigrations() error {
+	logger.Info("Checking for schema changes...")
+
+	// Get all model structs that might have changed
+	modelStructs := []interface{}{
+		models.User{},
+		models.Session{},
+		models.Post{},
+		models.PostViewer{},
+		models.Comment{},
+		models.FollowRequest{},
+		models.Follower{},
+	}
+
+	for _, model := range modelStructs {
+		if err := db.checkAndUpdateSchema(model); err != nil {
+			return fmt.Errorf("failed to update schema for %T: %w", model, err)
+		}
+	}
+
+	return nil
+}
+
+// checkAndUpdateSchema compares model struct with database table and creates migration if needed
+func (db *DB) checkAndUpdateSchema(modelStruct interface{}) error {
+	t := reflect.TypeOf(modelStruct)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	tableName := camelToSnake(t.Name()) + "s"
+
+	// Extract current table info from struct
+	newTableInfo, err := extractTableInfoFromStruct(modelStruct)
+	if err != nil {
+		return fmt.Errorf("failed to extract table info from struct: %w", err)
+	}
+
+	// Get current table schema from database
+	currentTableInfo, err := db.getTableInfoFromDB(tableName)
+	if err != nil {
+		if strings.Contains(err.Error(), "no such table") {
+			// Table doesn't exist yet, no need to update
+			return nil
+		}
+		return fmt.Errorf("failed to get table info from database: %w", err)
+	}
+
+	// Compare schemas
+	if !schemasEqual(currentTableInfo, newTableInfo) {
+		// Generate migration for schema update
+		return db.createSchemaMigration(tableName, currentTableInfo, newTableInfo)
+	}
+
+	return nil
+}
+
+// getTableInfoFromDB extracts table information from the database
+func (db *DB) getTableInfoFromDB(tableName string) (TableInfo, error) {
+	tableInfo := TableInfo{
+		Name: tableName,
+	}
+
+	// Get column information
+	query := fmt.Sprintf("PRAGMA table_info(%s)", tableName)
+	rows, err := db.Query(query)
+	if err != nil {
+		return tableInfo, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cid int
+		var name, typeName string
+		var notNull, pk int
+		var dfltValue interface{}
+
+		if err := rows.Scan(&cid, &name, &typeName, &notNull, &dfltValue, &pk); err != nil {
+			return tableInfo, err
+		}
+
+		column := ColumnInfo{
+			Name:       name,
+			Type:       typeName,
+			NotNull:    notNull == 1,
+			PrimaryKey: pk > 0,
+		}
+
+		if dfltValue != nil {
+			column.Default = fmt.Sprintf("%v", dfltValue)
+		}
+
+		tableInfo.Columns = append(tableInfo.Columns, column)
+	}
+
+	// Get index information
+	query = fmt.Sprintf("PRAGMA index_list(%s)", tableName)
+	rows, err = db.Query(query)
+	if err != nil {
+		return tableInfo, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var seq int
+		var name string
+		var unique int
+		var origin string
+		var partial int
+
+		if err := rows.Scan(&seq, &name, &unique, &origin, &partial); err != nil {
+			return tableInfo, err
+		}
+
+		// Skip sqlite_autoindex entries
+		if strings.HasPrefix(name, "sqlite_autoindex") {
+			continue
+		}
+
+		// Get columns for this index
+		var columns []string
+		indexInfoQuery := fmt.Sprintf("PRAGMA index_info(%s)", name)
+		indexRows, err := db.Query(indexInfoQuery)
+		if err != nil {
+			return tableInfo, err
+		}
+
+		for indexRows.Next() {
+			var seqno, cid int
+			var colName string
+
+			if err := indexRows.Scan(&seqno, &cid, &colName); err != nil {
+				indexRows.Close()
+				return tableInfo, err
+			}
+
+			columns = append(columns, colName)
+		}
+		indexRows.Close()
+
+		tableInfo.Indexes = append(tableInfo.Indexes, IndexInfo{
+			Name:    name,
+			Columns: columns,
+			Unique:  unique == 1,
+		})
+	}
+
+	return tableInfo, nil
+}
+
+// schemasEqual compares two table schemas to check if they're equivalent
+func schemasEqual(current, new TableInfo) bool {
+	// Compare column count
+	if len(current.Columns) != len(new.Columns) {
+		return false
+	}
+
+	// Create maps for easier comparison
+	currentCols := make(map[string]ColumnInfo)
+	for _, col := range current.Columns {
+		currentCols[col.Name] = col
+	}
+
+	// Compare columns
+	for _, newCol := range new.Columns {
+		currentCol, exists := currentCols[newCol.Name]
+		if !exists {
+			return false // Column doesn't exist in current schema
+		}
+
+		// Compare column properties
+		if currentCol.Type != newCol.Type ||
+			currentCol.NotNull != newCol.NotNull ||
+			currentCol.PrimaryKey != newCol.PrimaryKey {
+			return false
+		}
+	}
+
+	// Compare indexes (simplified)
+	if len(current.Indexes) != len(new.Indexes) {
+		return false
+	}
+
+	return true
+}
+
+// createSchemaMigration creates migration files for schema updates
+func (db *DB) createSchemaMigration(tableName string, currentSchema, newSchema TableInfo) error {
+	// Generate migration sequence number
+	seq, err := getNextMigrationSequence(db.config.MigrationsPath)
+	if err != nil {
+		return fmt.Errorf("failed to get next migration sequence: %w", err)
+	}
+
+	migrationName := fmt.Sprintf("update_%s_schema", tableName)
+
+	// Generate migration file names
+	upFileName := fmt.Sprintf("%06d_%s.up.sql", seq, migrationName)
+	downFileName := fmt.Sprintf("%06d_%s.down.sql", seq, migrationName)
+
+	// Generate SQL for up migration (create temp table, copy data, drop old, rename new)
+	var upSQL strings.Builder
+	upSQL.WriteString(fmt.Sprintf("-- Migration to update %s table schema\n\n", tableName))
+	upSQL.WriteString("PRAGMA foreign_keys=off;\n\n")
+
+	// Create new table with _new suffix
+	tempTableName := tableName + "_new"
+	upSQL.WriteString(fmt.Sprintf("-- Create new table with updated schema\n"))
+	upSQL.WriteString(fmt.Sprintf("CREATE TABLE %s (\n", tempTableName))
+
+	// Add columns
+	for i, col := range newSchema.Columns {
+		if i > 0 {
+			upSQL.WriteString(",\n")
+		}
+
+		upSQL.WriteString(fmt.Sprintf("    %s %s", col.Name, col.Type))
+
+		if col.PrimaryKey {
+			if strings.Contains(col.Type, "INTEGER") {
+				upSQL.WriteString(" PRIMARY KEY AUTOINCREMENT")
+			} else {
+				upSQL.WriteString(" PRIMARY KEY")
+			}
+		}
+
+		if col.NotNull {
+			upSQL.WriteString(" NOT NULL")
+		}
+
+		if col.Unique {
+			upSQL.WriteString(" UNIQUE")
+		}
+
+		if col.Default != "" {
+			upSQL.WriteString(fmt.Sprintf(" DEFAULT %s", col.Default))
+		}
+
+		if col.References != "" {
+			upSQL.WriteString(fmt.Sprintf(" REFERENCES %s", col.References))
+		}
+	}
+
+	// Add composite primary key if needed
+	if len(newSchema.CompositePrimaryKey) > 0 {
+		upSQL.WriteString(",\n    PRIMARY KEY (")
+		for i, col := range newSchema.CompositePrimaryKey {
+			if i > 0 {
+				upSQL.WriteString(", ")
+			}
+			upSQL.WriteString(col)
+		}
+		upSQL.WriteString(")")
+	}
+
+	upSQL.WriteString("\n);\n\n")
+
+	// Copy data from old table to new table
+	upSQL.WriteString("-- Copy data from old table to new table\n")
+	upSQL.WriteString(fmt.Sprintf("INSERT INTO %s (", tempTableName))
+
+	// Find common columns between old and new schemas
+	var commonColumns []string
+	for _, newCol := range newSchema.Columns {
+		for _, currentCol := range currentSchema.Columns {
+			if newCol.Name == currentCol.Name {
+				commonColumns = append(commonColumns, newCol.Name)
+				break
+			}
+		}
+	}
+
+	// Add column names
+	for i, col := range commonColumns {
+		if i > 0 {
+			upSQL.WriteString(", ")
+		}
+		upSQL.WriteString(col)
+	}
+
+	upSQL.WriteString(")\nSELECT ")
+
+	// Add column names again for SELECT
+	for i, col := range commonColumns {
+		if i > 0 {
+			upSQL.WriteString(", ")
+		}
+		upSQL.WriteString(col)
+	}
+
+	upSQL.WriteString(fmt.Sprintf(" FROM %s;\n\n", tableName))
+
+	// Drop old table and rename new table
+	upSQL.WriteString(fmt.Sprintf("-- Drop old table and rename new table\n"))
+	upSQL.WriteString(fmt.Sprintf("DROP TABLE %s;\n", tableName))
+	upSQL.WriteString(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;\n\n", tempTableName, tableName))
+
+	// Add indexes
+	for _, idx := range newSchema.Indexes {
+		uniqueStr := ""
+		if idx.Unique {
+			uniqueStr = "UNIQUE "
+		}
+
+		columns := strings.Join(idx.Columns, ", ")
+		upSQL.WriteString(fmt.Sprintf("CREATE %sINDEX IF NOT EXISTS %s ON %s(%s);\n",
+			uniqueStr, idx.Name, tableName, columns))
+	}
+
+	upSQL.WriteString("\nPRAGMA foreign_keys=on;\n")
+
+	// Generate SQL for down migration (restore original schema)
+	var downSQL strings.Builder
+	downSQL.WriteString(fmt.Sprintf("-- Revert migration for %s table\n\n", tableName))
+	downSQL.WriteString("PRAGMA foreign_keys=off;\n\n")
+
+	// Create temp table with original schema
+	downSQL.WriteString(fmt.Sprintf("-- Create table with original schema\n"))
+	downSQL.WriteString(fmt.Sprintf("CREATE TABLE %s (\n", tempTableName))
+
+	// Add columns
+	for i, col := range currentSchema.Columns {
+		if i > 0 {
+			downSQL.WriteString(",\n")
+		}
+
+		downSQL.WriteString(fmt.Sprintf("    %s %s", col.Name, col.Type))
+
+		if col.PrimaryKey {
+			if strings.Contains(col.Type, "INTEGER") {
+				downSQL.WriteString(" PRIMARY KEY AUTOINCREMENT")
+			} else {
+				downSQL.WriteString(" PRIMARY KEY")
+			}
+		}
+
+		if col.NotNull {
+			downSQL.WriteString(" NOT NULL")
+		}
+
+		if col.Unique {
+			downSQL.WriteString(" UNIQUE")
+		}
+
+		if col.Default != "" {
+			downSQL.WriteString(fmt.Sprintf(" DEFAULT %s", col.Default))
+		}
+	}
+
+	// Add composite primary key if needed
+	if len(currentSchema.CompositePrimaryKey) > 0 {
+		downSQL.WriteString(",\n    PRIMARY KEY (")
+		for i, col := range currentSchema.CompositePrimaryKey {
+			if i > 0 {
+				downSQL.WriteString(", ")
+			}
+			downSQL.WriteString(col)
+		}
+		downSQL.WriteString(")")
+	}
+
+	downSQL.WriteString("\n);\n\n")
+
+	// Copy data back (best effort)
+	downSQL.WriteString("-- Copy data back (best effort)\n")
+	downSQL.WriteString(fmt.Sprintf("INSERT INTO %s (", tempTableName))
+
+	// Add column names
+	for i, col := range commonColumns {
+		if i > 0 {
+			downSQL.WriteString(", ")
+		}
+		downSQL.WriteString(col)
+	}
+
+	downSQL.WriteString(")\nSELECT ")
+
+	// Add column names again for SELECT
+	for i, col := range commonColumns {
+		if i > 0 {
+			downSQL.WriteString(", ")
+		}
+		downSQL.WriteString(col)
+	}
+
+	downSQL.WriteString(fmt.Sprintf(" FROM %s;\n\n", tableName))
+
+	// Drop new table and rename temp table
+	downSQL.WriteString(fmt.Sprintf("-- Drop new table and rename temp table\n"))
+	downSQL.WriteString(fmt.Sprintf("DROP TABLE %s;\n", tableName))
+	downSQL.WriteString(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;\n\n", tempTableName, tableName))
+
+	// Add original indexes
+	for _, idx := range currentSchema.Indexes {
+		uniqueStr := ""
+		if idx.Unique {
+			uniqueStr = "UNIQUE "
+		}
+
+		columns := strings.Join(idx.Columns, ", ")
+		downSQL.WriteString(fmt.Sprintf("CREATE %sINDEX IF NOT EXISTS %s ON %s(%s);\n",
+			uniqueStr, idx.Name, tableName, columns))
+	}
+
+	downSQL.WriteString("\nPRAGMA foreign_keys=on;\n")
+
+	// Write migration files
+	upFilePath := filepath.Join(db.config.MigrationsPath, upFileName)
+	if err := os.WriteFile(upFilePath, []byte(upSQL.String()), 0o644); err != nil {
+		return fmt.Errorf("failed to write up migration file: %w", err)
+	}
+
+	downFilePath := filepath.Join(db.config.MigrationsPath, downFileName)
+	if err := os.WriteFile(downFilePath, []byte(downSQL.String()), 0o644); err != nil {
+		return fmt.Errorf("failed to write down migration file: %w", err)
+	}
+
+	logger.Info("Created schema update migration files: %s, %s", upFileName, downFileName)
 	return nil
 }
