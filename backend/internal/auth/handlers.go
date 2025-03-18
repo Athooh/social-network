@@ -63,7 +63,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if file, header, err := r.FormFile("avatar"); err == nil {
 		defer file.Close()
 
-		filename, err := h.fileStore.SaveFile(header)
+		filename, err := h.fileStore.SaveFile(header, "avatars")
 		if err != nil {
 			h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to save avatar: %s", err.Error()))
 			return
