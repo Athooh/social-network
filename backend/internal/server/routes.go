@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/Athooh/social-network/pkg/auth"
+	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/middleware"
 )
