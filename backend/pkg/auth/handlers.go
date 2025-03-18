@@ -2,9 +2,11 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Athooh/social-network/pkg/filestore"
+	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 )
 
@@ -26,7 +28,7 @@ func NewHandler(service *Service, fileStore *filestore.FileStore) *Handler {
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 		return
 	}
 
@@ -50,7 +52,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Validate required fields
 	if req.Email == "" || req.Password == "" ||
 		req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
-		h.sendError(w, http.StatusBadRequest, "Missing required fields")
+		h.sendError(w, http.StatusBadRequest,
+			fmt.Sprintf("Missing required fields: email: %s, password: %s, firstName: %s, lastName: %s, dateOfBirth: %s",
+				req.Email, req.Password, req.FirstName, req.LastName, req.DateOfBirth))
 		return
 	}
 
@@ -60,10 +64,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 		filename, err := h.fileStore.SaveFile(header)
 		if err != nil {
-			logger.Error("Failed to save avatar: %v", map[string]interface{}{
-				"error": err.Error(),
-			})
-			h.sendError(w, http.StatusInternalServerError, "Failed to save avatar")
+			h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to save avatar: %s", err.Error()))
 			return
 		}
 		req.Avatar = filename
@@ -72,23 +73,18 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Register the user
 	tokenResponse, err := h.service.Register(req)
 	if err != nil {
-		logger.Error("Failed to register user: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		h.sendError(w, http.StatusBadRequest, err.Error())
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to register user: %s", err.Error()))
 		return
 	}
 
 	// Create a session
 	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
-		logger.Error("Failed to create session: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		h.sendError(w, http.StatusInternalServerError, "Failed to create session")
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create session: %s", err.Error()))
 		return
 	}
 
-	logger.Info("User registered successfully")
+	logger.Info("User registered successfully: %s %s (%s)",
+		req.FirstName, req.LastName, req.Email)
 
 	// Return success response
 	h.sendJSON(w, http.StatusCreated, tokenResponse)
@@ -96,144 +92,82 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 // Helper method to send JSON responses
 func (h *Handler) sendJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	httputil.SendJSON(w, status, data)
 }
 
 // Helper method to send error responses
 func (h *Handler) sendError(w http.ResponseWriter, status int, message string) {
-	logger.Error(message, map[string]interface{}{
-		"status": status,
-	})
-	h.sendJSON(w, status, map[string]string{"error": message})
+	httputil.SendError(w, status, message)
 }
 
 // Logout handles user logout
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		logger.Error("Method not allowed: %s", map[string]interface{}{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"status": http.StatusMethodNotAllowed,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 		return
 	}
 
 	// Logout the user
 	if err := h.service.Logout(w, r); err != nil {
-		logger.Error("Failed to logout user: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to logout"})
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to logout user: %s", err.Error()))
 		return
 	}
 
 	// Return success
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Logged out successfully"})
+	h.sendJSON(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }
 
 // Me returns the current user's information
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
-		logger.Error("Method not allowed: %s", map[string]interface{}{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"status": http.StatusMethodNotAllowed,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 		return
 	}
 
 	// Get the current user
 	user, err := h.service.GetCurrentUser(r)
 	if err != nil {
-		logger.Error("Failed to get current user: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Not authenticated"})
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Failed to get current user: %s", err.Error()))
 		return
 	}
 
 	// Return the user data
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	h.sendJSON(w, http.StatusOK, user)
 }
 
 // LoginJWT handles user login with JWT authentication
 func (h *Handler) LoginJWT(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		logger.Error("Method not allowed: %s", map[string]interface{}{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"status": http.StatusMethodNotAllowed,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 		return
 	}
 
 	// Parse request body
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("Invalid request body: %v", map[string]interface{}{
-			"status": http.StatusBadRequest,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %s", err.Error()))
 		return
 	}
 
 	// Validate required fields
 	if req.Email == "" || req.Password == "" {
-		logger.Error("Missing email or password: %v", map[string]interface{}{
-			"status": http.StatusBadRequest,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Missing email or password"})
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Missing required fields: email: %s, password: %s", req.Email, req.Password))
 		return
 	}
 
 	// Login the user with JWT
 	tokenResponse, err := h.service.LoginWithJWT(req)
 	if err != nil {
-		logger.Error("Failed to login user: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Failed to login user: %s", err.Error()))
 		return
 	}
-	logger.Info("creating session: %s", map[string]interface{}{
-		"email": req.Email,
-	})
+
 	// Create a session
 	if err := h.service.sessionManager.CreateSession(w, tokenResponse.User.ID); err != nil {
-		logger.Error("Failed to create session: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create session: %s", err.Error()))
 		return
 	}
 
@@ -247,43 +181,25 @@ func (h *Handler) LoginJWT(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
-		logger.Error("Method not allowed: %s", map[string]interface{}{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"status": http.StatusMethodNotAllowed,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 		return
 	}
 
 	// Extract token from request
 	tokenString, err := ExtractTokenFromRequest(r)
 	if err != nil {
-		logger.Warn("Token validation failed: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid token"})
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Token validation failed: %s", err.Error()))
 		return
 	}
 
 	// Validate token
 	_, err = ValidateToken(tokenString, h.service.jwtConfig)
 	if err != nil {
-		logger.Warn("Invalid token: %v", map[string]interface{}{
-			"error": err.Error(),
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid token"})
+		logger.Warn("Invalid token : %s", tokenString)
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Invalid token: %s", err.Error()))
 		return
 	}
 
 	// Token is valid
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Token is valid"})
+	h.sendJSON(w, http.StatusOK, map[string]string{"message": "Token is valid"})
 }
