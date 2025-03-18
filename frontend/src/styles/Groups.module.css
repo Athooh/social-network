@@ -1,5 +1,5 @@
 .container {
-    padding-top: calc(var(--header-height) + var(--spacing-md));
+  padding-top: calc(var(--header-height) + var(--spacing-md));
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   gap: var(--spacing-md);
