@@ -62,7 +62,7 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
-	_, err := r.db.Exec(
+	result, err := r.db.Exec(
 		query,
 		post.UserID,
 		post.Content,
@@ -75,6 +75,11 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 	if err != nil {
 		return err
 	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	post.ID = id
 
 	return nil
 }
