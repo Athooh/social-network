@@ -1039,4 +1039,46 @@
   padding: var(--spacing-md);
   color: var(--text-secondary);
   margin-top: var(--spacing-md);
+}
+
+.deleteConfirmText {
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  text-align: center;
+  font-size: var(--font-size-md);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.cancelBtn, 
+.deleteBtn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.cancelBtn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.cancelBtn:hover {
+  background-color: var(--background-main);
+}
+
+.deleteBtn {
+  background-color: #f44336;
+  color: white;
+}
+
+.deleteBtn:hover {
+  background-color: #d32f2f;
 } 
