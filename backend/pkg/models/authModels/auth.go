@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 // RegisterRequest represents the data needed for user registration
 type RegisterRequest struct {
@@ -32,6 +34,7 @@ type UserResponse struct {
 	AboutMe     string    `json:"aboutMe"`
 	IsPublic    bool      `json:"isPublic"`
 	CreatedAt   time.Time `json:"createdAt"`
+	// UserStats   models.UserStats `json:"userStats"`
 }
 
 // TokenResponse represents the JWT token response
