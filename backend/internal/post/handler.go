@@ -660,7 +660,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 	commentID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid comment ID: %v", err))
 		return
 	}
 
@@ -745,7 +745,10 @@ func (h *Handler) GetFeedPosts(w http.ResponseWriter, r *http.Request) {
 			postResp.VideoURL = "/uploads/" + post.VideoPath.String
 		}
 
-		postResp.UserData.Avatar = "/uploads/" + postResp.UserData.Avatar
+		if postResp.UserData.Avatar != "" {
+			postResp.UserData.Avatar = "/uploads/" + postResp.UserData.Avatar
+		}
+
 		// Add comments to response
 		for _, comment := range comments {
 			commentResp := CommentResponse{
