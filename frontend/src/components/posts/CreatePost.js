@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePostService } from "@/services/postService"; // Adjust the import path
 import styles from "@/styles/Posts.module.css";
 import { showToast } from "@/components/ui/ToastContainer";
+import EmojiPicker from "@/components/ui/EmojiPicker";
 
 export default function CreatePost() {
   const { createPost } = usePostService();
@@ -13,6 +14,11 @@ export default function CreatePost() {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [privacy, setPrivacy] = useState("public");
   const [showPrivacyDropdown, setShowPrivacyDropdown] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [selectedViewers, setSelectedViewers] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,11 +26,36 @@ export default function CreatePost() {
     const formData = new FormData();
     formData.append("content", postText);
     formData.append("privacy", privacy);
+
+    if (privacy === "private" && selectedViewers.length === 0) {
+      showToast("Please select at least one follower", "error");
+      return;
+    }
+
+    // Add selected viewers if privacy is private
+    if (privacy === "private" && selectedViewers.length > 0) {
+      selectedViewers.forEach((viewerId, index) => {
+        formData.append(`viewers[${index}]`, viewerId);
+      });
+    }
+
+    if (selectedFiles.length > 1) {
+      showToast(
+        "Please select only one image or video the backend does not support multiple files currently😁",
+        "error"
+      );
+      return;
+    }
+    // Separate files by type
     selectedFiles.forEach((file) => {
-      formData.append("files", file);
+      if (file.type.startsWith("image/")) {
+        formData.append("image", file);
+      } else if (file.type.startsWith("video/")) {
+        formData.append("video", file);
+      }
     });
 
-    if (!postText && !selectedFiles.length) {
+    if (!postText.trim() && !selectedFiles.length) {
       showToast("Please enter a post content or add media", "error");
       return;
     }
@@ -36,17 +67,44 @@ export default function CreatePost() {
       setSelectedFiles([]);
       setPreviewUrls([]);
       setIsModalOpen(false);
+      setSelectedViewers([]);
     } catch (error) {
       console.error("Error submitting post:", error);
     }
   };
-  const handleFileSelect = (e) => {
+  const handleFileSelect = (e, fileType) => {
     const files = Array.from(e.target.files);
-    setSelectedFiles(files);
+
+    const filteredFiles = files.filter((file) => {
+      if (fileType === "image") {
+        // Only accept png, jpg/jpeg, and gif
+        return (
+          file.type === "image/png" ||
+          file.type === "image/jpeg" ||
+          file.type === "image/jpg" ||
+          file.type === "image/gif"
+        );
+      }
+      if (fileType === "video") {
+        return file.type.startsWith("video/");
+      }
+      return false; // Reject if not matching criteria
+    });
+
+    if (filteredFiles.length === 0) {
+      if (fileType === "image") {
+        showToast("Please select PNG, JPG, or GIF images only", "error");
+      } else {
+        showToast("Please select valid video files", "error");
+      }
+      return;
+    }
+
+    setSelectedFiles((prev) => [...prev, ...filteredFiles]);
 
     // Create preview URLs
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
+    const urls = filteredFiles.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...urls]);
   };
 
   const removeFile = (index) => {
@@ -80,6 +138,55 @@ export default function CreatePost() {
     }
   };
 
+  const addEmoji = (emoji) => {
+    setPostText((prev) => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const fetchFollowers = () => {
+    // Dummy data for followers
+    const dummyFollowers = [
+      { id: "1", name: "Alice Johnson", avatar: "/avatar1.png" },
+      { id: "2", name: "Bob Smith", avatar: "/avatar2.png" },
+      { id: "3", name: "Carol Williams", avatar: "/avatar3.png" },
+      { id: "4", name: "Dave Brown", avatar: "/avatar5.png" },
+      { id: "5", name: "Eve Davis", avatar: "/avatar6.png" },
+      { id: "6", name: "Frank Miller", avatar: "/avatar7.png" },
+      { id: "7", name: "Grace Wilson", avatar: "/avatar8.png" },
+    ];
+
+    setFollowers(dummyFollowers);
+  };
+
+  const toggleViewer = (followerId) => {
+    setSelectedViewers((prev) => {
+      if (prev.includes(followerId)) {
+        return prev.filter((id) => id !== followerId);
+      } else {
+        return [...prev, followerId];
+      }
+    });
+  };
+
+  const filteredFollowers = () => {
+    if (!searchTerm.trim()) return followers;
+
+    return followers.filter((follower) =>
+      follower.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const openSettingsModal = () => {
+    fetchFollowers(); // Fetch followers when opening settings
+    setIsModalOpen(false); // Close the create post modal
+    setShowSettingsModal(true);
+  };
+
+  const closeSettingsModal = () => {
+    setShowSettingsModal(false);
+    setIsModalOpen(true); // Reopen the create post modal
+  };
+
   return (
     <>
       <div className={styles.createPostCard}>
@@ -97,14 +204,34 @@ export default function CreatePost() {
           </div>
         </div>
         <div className={styles.createPostFooter}>
-          <button className={styles.mediaButton}>
-            <i className="fas fa-video"></i>
-            <span>Live Video</span>
-          </button>
-          <button className={styles.mediaButton}>
+          <label className={styles.mediaButton}>
+            <input
+              type="file"
+              multiple
+              accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/jpg,image/gif"
+              onChange={(e) => {
+                handleFileSelect(e, "image");
+                setIsModalOpen(true);
+              }}
+              hidden
+            />
             <i className="fas fa-images"></i>
-            <span>Photo/Video</span>
-          </button>
+            <span>Photo</span>
+          </label>
+          <label className={styles.mediaButton}>
+            <input
+              type="file"
+              multiple
+              accept="video/*"
+              onChange={(e) => {
+                handleFileSelect(e, "video");
+                setIsModalOpen(true);
+              }}
+              hidden
+            />
+            <i className="fas fa-video"></i>
+            <span>Video</span>
+          </label>
           <button className={styles.mediaButton}>
             <i className="fas fa-face-smile"></i>
             <span>Feeling/Activity</span>
@@ -137,58 +264,12 @@ export default function CreatePost() {
                   <div className={styles.privacySelector}>
                     <button
                       className={styles.privacyButton}
-                      onClick={() =>
-                        setShowPrivacyDropdown(!showPrivacyDropdown)
-                      }
+                      onClick={openSettingsModal}
                     >
                       <i className={getPrivacyIcon()}></i>
                       {getPrivacyText()}
                       <i className="fas fa-caret-down"></i>
                     </button>
-
-                    {showPrivacyDropdown && (
-                      <div className={styles.privacyDropdown}>
-                        <div
-                          className={`${styles.privacyOption} ${privacy === "public" ? styles.selected : ""}`}
-                          onClick={() => {
-                            setPrivacy("public");
-                            setShowPrivacyDropdown(false);
-                          }}
-                        >
-                          <i className="fas fa-globe"></i>
-                          <div>
-                            <span>Public</span>
-                            <p className={styles.privacyDescription}>Anyone can see this post</p>
-                          </div>
-                        </div>
-                        <div
-                          className={`${styles.privacyOption} ${privacy === "private" ? styles.selected : ""}`}
-                          onClick={() => {
-                            setPrivacy("private");
-                            setShowPrivacyDropdown(false);
-                          }}
-                        >
-                          <i className="fas fa-lock"></i>
-                          <div>
-                            <span>Private</span>
-                            <p className={styles.privacyDescription}>Only you can see this post</p>
-                          </div>
-                        </div>
-                        <div
-                          className={`${styles.privacyOption} ${privacy === "almost_private" ? styles.selected : ""}`}
-                          onClick={() => {
-                            setPrivacy("almost_private");
-                            setShowPrivacyDropdown(false);
-                          }}
-                        >
-                          <i className="fas fa-user-friends"></i>
-                          <div>
-                            <span>Almost Private</span>
-                            <p className={styles.privacyDescription}>Only friends can see this post</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -205,10 +286,18 @@ export default function CreatePost() {
                   <div className={styles.previewGrid}>
                     {previewUrls.map((url, index) => (
                       <div key={index} className={styles.previewItem}>
-                        {url.includes("image") ? (
+                        {selectedFiles[index].type.startsWith("image/") ? (
                           <img src={url} alt="Preview" />
                         ) : (
-                          <video src={url} controls />
+                          <video
+                            src={url}
+                            controls
+                            preload="metadata"
+                            className={styles.videoPreview}
+                            onError={(e) =>
+                              console.error("Video preview error:", e)
+                            }
+                          />
                         )}
                         <button
                           type="button"
@@ -229,13 +318,28 @@ export default function CreatePost() {
                       <input
                         type="file"
                         multiple
-                        accept="image/*,video/*"
-                        onChange={handleFileSelect}
+                        accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/jpg,image/gif"
+                        onChange={(e) => handleFileSelect(e, "image")}
                         hidden
                       />
                       <i
-                        className="fas fa-images"
+                        className="fas fa-image"
                         style={{ color: "#45bd62" }}
+                        title="Upload Images (PNG, JPG, GIF)"
+                      ></i>
+                    </label>
+                    <label className={styles.mediaLabel}>
+                      <input
+                        type="file"
+                        multiple
+                        accept="video/*"
+                        onChange={(e) => handleFileSelect(e, "video")}
+                        hidden
+                      />
+                      <i
+                        className="fas fa-video"
+                        style={{ color: "#e42645" }}
+                        title="Upload Videos"
                       ></i>
                     </label>
                     <button type="button">
@@ -244,7 +348,10 @@ export default function CreatePost() {
                         style={{ color: "#1877f2" }}
                       ></i>
                     </button>
-                    <button type="button">
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
                       <i
                         className="fas fa-face-smile"
                         style={{ color: "#f7b928" }}
@@ -256,11 +363,25 @@ export default function CreatePost() {
                         style={{ color: "#f5533d" }}
                       ></i>
                     </button>
-                    <button type="button">
-                      <i className="fas fa-ellipsis-h"></i>
+                    <button
+                      type="button"
+                      onClick={openSettingsModal}
+                      title="Post Settings"
+                    >
+                      <i
+                        className="fas fa-cog"
+                        style={{ color: "#1877f2" }}
+                      ></i>
                     </button>
                   </div>
                 </div>
+
+                {showEmojiPicker && (
+                  <EmojiPicker
+                    onEmojiSelect={(emoji) => addEmoji(emoji)}
+                    onClose={() => setShowEmojiPicker(false)}
+                  />
+                )}
 
                 <button
                   type="submit"
@@ -271,6 +392,162 @@ export default function CreatePost() {
                   Post
                 </button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSettingsModal && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modal} ${styles.settingsModal}`}>
+            <div className={styles.modalHeader}>
+              <button
+                className={styles.backButton}
+                onClick={closeSettingsModal}
+              >
+                <i className="fas fa-arrow-left"></i>
+              </button>
+              <h2>Post Settings</h2>
+              <div></div> {/* Empty div for flex spacing */}
+            </div>
+
+            <div className={styles.modalContent}>
+              <div className={styles.settingsSection}>
+                <h3>Privacy</h3>
+                <div className={styles.privacyOptions}>
+                  <div className={styles.privacyOption}>
+                    <label
+                      className={`${styles.radioLabel} ${
+                        privacy === "public" ? styles.selectedPrivacy : ""
+                      }`}
+                    >
+                      <div className={styles.radioIcon}>
+                        <input
+                          type="radio"
+                          name="privacy"
+                          value="public"
+                          checked={privacy === "public"}
+                          onChange={() => setPrivacy("public")}
+                        />
+                        <i className="fas fa-globe"></i>
+                      </div>
+                      <div className={styles.privacyContent}>
+                        <span className={styles.privacyTitle}>Public</span>
+                        <p className={styles.privacyDescription}>
+                          Anyone can see this post
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className={styles.privacyOption}>
+                    <label
+                      className={`${styles.radioLabel} ${
+                        privacy === "almost_private"
+                          ? styles.selectedPrivacy
+                          : ""
+                      }`}
+                    >
+                      <div className={styles.radioIcon}>
+                        <input
+                          type="radio"
+                          name="privacy"
+                          value="almost_private"
+                          checked={privacy === "almost_private"}
+                          onChange={() => setPrivacy("almost_private")}
+                        />
+                        <i className="fas fa-user-friends"></i>
+                      </div>
+                      <div className={styles.privacyContent}>
+                        <span className={styles.privacyTitle}>
+                          Almost Private
+                        </span>
+                        <p className={styles.privacyDescription}>
+                          Only your followers can see this post
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className={styles.privacyOption}>
+                    <label
+                      className={`${styles.radioLabel} ${
+                        privacy === "private" ? styles.selectedPrivacy : ""
+                      }`}
+                    >
+                      <div className={styles.radioIcon}>
+                        <input
+                          type="radio"
+                          name="privacy"
+                          value="private"
+                          checked={privacy === "private"}
+                          onChange={() => setPrivacy("private")}
+                        />
+                        <i className="fas fa-lock"></i>
+                      </div>
+                      <div className={styles.privacyContent}>
+                        <span className={styles.privacyTitle}>Private</span>
+                        <p className={styles.privacyDescription}>
+                          Only selected followers can see this post
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {privacy === "private" && (
+                <div className={styles.settingsSection}>
+                  <h3>Who can see this post?</h3>
+                  <div className={styles.searchContainer}>
+                    <i className="fas fa-search"></i>
+                    <input
+                      type="text"
+                      placeholder="Search followers..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className={styles.searchInput}
+                    />
+                  </div>
+
+                  <div className={styles.followersList}>
+                    {filteredFollowers().length > 0 ? (
+                      filteredFollowers().map((follower) => (
+                        <div
+                          key={follower.id}
+                          className={`${styles.followerItem} ${
+                            selectedViewers.includes(follower.id)
+                              ? styles.selected
+                              : ""
+                          }`}
+                          onClick={() => toggleViewer(follower.id)}
+                        >
+                          <div className={styles.followerInfo}>
+                            <img src={follower.avatar} alt={follower.name} />
+                            <span>{follower.name}</span>
+                          </div>
+                          <div className={styles.checkboxContainer}>
+                            {selectedViewers.includes(follower.id) && (
+                              <i className="fas fa-check-circle"></i>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={styles.noResults}>
+                        No followers found matching "{searchTerm}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <button
+                className={styles.saveSettingsButton}
+                onClick={closeSettingsModal}
+              >
+                Save Settings
+              </button>
             </div>
           </div>
         </div>
