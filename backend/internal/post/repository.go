@@ -38,6 +38,9 @@ type Repository interface {
 
 	// User data method
 	GetUserDataByID(userID string) (*models.PostUserData, error)
+
+	// New method
+	GetUserFollowers(userID string) ([]string, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -576,4 +579,27 @@ func (r *SQLiteRepository) GetUserDataByID(userID string) (*models.PostUserData,
 	}
 
 	return user, nil
+}
+
+// GetUserFollowers returns the IDs of users who follow the specified user
+func (r *SQLiteRepository) GetUserFollowers(userID string) ([]string, error) {
+	var followerIDs []string
+
+	query := `SELECT follower_id FROM followers WHERE following_id = $1`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		followerIDs = append(followerIDs, id)
+	}
+
+	return followerIDs, nil
 }

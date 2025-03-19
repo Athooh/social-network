@@ -5,6 +5,8 @@ import styles from "@/styles/Posts.module.css";
 import { usePostService } from "@/services/postService";
 import { showToast } from "@/components/ui/ToastContainer";
 import { useAuth } from "@/context/authcontext";
+import { formatRelativeTime } from "@/utils/dateUtils";
+import { BASE_URL } from "@/utils/constants";
 
 export default function Post({ post, onPostUpdated }) {
   const { likePost, addComment, getPostComments, deletePost } =
@@ -14,12 +16,36 @@ export default function Post({ post, onPostUpdated }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showOptions, setShowOptions] = useState(false);
-  const [comments, setComments] = useState(post.comments || []);
-  const [likesCount, setLikesCount] = useState(post.likes || 0);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentImage, setCommentImage] = useState(null);
   const [commentImagePreview, setCommentImagePreview] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Format the post data to match component expectations
+  const formattedPost = {
+    id: post.id,
+    authorName: post.userData
+      ? `${post.userData.firstName} ${post.userData.lastName}`
+      : "Unknown User",
+    authorImage: post.userData?.avatar
+      ? post.userData.avatar.startsWith("http")
+        ? post.userData.avatar
+        : `${BASE_URL}${post.userData.avatar}`
+      : "/avatar4.png",
+    content: post.content,
+    timestamp: formatRelativeTime(post.createdAt),
+    privacy: post.privacy,
+    likes: post.likesCount || 0,
+    commentCount: post.comments?.length || 0,
+    shares: post.shares || 0,
+    image: post.imageUrl ? `${BASE_URL}${post.imageUrl}` : null,
+    video: post.videoUrl ? `${BASE_URL}${post.videoUrl}` : null,
+    userId: post.userId,
+  };
+
+  // Use formatted data instead of raw post data
+  const [likesCount, setLikesCount] = useState(formattedPost.likes);
+  const [comments, setComments] = useState(post.comments || []);
 
   // Add click outside handler
   const handleClickOutside = (e) => {
@@ -104,7 +130,8 @@ export default function Post({ post, onPostUpdated }) {
         authorName: user?.name || "You",
         authorImage: user?.profilePicture || "/avatar4.png",
         content: commentText,
-        timestamp: "Just now",
+        timestamp: "just now",
+        imageUrl: newComment.image || null,
       };
 
       setComments((prev) => [...prev, formattedComment]);
@@ -163,20 +190,20 @@ export default function Post({ post, onPostUpdated }) {
       <div className={styles.postHeader}>
         <div className={styles.postAuthor}>
           <img
-            src={post.authorImage}
-            alt={post.authorName}
+            src={formattedPost.authorImage}
+            alt={formattedPost.authorName}
             className={styles.authorAvatar}
           />
           <div className={styles.authorInfo}>
-            <h3>{post.authorName}</h3>
+            <h3>{formattedPost.authorName}</h3>
             <div className={styles.postMeta}>
-              <span>{post.timestamp}</span>
+              <span>{formattedPost.timestamp}</span>
               <span className={styles.dot}>•</span>
               <i
                 className={`fas ${
-                  post.privacy === "public"
+                  formattedPost.privacy === "public"
                     ? "fa-globe-americas"
-                    : post.privacy === "private"
+                    : formattedPost.privacy === "private"
                     ? "fa-lock"
                     : "fa-user-friends"
                 }`}
@@ -223,15 +250,19 @@ export default function Post({ post, onPostUpdated }) {
       </div>
 
       <div className={styles.postContent}>
-        <p>{post.content}</p>
-        {post.image && (
+        <p>{formattedPost.content}</p>
+        {formattedPost.image && (
           <div className={styles.postMedia}>
-            <img src={post.image} alt="Post content" />
+            <img src={formattedPost.image} alt="Post content" />
           </div>
         )}
-        {post.video && (
+        {formattedPost.video && (
           <div className={styles.postMedia}>
-            <video src={post.video} controls className={styles.videoContent} />
+            <video
+              src={formattedPost.video}
+              controls
+              className={styles.videoContent}
+            />
           </div>
         )}
       </div>
@@ -245,8 +276,8 @@ export default function Post({ post, onPostUpdated }) {
           <span>{likesCount} likes</span>
         </div>
         <div className={styles.engagement}>
-          <span>{post.commentCount} comments</span>
-          <span>{post.shares} shares</span>
+          <span>{formattedPost.commentCount} comments</span>
+          <span>{formattedPost.shares} shares</span>
         </div>
       </div>
 
