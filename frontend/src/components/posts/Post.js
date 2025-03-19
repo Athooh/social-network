@@ -1,13 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import styles from '@/styles/Posts.module.css';
+import { useState, useEffect } from "react";
+import styles from "@/styles/Posts.module.css";
+import { usePostService } from "@/services/postService";
+import { showToast } from "@/components/ui/ToastContainer";
+import { useAuth } from "@/context/authcontext";
 
-export default function Post({ post }) {
+export default function Post({ post, onPostUpdated }) {
+  const { likePost, addComment, getPostComments } = usePostService();
+  const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const [showOptions, setShowOptions] = useState(false);
+  const [comments, setComments] = useState(post.comments || []);
+  const [likesCount, setLikesCount] = useState(post.likes || 0);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentImage, setCommentImage] = useState(null);
+  const [commentImagePreview, setCommentImagePreview] = useState(null);
+
 
   // Add click outside handler
   const handleClickOutside = (e) => {
@@ -17,62 +28,146 @@ export default function Post({ post }) {
   };
 
   // Add event listener when dropdown is open
-  useState(() => {
+  useEffect(() => {
     if (showOptions) {
-      document.addEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
     }
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [showOptions]);
 
+  // Fetch comments when comment section is opened
+  useEffect(() => {
+    if (showComments && comments.length === 0) {
+      fetchComments();
+    }
+  }, [showComments]);
+
+  const fetchComments = async () => {
+    if (loadingComments) return;
+
+    setLoadingComments(true);
+    try {
+      const commentsData = await getPostComments(post.id);
+      setComments(commentsData);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
   const handleOptionClick = (action) => {
     switch (action) {
-      case 'edit':
-        console.log('Edit post');
+      case "edit":
+        console.log("Edit post");
         break;
-      case 'delete':
-        console.log('Delete post');
+      case "delete":
+        console.log("Delete post");
         break;
-      case 'follow':
-        console.log('Follow user');
+      case "follow":
+        console.log("Follow user");
         break;
-      case 'unfollow':
-        console.log('Unfollow user');
+      case "unfollow":
+        console.log("Unfollow user");
         break;
     }
     setShowOptions(false);
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-  };
-
-  const handleComment = (e) => {
-    e.preventDefault();
-    if (commentText.trim()) {
-      // Add comment logic here
-      console.log('New comment:', commentText);
-      setCommentText('');
+  const handleLike = async () => {
+    try {
+      await likePost(post.id);
+      setIsLiked(!isLiked);
+      setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+      if (onPostUpdated) onPostUpdated();
+    } catch (error) {
+      console.error("Error liking post:", error);
     }
   };
+
+  const handleComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim() && !commentImage) {
+      showToast("Please enter a comment or add an image", "error");
+      return;
+    }
+
+    try {
+      const newComment = await addComment(post.id, commentText, commentImage);
+
+      // Format the new comment to match our component's expected format
+      const formattedComment = {
+        id: newComment.id,
+        authorName: user?.name || "You",
+        authorImage: user?.profilePicture || "/avatar4.png",
+        content: commentText,
+        timestamp: "Just now",
+      };
+
+      setComments((prev) => [...prev, formattedComment]);
+      setCommentText("");
+      setCommentImage(null);
+      setCommentImagePreview(null);
+
+      if (onPostUpdated) onPostUpdated();
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  const handleCommentImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showToast("Please select an image file", "error");
+      return;
+    }
+
+    setCommentImage(file);
+    setCommentImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeCommentImage = () => {
+    setCommentImage(null);
+    if (commentImagePreview) {
+      URL.revokeObjectURL(commentImagePreview);
+      setCommentImagePreview(null);
+    }
+  };
+
+  const isCurrentUserPost = user?.id === post.userId;
 
   return (
     <article className={styles.post}>
       <div className={styles.postHeader}>
         <div className={styles.postAuthor}>
-          <img src={post.authorImage} alt={post.authorName} className={styles.authorAvatar} />
+          <img
+            src={post.authorImage}
+            alt={post.authorName}
+            className={styles.authorAvatar}
+          />
           <div className={styles.authorInfo}>
             <h3>{post.authorName}</h3>
             <div className={styles.postMeta}>
               <span>{post.timestamp}</span>
               <span className={styles.dot}>•</span>
-              <i className="fas fa-globe-americas"></i>
+              <i
+                className={`fas ${
+                  post.privacy === "public"
+                    ? "fa-globe-americas"
+                    : post.privacy === "private"
+                    ? "fa-lock"
+                    : "fa-user-friends"
+                }`}
+              ></i>
             </div>
           </div>
         </div>
         <div className={styles.postOptionsContainer}>
-          <button 
+          <button
             className={styles.postOptions}
             onClick={(e) => {
               e.stopPropagation();
@@ -83,20 +178,24 @@ export default function Post({ post }) {
           </button>
           {showOptions && (
             <div className={styles.optionsDropdown}>
-              <button onClick={() => handleOptionClick('edit')}>
-                <i className="fas fa-edit"></i>
-                Edit Post
-              </button>
-              <button onClick={() => handleOptionClick('delete')}>
-                <i className="fas fa-trash-alt"></i>
-                Delete Post
-              </button>
-              <div className={styles.dropdownDivider} />
-              <button onClick={() => handleOptionClick('follow')}>
+              {isCurrentUserPost && (
+                <>
+                  <button onClick={() => handleOptionClick("edit")}>
+                    <i className="fas fa-edit"></i>
+                    Edit Post
+                  </button>
+                  <button onClick={() => handleOptionClick("delete")}>
+                    <i className="fas fa-trash-alt"></i>
+                    Delete Post
+                  </button>
+                  <div className={styles.dropdownDivider} />
+                </>
+              )}
+              <button onClick={() => handleOptionClick("follow")}>
                 <i className="fas fa-user-plus"></i>
                 Follow
               </button>
-              <button onClick={() => handleOptionClick('unfollow')}>
+              <button onClick={() => handleOptionClick("unfollow")}>
                 <i className="fas fa-user-minus"></i>
                 Unfollow
               </button>
@@ -112,15 +211,20 @@ export default function Post({ post }) {
             <img src={post.image} alt="Post content" />
           </div>
         )}
+        {post.video && (
+          <div className={styles.postMedia}>
+            <video src={post.video} controls className={styles.videoContent} />
+          </div>
+        )}
       </div>
 
       <div className={styles.postStats}>
         <div className={styles.reactions}>
           <span className={styles.reactionIcons}>
-            <i className="fas fa-thumbs-up" style={{ color: '#2078f4' }}></i>
-            <i className="fas fa-heart" style={{ color: '#f33e58' }}></i>
+            <i className="fas fa-thumbs-up" style={{ color: "#2078f4" }}></i>
+            <i className="fas fa-heart" style={{ color: "#f33e58" }}></i>
           </span>
-          <span>{post.likes} likes</span>
+          <span>{likesCount} likes</span>
         </div>
         <div className={styles.engagement}>
           <span>{post.commentCount} comments</span>
@@ -129,14 +233,14 @@ export default function Post({ post }) {
       </div>
 
       <div className={styles.postActions}>
-        <button 
-          className={`${styles.actionButton} ${isLiked ? styles.liked : ''}`}
+        <button
+          className={`${styles.actionButton} ${isLiked ? styles.liked : ""}`}
           onClick={handleLike}
         >
           <i className="fas fa-thumbs-up"></i>
           <span>Like</span>
         </button>
-        <button 
+        <button
           className={styles.actionButton}
           onClick={() => setShowComments(!showComments)}
         >
@@ -152,7 +256,11 @@ export default function Post({ post }) {
       {showComments && (
         <div className={styles.commentsSection}>
           <form onSubmit={handleComment} className={styles.commentForm}>
-            <img src="/avatar4.png" alt="Your avatar" className={styles.commentAvatar} />
+            <img
+              src={user?.profilePicture || "/avatar4.png"}
+              alt="Your avatar"
+              className={styles.commentAvatar}
+            />
             <div className={styles.commentInput}>
               <input
                 type="text"
@@ -160,19 +268,65 @@ export default function Post({ post }) {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
               />
-              <button type="submit" disabled={!commentText.trim()}>
+              <label className={styles.commentImageLabel}>
+                <i className="fas fa-camera"></i>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCommentImageChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={!commentText.trim() && !commentImage}
+              >
                 <i className="fas fa-paper-plane"></i>
               </button>
             </div>
           </form>
-          
-          {post.comments && post.comments.map((comment) => (
+
+          {commentImagePreview && (
+            <div className={styles.commentImagePreview}>
+              <img src={commentImagePreview} alt="Comment attachment" />
+              <button
+                className={styles.removeCommentImage}
+                onClick={removeCommentImage}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          )}
+
+          {loadingComments && (
+            <div className={styles.commentsLoading}>
+              <div className={styles.spinner}></div>
+              <p>Loading comments...</p>
+            </div>
+          )}
+
+          {!loadingComments && comments.length === 0 && (
+            <div className={styles.noComments}>
+              <p>No comments yet. Be the first to comment!</p>
+            </div>
+          )}
+
+          {comments.map((comment) => (
             <div key={comment.id} className={styles.comment}>
-              <img src={comment.authorImage} alt={comment.authorName} className={styles.commentAvatar} />
+              <img
+                src={comment.authorImage}
+                alt={comment.authorName}
+                className={styles.commentAvatar}
+              />
               <div className={styles.commentContent}>
                 <div className={styles.commentBubble}>
                   <h4>{comment.authorName}</h4>
                   <p>{comment.content}</p>
+                  {comment.imageUrl && (
+                    <div className={styles.commentImage}>
+                      <img src={comment.imageUrl} alt="Comment attachment" />
+                    </div>
+                  )}
                 </div>
                 <div className={styles.commentActions}>
                   <button>Like</button>
@@ -186,4 +340,4 @@ export default function Post({ post }) {
       )}
     </article>
   );
-} 
+}
