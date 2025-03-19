@@ -12,18 +12,20 @@ export const usePostService = () => {
         body: formData,
       });
 
-      console.log("Response ", response);
+      // Check if response is not ok
       if (!response.ok) {
-        throw new Error("Failed to create post");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to create post"
+        );
       }
 
       const data = await response.json();
-
       showToast("Post created successfully!", "success");
       return data;
     } catch (error) {
       console.error("Error creating post:", error);
-      await handleApiError(error, "Error creating post");
+      showToast(error.message || "Error creating post", "error");
       throw error;
     }
   };
