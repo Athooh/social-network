@@ -454,25 +454,28 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized Attempt by user: %s", userID))
 		return
 	}
 
-	// Get post ID from URL
-	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) < 3 {
-		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
+	// Parse request body to get post ID
+	var request struct {
+		PostID int64 `json:"postId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %s", err.Error()))
 		return
 	}
-	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
-	if err != nil {
-		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
+
+	if request.PostID <= 0 {
+		h.sendError(w, http.StatusBadRequest, "Invalid or missing Post ID")
 		return
 	}
 
 	// Delete post
-	if err := h.service.DeletePost(postID, userID); err != nil {
+	if err := h.service.DeletePost(request.PostID, userID); err != nil {
 		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to Delete post: %s", err.Error()))
 		return
 	}
