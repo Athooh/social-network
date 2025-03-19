@@ -1,5 +1,5 @@
 .container {
-    padding-top: calc(var(--header-height) + var(--spacing-md));
+  padding-top: calc(var(--header-height) + var(--spacing-md));
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   gap: var(--spacing-md);
@@ -87,22 +87,22 @@
 }
 
 .confirmButton {
-  background-color: var(--primary-color);
+  background-color: #28a745;
   color: white;
 }
 
 .confirmButton:hover {
-  background-color: #1666d8;
+  background-color: #218838;
 }
 
 .deleteButton {
-  background-color: #ff4d6d;
+  background-color: #dc3545;
   color: white;
   border: 1px solid var(--border-color);
 }
 
 .deleteButton:hover {
   background-color: #e4e6eb;
-  color: #ff4d6d;
+  color: #c82333;
   border-color: var(--danger-color);
 }

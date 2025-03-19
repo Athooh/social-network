@@ -354,13 +354,13 @@ export default function Post({ post, onPostUpdated }) {
             </div>
           )}
 
-          {!loadingComments && comments.length === 0 && (
+          {!loadingComments && commentsList.length === 0 && (
             <div className={styles.noComments}>
               <p>No comments yet. Be the first to comment!</p>
             </div>
           )}
 
-          {comments.map((comment) => (
+          {commentsList.map((comment) => (
             <div key={comment.id} className={styles.comment}>
               <img
                 src={comment.authorImage}
