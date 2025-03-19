@@ -31,6 +31,9 @@ type Service interface {
 	UnlikePost(postID int64, userID string) error
 	GetFeedPosts(userID string, page, pageSize int) ([]*models.Post, error)
 	GetPostWithComments(postID int64, userID string) (*models.Post, []*models.Comment, error)
+
+	// Notification functionality
+	NotifyPostCreated(post *models.Post, userID string, userName string) error
 }
 
 // PostService implements the Service interface
@@ -49,6 +52,42 @@ func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Log
 		log:             log,
 		notificationSvc: notificationSvc,
 	}
+}
+
+// NotifyPostCreated sends notifications about a new post to appropriate users
+func (s *PostService) NotifyPostCreated(post *models.Post, userID string, userName string) error {
+	if s.notificationSvc == nil {
+		return nil
+	}
+
+	// For public posts, notify all users
+	if post.Privacy == models.PrivacyPublic {
+		return s.notificationSvc.NotifyPostCreated(post, userID, userName)
+	}
+
+	// For private posts, only notify allowed viewers
+	if post.Privacy == models.PrivacyPrivate {
+		viewers, err := s.repo.GetPostViewers(post.ID)
+		if err != nil {
+			s.log.Error("Failed to get post viewers for notification: %v", err)
+			return err
+		}
+
+		return s.notificationSvc.NotifyPostCreatedToSpecificUsers(post, userID, userName, viewers)
+	}
+
+	// For almost private posts, notify friends/followers
+	if post.Privacy == models.PrivacyAlmostPrivate {
+		followers, err := s.repo.GetUserFollowers(userID)
+		if err != nil {
+			s.log.Error("Failed to get user followers for notification: %v", err)
+			return err
+		}
+
+		return s.notificationSvc.NotifyPostCreatedToSpecificUsers(post, userID, userName, followers)
+	}
+
+	return nil
 }
 
 // CreatePost creates a new post
@@ -91,11 +130,16 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image, 
 		return nil, err
 	}
 
-	// Get user name for notification
+	// Get user data for the post
 	userData, err := s.repo.GetUserDataByID(userID)
 	if err != nil {
-		s.log.Warn("Failed to get user data for notification: %v", err)
-		// Continue even if we can't get the user name
+		s.log.Warn("Failed to get user data for post: %v", err)
+		// Continue even if we can't get the user data
+	}
+
+	// Set user data in the post
+	if userData != nil {
+		post.UserData = userData
 	}
 
 	userName := "Unknown User"
@@ -103,9 +147,9 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image, 
 		userName = userData.FirstName
 	}
 
-	// Send notification
+	// Send notification based on privacy settings
 	if s.notificationSvc != nil {
-		go s.notificationSvc.NotifyPostCreated(post, userID, userName)
+		go s.NotifyPostCreated(post, userID, userName)
 	}
 
 	return post, nil
