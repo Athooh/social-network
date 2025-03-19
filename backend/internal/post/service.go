@@ -35,17 +35,19 @@ type Service interface {
 
 // PostService implements the Service interface
 type PostService struct {
-	repo      Repository
-	fileStore *filestore.FileStore
-	log       *logger.Logger
+	repo            Repository
+	fileStore       *filestore.FileStore
+	log             *logger.Logger
+	notificationSvc *NotificationService
 }
 
 // NewService creates a new post service
-func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger) Service {
+func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, notificationSvc *NotificationService) Service {
 	return &PostService{
-		repo:      repo,
-		fileStore: fileStore,
-		log:       log,
+		repo:            repo,
+		fileStore:       fileStore,
+		log:             log,
+		notificationSvc: notificationSvc,
 	}
 }
 
@@ -87,6 +89,23 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image, 
 	if err := s.repo.CreatePost(post); err != nil {
 		s.log.Error("Failed to create post: %v", err)
 		return nil, err
+	}
+
+	// Get user name for notification
+	userData, err := s.repo.GetUserDataByID(userID)
+	if err != nil {
+		s.log.Warn("Failed to get user data for notification: %v", err)
+		// Continue even if we can't get the user name
+	}
+
+	userName := "Unknown User"
+	if userData != nil && userData.FirstName != "" {
+		userName = userData.FirstName
+	}
+
+	// Send notification
+	if s.notificationSvc != nil {
+		go s.notificationSvc.NotifyPostCreated(post, userID, userName)
 	}
 
 	return post, nil
