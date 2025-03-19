@@ -76,6 +76,9 @@ backend/tmp/
 
 # database
 backend/data/
+backend/pkg/db/migrations/*.sql
+**/migrations/
+
 
 # cache directories
 .cache/
