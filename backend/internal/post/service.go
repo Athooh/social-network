@@ -25,6 +25,12 @@ type Service interface {
 	CreateComment(postID int64, userID string, content string, image *multipart.FileHeader) (*models.Comment, error)
 	GetPostComments(postID int64, userID string) ([]*models.Comment, error)
 	DeleteComment(commentID int64, userID string) error
+
+	// Like functionality
+	LikePost(postID int64, userID string) error
+	UnlikePost(postID int64, userID string) error
+	GetFeedPosts(userID string, page, pageSize int) ([]*models.Post, error)
+	GetPostWithComments(postID int64, userID string) (*models.Post, []*models.Comment, error)
 }
 
 // PostService implements the Service interface
@@ -64,7 +70,7 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image, 
 			s.log.Error("Failed to save post image: %v", err)
 			return nil, err
 		}
-		post.ImagePath = filename
+		post.ImagePath.String = filename
 	}
 
 	// Handle video upload if provided
@@ -74,7 +80,7 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image, 
 			s.log.Error("Failed to save post video: %v", err)
 			return nil, err
 		}
-		post.VideoPath = filename
+		post.VideoPath.String = filename
 	}
 
 	// Save post to database
@@ -186,8 +192,8 @@ func (s *PostService) UpdatePost(postID int64, userID string, content, privacy s
 	// Handle image upload if provided
 	if image != nil {
 		// Delete old image if exists
-		if post.ImagePath != "" {
-			if err := s.fileStore.DeleteFile(post.ImagePath); err != nil {
+		if post.ImagePath.String != "" {
+			if err := s.fileStore.DeleteFile(post.ImagePath.String); err != nil {
 				s.log.Warn("Failed to delete old post image: %v", err)
 			}
 		}
@@ -198,7 +204,7 @@ func (s *PostService) UpdatePost(postID int64, userID string, content, privacy s
 			s.log.Error("Failed to save post image: %v", err)
 			return nil, err
 		}
-		post.ImagePath = filename
+		post.ImagePath.String = filename
 	}
 
 	// Save updated post
@@ -229,15 +235,15 @@ func (s *PostService) DeletePost(postID int64, userID string) error {
 	}
 
 	// Delete the post image if exists
-	if post.ImagePath != "" {
-		if err := s.fileStore.DeleteFile(post.ImagePath); err != nil {
+	if post.ImagePath.String != "" {
+		if err := s.fileStore.DeleteFile(post.ImagePath.String); err != nil {
 			s.log.Warn("Failed to delete post image: %v", err)
 		}
 	}
 
 	// Delete the post video if exists
-	if post.VideoPath != "" {
-		if err := s.fileStore.DeleteFile(post.VideoPath); err != nil {
+	if post.VideoPath.String != "" {
+		if err := s.fileStore.DeleteFile(post.VideoPath.String); err != nil {
 			s.log.Warn("Failed to delete post video: %v", err)
 		}
 	}
@@ -342,7 +348,7 @@ func (s *PostService) CreateComment(postID int64, userID string, content string,
 			s.log.Error("Failed to save comment image: %v", err)
 			return nil, err
 		}
-		comment.ImagePath = filename
+		comment.ImagePath.String = filename
 	}
 
 	// Save comment to database
@@ -374,6 +380,16 @@ func (s *PostService) GetPostComments(postID int64, userID string) ([]*models.Co
 		return nil, err
 	}
 
+	// Fetch user data for each comment
+	for _, comment := range comments {
+		userData, err := s.repo.GetUserDataByID(comment.UserID)
+		if err != nil {
+			s.log.Warn("Failed to get user data for comment %d: %v", comment.ID, err)
+			continue
+		}
+		comment.UserData = userData
+	}
+
 	return comments, nil
 }
 
@@ -390,4 +406,93 @@ func (s *PostService) DeleteComment(commentID int64, userID string) error {
 	}
 
 	return nil
+}
+
+// LikePost handles liking a post
+func (s *PostService) LikePost(postID int64, userID string) error {
+	// Check if the user can view the post
+	canView, err := s.repo.CanViewPost(postID, userID)
+	if err != nil {
+		return err
+	}
+	if !canView {
+		return errors.New("you don't have permission to like this post")
+	}
+
+	// Check if already liked
+	hasLiked, err := s.repo.HasLiked(postID, userID)
+	if err != nil {
+		return err
+	}
+	if hasLiked {
+		if err := s.repo.UnlikePost(postID, userID); err != nil {
+			return err
+		}
+	} else {
+		if err := s.repo.LikePost(postID, userID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// UnlikePost handles unliking a post
+func (s *PostService) UnlikePost(postID int64, userID string) error {
+	// Check if the user can view the post
+	canView, err := s.repo.CanViewPost(postID, userID)
+	if err != nil {
+		return err
+	}
+	if !canView {
+		return errors.New("you don't have permission to unlike this post")
+	}
+
+	return s.repo.UnlikePost(postID, userID)
+}
+
+// GetFeedPosts gets posts visible to the user with pagination
+func (s *PostService) GetFeedPosts(userID string, page, pageSize int) ([]*models.Post, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+
+	offset := (page - 1) * pageSize
+	posts, err := s.repo.GetFeedPosts(userID, pageSize, offset)
+	if err != nil {
+		s.log.Error("Failed to get feed posts: %v", err)
+		return nil, err
+	}
+
+	// Fetch user data for each post
+	for _, post := range posts {
+		userData, err := s.repo.GetUserDataByID(post.UserID)
+		if err != nil {
+			s.log.Warn("Failed to get user data for post %d: %v", post.ID, err)
+			continue
+		}
+		if userData != nil {
+			post.UserData = userData
+		}
+	}
+
+	return posts, nil
+}
+
+// GetPostWithComments retrieves a post along with its comments
+func (s *PostService) GetPostWithComments(postID int64, userID string) (*models.Post, []*models.Comment, error) {
+	post, err := s.repo.GetPostByID(postID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	comments, err := s.repo.GetCommentsByPostID(postID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return post, comments, nil
 }
