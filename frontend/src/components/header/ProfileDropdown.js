@@ -69,7 +69,7 @@ export default function ProfileDropdown() {
             />
             <div className={styles.profileInfo}>
               <h3>{userName}</h3>
-              <span>{userRole}</span>
+              <span>@{userRole}</span>
             </div>
           </div>
 
