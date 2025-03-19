@@ -1,13 +1,16 @@
 .messagesContainer {
     background-color: #fff;
-    padding-top: calc(var(--header-height) + var(--spacing-md));
+    padding-top: 0;
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr;
     gap: var(--spacing-md);
-    min-height: 95vh;
-    height: 100vh auto;
+    min-height: 85vh;
+    height: 90vh auto;
     max-width: calc(1920px - 400px);
     margin: 0 auto;
+    margin-top: 100px;
+    margin-bottom: 20px;
+    border-radius: 8px;
   }
   
   .conversationsList {

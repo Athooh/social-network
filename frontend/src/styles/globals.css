@@ -67,6 +67,7 @@ body {
   max-width: calc(1920px - 460px);
   margin: 0 auto;
   padding: 0 var(--spacing-md);
+  margin-top: 100px;
 }
 
 .main-content {
