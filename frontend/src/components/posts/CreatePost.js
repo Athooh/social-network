@@ -5,6 +5,7 @@ import { usePostService } from "@/services/postService"; // Adjust the import pa
 import styles from "@/styles/Posts.module.css";
 import { showToast } from "@/components/ui/ToastContainer";
 import EmojiPicker from "@/components/ui/EmojiPicker";
+import Image from "next/image";
 
 export default function CreatePost() {
   const { createPost } = usePostService();
@@ -191,7 +192,7 @@ export default function CreatePost() {
     <>
       <div className={styles.createPostCard}>
         <div className={styles.createPostHeader}>
-          <img src="/avatar4.png" alt="Profile" className={styles.profilePic} />
+          <Image src="/avatar4.png" alt="Profile" width={40} height={40} className={styles.profilePic} />
           <div
             className={styles.createPostInput}
             onClick={() => setIsModalOpen(true)}
@@ -254,9 +255,11 @@ export default function CreatePost() {
 
             <div className={styles.modalContent}>
               <div className={styles.userInfo}>
-                <img
+                <Image
                   src="/avatar4.png"
                   alt="Profile"
+                  width={40}
+                  height={40}
                   className={styles.profilePic}
                 />
                 <div>
@@ -287,7 +290,7 @@ export default function CreatePost() {
                     {previewUrls.map((url, index) => (
                       <div key={index} className={styles.previewItem}>
                         {selectedFiles[index].type.startsWith("image/") ? (
-                          <img src={url} alt="Preview" />
+                          <Image src={url} fill alt="Preview" />
                         ) : (
                           <video
                             src={url}
@@ -523,7 +526,7 @@ export default function CreatePost() {
                           onClick={() => toggleViewer(follower.id)}
                         >
                           <div className={styles.followerInfo}>
-                            <img src={follower.avatar} alt={follower.name} />
+                            <Image src={follower.avatar} alt={follower.name} />
                             <span>{follower.name}</span>
                           </div>
                           <div className={styles.checkboxContainer}>
@@ -535,7 +538,7 @@ export default function CreatePost() {
                       ))
                     ) : (
                       <div className={styles.noResults}>
-                        No followers found matching "{searchTerm}"
+                        No followers found matching `${searchTerm}`
                       </div>
                     )}
                   </div>
