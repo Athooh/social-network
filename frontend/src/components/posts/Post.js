@@ -7,7 +7,8 @@ import { showToast } from "@/components/ui/ToastContainer";
 import { useAuth } from "@/context/authcontext";
 
 export default function Post({ post, onPostUpdated }) {
-  const { likePost, addComment, getPostComments } = usePostService();
+  const { likePost, addComment, getPostComments, deletePost } =
+    usePostService();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -18,7 +19,7 @@ export default function Post({ post, onPostUpdated }) {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentImage, setCommentImage] = useState(null);
   const [commentImagePreview, setCommentImagePreview] = useState(null);
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Add click outside handler
   const handleClickOutside = (e) => {
@@ -58,13 +59,13 @@ export default function Post({ post, onPostUpdated }) {
     }
   };
 
-  const handleOptionClick = (action) => {
+  const handleOptionClick = async (action) => {
     switch (action) {
       case "edit":
         console.log("Edit post");
         break;
       case "delete":
-        console.log("Delete post");
+        setShowDeleteModal(true);
         break;
       case "follow":
         console.log("Follow user");
@@ -138,7 +139,24 @@ export default function Post({ post, onPostUpdated }) {
     }
   };
 
-  const isCurrentUserPost = user?.id === post.userId;
+  const userData = JSON.parse(localStorage.getItem("userData"));
+
+  const isCurrentUserPost = userData?.id === post.userId;
+
+  const confirmDelete = async () => {
+    try {
+      await deletePost(post.id);
+      if (onPostUpdated) onPostUpdated();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setShowDeleteModal(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+  };
 
   return (
     <article className={styles.post}>
@@ -336,6 +354,33 @@ export default function Post({ post, onPostUpdated }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2>Delete Post</h2>
+              <button className={styles.closeButton} onClick={cancelDelete}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              <p className={styles.deleteConfirmText}>
+                Are you sure you want to delete this post? This action cannot be
+                undone.
+              </p>
+              <div className={styles.modalFooter}>
+                <button className={styles.cancelBtn} onClick={cancelDelete}>
+                  Cancel
+                </button>
+                <button className={styles.deleteBtn} onClick={confirmDelete}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </article>
