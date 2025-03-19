@@ -12,6 +12,7 @@ import (
 	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
+	models "github.com/Athooh/social-network/pkg/models/dbTables"
 )
 
 // Handler handles HTTP requests for posts
@@ -36,25 +37,42 @@ type CreatePostRequest struct {
 
 // PostResponse represents the response for a post
 type PostResponse struct {
-	ID        int64  `json:"id"`
-	UserID    string `json:"userId"`
-	Content   string `json:"content"`
-	ImageURL  string `json:"imageUrl,omitempty"`
-	VideoURL  string `json:"videoUrl,omitempty"`
-	Privacy   string `json:"privacy"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID        int64                `json:"id"`
+	UserID    string               `json:"userId"`
+	Content   string               `json:"content"`
+	ImageURL  string               `json:"imageUrl,omitempty"`
+	VideoURL  string               `json:"videoUrl,omitempty"`
+	Privacy   string               `json:"privacy"`
+	CreatedAt string               `json:"createdAt"`
+	UpdatedAt string               `json:"updatedAt"`
+	UserData  *models.PostUserData `json:"userData"`
 }
 
 // CommentResponse represents the response for a comment
 type CommentResponse struct {
-	ID        int64  `json:"id"`
-	PostID    int64  `json:"postId"`
-	UserID    string `json:"userId"`
-	Content   string `json:"content"`
-	ImageURL  string `json:"imageUrl,omitempty"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID        int64                `json:"id"`
+	PostID    int64                `json:"postId"`
+	UserID    string               `json:"userId"`
+	Content   string               `json:"content"`
+	ImageURL  string               `json:"imageUrl,omitempty"`
+	CreatedAt string               `json:"createdAt"`
+	UpdatedAt string               `json:"updatedAt"`
+	UserData  *models.PostUserData `json:"userData"`
+}
+
+// PostWithCommentsResponse represents the response for a post with its comments
+type PostWithCommentsResponse struct {
+	ID         int64                `json:"id"`
+	UserID     string               `json:"userId"`
+	Content    string               `json:"content"`
+	ImageURL   string               `json:"imageUrl,omitempty"`
+	VideoURL   string               `json:"videoUrl,omitempty"`
+	Privacy    string               `json:"privacy"`
+	CreatedAt  string               `json:"createdAt"`
+	UpdatedAt  string               `json:"updatedAt"`
+	LikesCount int                  `json:"likesCount"`
+	Comments   []CommentResponse    `json:"comments"`
+	UserData   *models.PostUserData `json:"userData"`
 }
 
 // CreatePost handles the creation of a new post
@@ -126,12 +144,12 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
 	}
 
-	if post.ImagePath != "" {
-		response.ImageURL = "/uploads/posts/" + post.ImagePath
+	if post.ImagePath.String != "" {
+		response.ImageURL = "/uploads/" + post.ImagePath.String
 	}
 
-	if post.VideoPath != "" {
-		response.VideoURL = "/uploads/videos/" + post.VideoPath
+	if post.VideoPath.String != "" {
+		response.VideoURL = "/uploads/" + post.VideoPath.String
 	}
 
 	// Return response
@@ -143,7 +161,7 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok || userID <= "" {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %s", userID))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized Attempt by user: %s", userID))
 		return
 	}
 
@@ -159,29 +177,48 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get post
-	post, err := h.service.GetPost(postID, userID)
+	// Get post with comments
+	post, comments, err := h.service.GetPostWithComments(postID, userID)
 	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get post: %v", err))
 		return
 	}
 
 	// Prepare response
-	response := PostResponse{
-		ID:        post.ID,
-		UserID:    post.UserID,
-		Content:   post.Content,
-		Privacy:   post.Privacy,
-		CreatedAt: post.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
+	response := PostWithCommentsResponse{
+		ID:         post.ID,
+		UserID:     post.UserID,
+		Content:    post.Content,
+		Privacy:    post.Privacy,
+		LikesCount: int(post.LikesCount),
+		CreatedAt:  post.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
+		Comments:   make([]CommentResponse, 0, len(comments)),
+		UserData:   post.UserData,
 	}
 
-	if post.ImagePath != "" {
-		response.ImageURL = "/uploads/posts/" + post.ImagePath
+	if post.ImagePath.String != "" {
+		response.ImageURL = "/uploads/" + post.ImagePath.String
 	}
 
-	if post.VideoPath != "" {
-		response.VideoURL = "/uploads/videos/" + post.VideoPath
+	if post.VideoPath.String != "" {
+		response.VideoURL = "/uploads/" + post.VideoPath.String
+	}
+
+	// Add comments to response
+	for _, comment := range comments {
+		commentResp := CommentResponse{
+			ID:        comment.ID,
+			PostID:    comment.PostID,
+			UserID:    comment.UserID,
+			Content:   comment.Content,
+			CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
+		}
+		if comment.ImagePath.String != "" {
+			commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+		}
+		response.Comments = append(response.Comments, commentResp)
 	}
 
 	// Return response
@@ -226,14 +263,15 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 			Privacy:   post.Privacy,
 			CreatedAt: post.CreatedAt.Format(time.RFC3339),
 			UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
+			UserData:  post.UserData,
 		}
 
-		if post.ImagePath != "" {
-			postResp.ImageURL = "/uploads/posts/" + post.ImagePath
+		if post.ImagePath.String != "" {
+			postResp.ImageURL = "/uploads/" + post.ImagePath.String
 		}
 
-		if post.VideoPath != "" {
-			postResp.VideoURL = "/uploads/videos/" + post.VideoPath
+		if post.VideoPath.String != "" {
+			postResp.VideoURL = "/uploads/" + post.VideoPath.String
 		}
 
 		response = append(response, postResp)
@@ -248,7 +286,7 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok || userID <= "" {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt by user: %s", userID))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized Attempt by user: %s", userID))
 		return
 	}
 
@@ -280,23 +318,49 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare response
-	var response []PostResponse
+	var response []PostWithCommentsResponse
 	for _, post := range posts {
-		postResp := PostResponse{
-			ID:        post.ID,
-			UserID:    post.UserID,
-			Content:   post.Content,
-			Privacy:   post.Privacy,
-			CreatedAt: post.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
+		// Get comments for each post
+		comments, err := h.service.GetPostComments(post.ID, userID)
+		if err != nil {
+			h.log.Error("Failed to get comments for post %d: %v", post.ID, err)
+			continue
 		}
 
-		if post.ImagePath != "" {
-			postResp.ImageURL = "/uploads/posts/" + post.ImagePath
+		postResp := PostWithCommentsResponse{
+			ID:         post.ID,
+			UserID:     post.UserID,
+			Content:    post.Content,
+			Privacy:    post.Privacy,
+			LikesCount: int(post.LikesCount),
+			CreatedAt:  post.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
+			Comments:   make([]CommentResponse, 0, len(comments)),
+			UserData:   post.UserData,
 		}
 
-		if post.VideoPath != "" {
-			postResp.VideoURL = "/uploads/videos/" + post.VideoPath
+		if post.ImagePath.String != "" {
+			postResp.ImageURL = "/uploads/" + post.ImagePath.String
+		}
+
+		if post.VideoPath.String != "" {
+			postResp.VideoURL = "/uploads/" + post.VideoPath.String
+		}
+
+		// Add comments to response
+		for _, comment := range comments {
+			commentResp := CommentResponse{
+				ID:        comment.ID,
+				PostID:    comment.PostID,
+				UserID:    comment.UserID,
+				Content:   comment.Content,
+				CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+				UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
+			}
+			if comment.ImagePath.String != "" {
+				commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+			}
+			postResp.Comments = append(postResp.Comments, commentResp)
 		}
 
 		response = append(response, postResp)
@@ -374,12 +438,12 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
 	}
 
-	if post.ImagePath != "" {
-		response.ImageURL = "/uploads/posts/" + post.ImagePath
+	if post.ImagePath.String != "" {
+		response.ImageURL = "/uploads/" + post.ImagePath.String
 	}
 
-	if post.VideoPath != "" {
-		response.VideoURL = "/uploads/videos/" + post.VideoPath
+	if post.VideoPath.String != "" {
+		response.VideoURL = "/uploads/" + post.VideoPath.String
 	}
 
 	// Return response
@@ -473,7 +537,7 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
-	postID, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
+	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
@@ -516,10 +580,11 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		Content:   comment.Content,
 		CreatedAt: comment.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
+		UserData:  comment.UserData,
 	}
 
-	if comment.ImagePath != "" {
-		response.ImageURL = "/uploads/comments/" + comment.ImagePath
+	if comment.ImagePath.String != "" {
+		response.ImageURL = "/uploads/comments/" + comment.ImagePath.String
 	}
 
 	// Return response
@@ -541,7 +606,7 @@ func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
 		return
 	}
-	postID, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
+	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
 	if err != nil {
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post Id: %d", postID))
 		return
@@ -564,10 +629,11 @@ func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 			Content:   comment.Content,
 			CreatedAt: comment.CreatedAt.Format(time.RFC3339),
 			UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
+			UserData:  comment.UserData,
 		}
 
-		if comment.ImagePath != "" {
-			commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath
+		if comment.ImagePath.String != "" {
+			commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
 		}
 
 		response = append(response, commentResp)
@@ -620,6 +686,134 @@ func (h *Handler) HandleComments(w http.ResponseWriter, r *http.Request) {
 	default:
 		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed: %s", r.Method))
 	}
+}
+
+// GetFeedPosts handles retrieving posts from the user's feed
+func (h *Handler) GetFeedPosts(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized Attempt by user: %s", userID))
+		return
+	}
+
+	// Get pagination parameters
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	pageSize, err := strconv.Atoi(r.URL.Query().Get("pageSize"))
+	if err != nil || pageSize < 1 {
+		pageSize = 10 // Default page size
+	}
+
+	// Get feed posts
+	posts, err := h.service.GetFeedPosts(userID, page, pageSize)
+	if err != nil {
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get feed posts: %v", err))
+		return
+	}
+
+	// Prepare response
+	var response []PostWithCommentsResponse
+	for _, post := range posts {
+		// Get comments for each post
+		comments, err := h.service.GetPostComments(post.ID, userID)
+		if err != nil {
+			h.log.Error("Failed to get comments for post %d: %v", post.ID, err)
+			continue
+		}
+
+		postResp := PostWithCommentsResponse{
+			ID:         post.ID,
+			UserID:     post.UserID,
+			Content:    post.Content,
+			Privacy:    post.Privacy,
+			LikesCount: int(post.LikesCount),
+			CreatedAt:  post.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
+			Comments:   make([]CommentResponse, 0, len(comments)),
+			UserData:   post.UserData,
+		}
+
+		if post.ImagePath.String != "" {
+			postResp.ImageURL = "/uploads/" + post.ImagePath.String
+		}
+
+		if post.VideoPath.String != "" {
+			postResp.VideoURL = "/uploads/" + post.VideoPath.String
+		}
+
+		postResp.UserData.Avatar = "/uploads/" + postResp.UserData.Avatar
+		// Add comments to response
+		for _, comment := range comments {
+			commentResp := CommentResponse{
+				ID:        comment.ID,
+				PostID:    comment.PostID,
+				UserID:    comment.UserID,
+				Content:   comment.Content,
+				CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+				UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
+				UserData:  comment.UserData,
+			}
+			if comment.ImagePath.String != "" {
+				commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+			}
+			postResp.Comments = append(postResp.Comments, commentResp)
+		}
+
+		response = append(response, postResp)
+	}
+
+	// Return response
+	h.sendJSON(w, http.StatusOK, response)
+}
+
+// LikePost handles liking or unliking a post
+func (h *Handler) LikePost(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context (set by auth middleware)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized attempt by user: %s", userID))
+		return
+	}
+
+	// Get post ID from URL
+	pathParts := strings.Split(r.URL.Path, "/")
+	if len(pathParts) < 3 {
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid URL: %s", r.URL.Path))
+		return
+	}
+	postID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
+	if err != nil {
+		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Invalid Post ID: %d", postID))
+		return
+	}
+
+	// Toggle like status
+	if err := h.service.LikePost(postID, userID); err != nil {
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to toggle like status: %s", err.Error()))
+		return
+	}
+
+	// Get updated likes count
+	post, err := h.service.GetPost(postID, userID)
+	if err != nil {
+		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get updated post: %s", err.Error()))
+		return
+	}
+
+	// Return response
+	response := struct {
+		LikesCount int  `json:"likesCount"`
+		IsLiked    bool `json:"isLiked"`
+	}{
+		LikesCount: int(post.LikesCount),
+		IsLiked:    true, // The service toggles, so if we're here, the action was successful
+	}
+
+	h.sendJSON(w, http.StatusOK, response)
 }
 
 // Helper method to send JSON responses
