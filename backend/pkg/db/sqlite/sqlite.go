@@ -298,6 +298,11 @@ func extractTableInfoFromStruct(modelStruct interface{}) (TableInfo, error) {
 		t = t.Elem()
 	}
 
+	// Check if this struct should be ignored for database operations
+	if shouldIgnoreStruct(t) {
+		return tableInfo, fmt.Errorf("skipping non-DB struct: %s", t.Name())
+	}
+
 	// Get table name from struct name (convert CamelCase to snake_case and pluralize)
 	tableName := camelToSnake(t.Name()) + "s"
 	tableInfo.Name = tableName
@@ -374,6 +379,47 @@ func extractTableInfoFromStruct(modelStruct interface{}) (TableInfo, error) {
 	}
 
 	return tableInfo, nil
+}
+
+// shouldIgnoreStruct determines if a struct should be ignored for database operations
+func shouldIgnoreStruct(t reflect.Type) bool {
+	// Check if the struct has a db tag at the type level
+	if dbTag, ok := t.FieldByName("db"); ok {
+		if dbTag.Tag.Get("db") == "-" {
+			return true
+		}
+	}
+
+	// Check if all fields have db:"-" tags
+	allFieldsIgnored := true
+	hasFields := false
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+
+		hasFields = true
+		dbTag := field.Tag.Get("db")
+		if dbTag != "-" {
+			allFieldsIgnored = false
+			break
+		}
+	}
+
+	// If the struct has fields and all of them are ignored, skip this struct
+	if hasFields && allFieldsIgnored {
+		return true
+	}
+
+	// Skip structs that are commonly used for embedding but not as DB tables
+	switch t.Name() {
+	case "PostUserData", "UserData", "EmbeddedData":
+		return true
+	}
+
+	return false
 }
 
 // extractColumnInfoFromField extracts column information from a struct field
