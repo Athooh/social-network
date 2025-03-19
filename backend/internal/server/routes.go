@@ -88,6 +88,8 @@ func Router(
 			postHandler.CreatePost(w, r)
 		case http.MethodGet:
 			postHandler.GetFeedPosts(w, r)
+		case http.MethodDelete:
+			postHandler.DeletePost(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
