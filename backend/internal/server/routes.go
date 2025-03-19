@@ -60,6 +60,7 @@ func Router(
 	loggingMiddleware := log.HTTPMiddleware
 	publicRouteMiddleware := middlewareChain(loggingMiddleware, middleware.CorsMiddleware)
 	authenticatedRouteMiddleware := middlewareChain(middleware.CorsMiddleware, jwtMiddleware, authMiddleware, loggingMiddleware)
+	wsMiddleware := middlewareChain(middleware.CorsMiddleware, jwtMiddleware)
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +102,7 @@ func Router(
 	protectedPostGroup.HandleFunc("/like/", postHandler.LikePost)
 
 	// Add WebSocket route
-	wsRoute := NewRouteGroup("/ws", authenticatedRouteMiddleware)
+	wsRoute := NewRouteGroup("/ws", wsMiddleware)
 	wsRoute.HandleFunc("", wsHandler.HandleConnection)
 
 	// Register all groups
