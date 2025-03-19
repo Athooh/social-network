@@ -36,7 +36,7 @@ export default function CreatePost() {
     // Add selected viewers if privacy is private
     if (privacy === "private" && selectedViewers.length > 0) {
       selectedViewers.forEach((viewerId, index) => {
-        formData.append(`viewers[${index}]`, viewerId);
+        formData.append(`viewers`, viewerId);
       });
     }
 
@@ -526,7 +526,7 @@ export default function CreatePost() {
                           onClick={() => toggleViewer(follower.id)}
                         >
                           <div className={styles.followerInfo}>
-                            <Image src={follower.avatar} alt={follower.name} />
+                            <Image src={follower.avatar} width={40} height={40} alt={follower.name} />
                             <span>{follower.name}</span>
                           </div>
                           <div className={styles.checkboxContainer}>
