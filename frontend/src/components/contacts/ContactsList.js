@@ -45,11 +45,9 @@ const ContactsList = () => {
                 height={40}
                 className={styles.avatar}
               />
-              {contact.isOnline && (
-                <span className={styles.onlineStatus}>
-                  <FontAwesomeIcon icon={faCircle} />
-                </span>
-              )}
+              <span className={`${styles.onlineStatus} ${!contact.isOnline ? styles.offline : ''}`}>
+                <FontAwesomeIcon icon={faCircle} style={{color: contact.isOnline ? '#31a24c' : '#a3a3a3', border: '2px solid #fff', borderRadius: '50%'}} />
+              </span>
             </div>
             <span className={styles.contactName}>{contact.name}</span>
           </div>
