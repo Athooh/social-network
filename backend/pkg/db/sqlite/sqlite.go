@@ -134,6 +134,7 @@ func DiscoverModelStructs() []interface{} {
 		models.FollowRequest{},
 		models.Follower{},
 		models.UserStats{},
+		models.PostLike{},
 		// Add new models here
 	}
 }
