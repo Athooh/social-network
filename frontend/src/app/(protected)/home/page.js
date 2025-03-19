@@ -68,21 +68,23 @@ export default function Home() {
   // Function to format posts from API to match our component's expected format
   const formatPosts = (apiPosts) => {
     if (!apiPosts) return [];
-    
+
     return apiPosts.map((post) => ({
       id: post.id,
       authorName:
         post.userData.firstName + " " + post.userData.lastName ||
         "Unknown User",
-      authorImage: `${BASE_URL}${post.userData.avatar}` || "/avatar4.png",
+      authorImage: post.userData.avatar
+        ? `${BASE_URL}${post.userData.avatar}`
+        : "/avatar4.png",
       timestamp: formatTimestamp(post.createdAt),
       content: post.content,
       image: post.imageUrl ? `${BASE_URL}${post.imageUrl}` : null,
       video: post.videoUrl ? `${BASE_URL}${post.videoUrl}` : null,
       likes: post.likesCount || 0,
       commentCount: post.comments?.length || 0,
-      shares: 0, // If backend doesn't provide shares count
-      comments: Array.isArray(post.comments) 
+      shares: 0,
+      comments: Array.isArray(post.comments)
         ? post.comments.map((comment) => ({
             id: comment.id,
             authorName:
