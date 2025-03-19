@@ -9,9 +9,11 @@ import (
 	"github.com/Athooh/social-network/internal/config"
 	"github.com/Athooh/social-network/internal/post"
 	"github.com/Athooh/social-network/internal/server"
+	wsHandler "github.com/Athooh/social-network/internal/websocket"
 	"github.com/Athooh/social-network/pkg/db/sqlite"
 	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
+	"github.com/Athooh/social-network/pkg/websocket"
 
 	"github.com/Athooh/social-network/pkg/session"
 	"github.com/Athooh/social-network/pkg/user"
@@ -98,18 +100,25 @@ func main() {
 		log.Fatal("Failed to create file store: %v", err)
 	}
 
+	// Set up WebSocket hub
+	wsHub := websocket.NewHub(log)
+	go wsHub.Run()
+
 	// Set up services
 	authService := auth.NewService(userRepo, sessionManager, jwtConfig)
-	postService := post.NewService(postRepo, fileStore, log)
+	postNotificationSvc := post.NewNotificationService(wsHub)
+	postService := post.NewService(postRepo, fileStore, log, postNotificationSvc)
 
 	// Set up handlers
 	authHandler := auth.NewHandler(authService, fileStore)
 	postHandler := post.NewHandler(postService, log)
+	wsHandler := wsHandler.NewHandler(wsHub, log)
 
 	// Set up router with both session and JWT middleware
 	router := server.Router(
 		authHandler,
 		postHandler,
+		wsHandler,
 		authService.RequireAuth,
 		authService.RequireJWTAuth,
 		log,

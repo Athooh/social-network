@@ -147,19 +147,24 @@ func ValidateToken(tokenString string, config JWTConfig, sessionStore ...session
 
 // ExtractTokenFromRequest extracts the JWT token from the request
 func ExtractTokenFromRequest(r *http.Request) (string, error) {
-	// Get the Authorization header
+	// First try to get from Authorization header
 	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return "", errors.New("authorization header is required")
+	if authHeader != "" {
+		// Check if the header has the Bearer prefix
+		parts := strings.Split(authHeader, " ")
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			return parts[1], nil
+		}
 	}
 
-	// Check if the header has the Bearer prefix
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		return "", errors.New("authorization header format must be Bearer {token}")
+	// If not found in header, try to get from URL query parameter
+	token := r.URL.Query().Get("token")
+	if token != "" {
+		return token, nil
 	}
 
-	return parts[1], nil
+	// If token not found in either location
+	return "", errors.New("token not found in Authorization header or URL parameter")
 }
 
 // Helper functions for JWT operations

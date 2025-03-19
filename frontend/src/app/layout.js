@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 import { AuthProvider } from "@/context/authcontext";
 import ToastContainer from "@/components/ui/ToastContainer";
+import { WebSocketProvider } from "@/context/websocketContext";
 
 export const metadata = {
   title: "NoteBook",
@@ -17,8 +18,12 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
-        <ToastContainer />
+        <AuthProvider>
+          <WebSocketProvider>
+            {children}
+            <ToastContainer />
+          </WebSocketProvider>
+        </AuthProvider>
       </body>
     </html>
   );
