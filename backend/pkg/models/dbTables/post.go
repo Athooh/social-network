@@ -17,6 +17,7 @@ type Post struct {
 	UserID    string    `db:"user_id,notnull" index:"idx_post_user_id"`
 	Content   string    `db:"content,notnull"`
 	ImagePath string    `db:"image_path"`
+	VideoPath string    `db:"video_path"`
 	Privacy   string    `db:"privacy,notnull"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `db:"updated_at,notnull"`
