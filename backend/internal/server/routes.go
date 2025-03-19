@@ -87,13 +87,14 @@ func Router(
 		case http.MethodPost:
 			postHandler.CreatePost(w, r)
 		case http.MethodGet:
-			postHandler.GetPublicPosts(w, r)
+			postHandler.GetFeedPosts(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 	protectedPostGroup.HandleFunc("/comments/", postHandler.HandleComments)
 	protectedPostGroup.HandleFunc("/user/", postHandler.GetUserPosts)
+	protectedPostGroup.HandleFunc("/like/", postHandler.LikePost)
 
 	// Register all groups
 	publicAuthGroup.Register(mux)
