@@ -3,6 +3,7 @@ package post
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
@@ -27,6 +28,16 @@ type Repository interface {
 	CreateComment(comment *models.Comment) error
 	GetCommentsByPostID(postID int64) ([]*models.Comment, error)
 	DeleteComment(id int64) error
+
+	// Like-related methods
+	LikePost(postID int64, userID string) error
+	UnlikePost(postID int64, userID string) error
+	HasLiked(postID int64, userID string) (bool, error)
+	GetLikesCount(postID int64) (int, error)
+	GetFeedPosts(userID string, limit, offset int) ([]*models.Post, error)
+
+	// User data method
+	GetUserDataByID(userID string) (*models.PostUserData, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -44,17 +55,19 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 	now := time.Now()
 	post.CreatedAt = now
 	post.UpdatedAt = now
+	fmt.Println("video path", post.VideoPath.String)
 
 	query := `
-		INSERT INTO posts (user_id, content, image_path, privacy, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO posts (user_id, content, image_path, video_path, privacy, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := r.db.Exec(
+	_, err := r.db.Exec(
 		query,
 		post.UserID,
 		post.Content,
-		post.ImagePath,
+		post.ImagePath.String,
+		post.VideoPath.String,
 		post.Privacy,
 		post.CreatedAt,
 		post.UpdatedAt,
@@ -63,29 +76,25 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 		return err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	post.ID = id
 	return nil
 }
 
 // GetPostByID retrieves a post by ID
 func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 	query := `
-		SELECT id, user_id, content, image_path, privacy, created_at, updated_at
+		SELECT id, user_id, content, image_path, video_path, privacy, created_at, updated_at
 		FROM posts
 		WHERE id = ?
 	`
 
 	post := &models.Post{}
+	var imagePath, videoPath sql.NullString
 	err := r.db.QueryRow(query, id).Scan(
 		&post.ID,
 		&post.UserID,
 		&post.Content,
-		&post.ImagePath,
+		&imagePath,
+		&videoPath,
 		&post.Privacy,
 		&post.CreatedAt,
 		&post.UpdatedAt,
@@ -95,6 +104,13 @@ func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	if imagePath.Valid {
+		post.ImagePath = imagePath
+	}
+	if videoPath.Valid {
+		post.VideoPath = videoPath
 	}
 
 	return post, nil
@@ -116,19 +132,27 @@ func (r *SQLiteRepository) GetPostsByUserID(userID string) ([]*models.Post, erro
 	defer rows.Close()
 
 	var posts []*models.Post
+	var imagePath, videoPath sql.NullString
 	for rows.Next() {
 		post := &models.Post{}
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
 			&post.Content,
-			&post.ImagePath,
+			&imagePath,
+			&videoPath,
 			&post.Privacy,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if imagePath.Valid {
+			post.ImagePath = imagePath
+		}
+		if videoPath.Valid {
+			post.VideoPath = videoPath
 		}
 		posts = append(posts, post)
 	}
@@ -157,13 +181,15 @@ func (r *SQLiteRepository) GetPublicPosts(limit, offset int) ([]*models.Post, er
 	defer rows.Close()
 
 	var posts []*models.Post
+	var imagePath, videoPath sql.NullString
 	for rows.Next() {
 		post := &models.Post{}
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
 			&post.Content,
-			&post.ImagePath,
+			&imagePath,
+			&videoPath,
 			&post.Privacy,
 			&post.CreatedAt,
 			&post.UpdatedAt,
@@ -336,6 +362,7 @@ func (r *SQLiteRepository) GetCommentsByPostID(postID int64) ([]*models.Comment,
 	defer rows.Close()
 
 	var comments []*models.Comment
+	var imagePath sql.NullString
 	for rows.Next() {
 		comment := &models.Comment{}
 		err := rows.Scan(
@@ -343,12 +370,15 @@ func (r *SQLiteRepository) GetCommentsByPostID(postID int64) ([]*models.Comment,
 			&comment.PostID,
 			&comment.UserID,
 			&comment.Content,
-			&comment.ImagePath,
+			&imagePath,
 			&comment.CreatedAt,
 			&comment.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if imagePath.Valid {
+			comment.ImagePath.String = imagePath.String
 		}
 		comments = append(comments, comment)
 	}
@@ -365,4 +395,180 @@ func (r *SQLiteRepository) DeleteComment(id int64) error {
 	query := "DELETE FROM comments WHERE id = ?"
 	_, err := r.db.Exec(query, id)
 	return err
+}
+
+// LikePost adds a like to a post and increments the likes count
+func (r *SQLiteRepository) LikePost(postID int64, userID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Insert like
+	_, err = tx.Exec(`
+		INSERT INTO post_likes (post_id, user_id)
+		VALUES (?, ?)
+	`, postID, userID)
+	if err != nil {
+		return err
+	}
+
+	// Increment likes count
+	_, err = tx.Exec(`
+		UPDATE posts 
+		SET likes_count = likes_count + 1 
+		WHERE id = ?
+	`, postID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// UnlikePost removes a like from a post and decrements the likes count
+func (r *SQLiteRepository) UnlikePost(postID int64, userID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Remove like
+	result, err := tx.Exec(`
+		DELETE FROM post_likes 
+		WHERE post_id = ? AND user_id = ?
+	`, postID, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected > 0 {
+		// Decrement likes count only if a like was actually removed
+		_, err = tx.Exec(`
+			UPDATE posts 
+			SET likes_count = likes_count - 1 
+			WHERE id = ? AND likes_count > 0
+		`, postID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// HasLiked checks if a user has liked a post
+func (r *SQLiteRepository) HasLiked(postID int64, userID string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM post_likes 
+			WHERE post_id = ? AND user_id = ?
+		)
+	`, postID, userID).Scan(&exists)
+	return exists, err
+}
+
+// GetLikesCount gets the number of likes for a post
+func (r *SQLiteRepository) GetLikesCount(postID int64) (int, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT likes_count FROM posts WHERE id = ?
+	`, postID).Scan(&count)
+	return count, err
+}
+
+// GetFeedPosts gets posts visible to the user
+func (r *SQLiteRepository) GetFeedPosts(userID string, limit, offset int) ([]*models.Post, error) {
+	query := `
+		SELECT DISTINCT p.* 
+		FROM posts p
+		LEFT JOIN followers f ON p.user_id = f.following_id
+		LEFT JOIN post_viewers pv ON p.id = pv.post_id
+		WHERE 
+			p.privacy = 'public'
+			OR p.user_id = ?
+			OR (p.privacy = 'almost_private' AND f.follower_id = ?)
+			OR (p.privacy = 'private' AND pv.user_id = ?)
+		ORDER BY p.created_at DESC
+		LIMIT ? OFFSET ?
+	`
+
+	rows, err := r.db.Query(query, userID, userID, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*models.Post
+	for rows.Next() {
+		post := &models.Post{}
+		var imagePath, videoPath sql.NullString
+
+		// Make sure the order matches exactly what's returned from the database
+		err := rows.Scan(
+			&post.ID,
+			&post.UserID,
+			&post.Content,
+			&imagePath,
+			&videoPath,
+			&post.Privacy,
+			&post.LikesCount,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if imagePath.Valid {
+			post.ImagePath = imagePath
+		}
+
+		if videoPath.Valid {
+			post.VideoPath = videoPath
+		}
+
+		user, err := r.GetUserDataByID(post.UserID)
+		if err != nil {
+			return nil, err
+		}
+		post.UserData = user
+
+		posts = append(posts, post)
+	}
+
+	return posts, rows.Err()
+}
+
+// GetUserDataByID retrieves user data by ID
+func (r *SQLiteRepository) GetUserDataByID(userID string) (*models.PostUserData, error) {
+	query := `
+		SELECT id, first_name, last_name, avatar
+		FROM users
+		WHERE id = ?
+	`
+
+	user := &models.PostUserData{}
+	err := r.db.QueryRow(query, userID).Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Avatar,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return user, nil
 }
