@@ -98,7 +98,7 @@ export default function Home() {
           }))
         : [],
       privacy: post.privacy,
-      userId: post.userId,
+      userId: post.userData.id,
     }));
   };
 
