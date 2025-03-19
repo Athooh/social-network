@@ -75,6 +75,7 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Get form values
 	content := r.FormValue("content")
 	privacy := r.FormValue("privacy")
+	viewers := r.Form["viewers"]
 
 	if privacy == "" {
 		h.sendError(w, http.StatusBadRequest, "Privacy field is missing")
@@ -106,6 +107,13 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create post: %s", err.Error()))
 		return
+	}
+
+	if len(viewers) > 0 {
+		if err := h.service.SetPostViewers(post.ID, userID, viewers); err != nil {
+			h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to set post viewers: %s", err.Error()))
+			return
+		}
 	}
 
 	// Prepare response
