@@ -5,6 +5,7 @@ import (
 
 	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/internal/post"
+	websocketHandler "github.com/Athooh/social-network/internal/websocket"
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/middleware"
 )
@@ -47,6 +48,7 @@ func (rg *RouteGroup) Register(mux *http.ServeMux) {
 func Router(
 	authHandler *auth.Handler,
 	postHandler *post.Handler,
+	wsHandler *websocketHandler.Handler,
 	authMiddleware, jwtMiddleware func(http.Handler) http.Handler,
 	log *logger.Logger,
 	uploadDir string,
@@ -98,10 +100,15 @@ func Router(
 	protectedPostGroup.HandleFunc("/user/", postHandler.GetUserPosts)
 	protectedPostGroup.HandleFunc("/like/", postHandler.LikePost)
 
+	// Add WebSocket route
+	wsRoute := NewRouteGroup("/ws", authenticatedRouteMiddleware)
+	wsRoute.HandleFunc("", wsHandler.HandleConnection)
+
 	// Register all groups
 	publicAuthGroup.Register(mux)
 	protectedAuthGroup.Register(mux)
 	protectedPostGroup.Register(mux)
+	wsRoute.Register(mux)
 
 	// Serve static files
 	fileServer := http.FileServer(http.Dir(uploadDir))
