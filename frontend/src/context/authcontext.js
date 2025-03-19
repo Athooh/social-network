@@ -71,7 +71,8 @@ export const AuthProvider = ({ children }) => {
 
         setLoading(false);
       } catch (error) {
-        await handleApiError(error, "Token validation error");
+        console.log("Token validation error", error);
+
         handleLogout(false);
       }
     },
