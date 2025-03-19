@@ -77,9 +77,14 @@ func (fs *FileStore) SaveFile(file *multipart.FileHeader, subdir string) (string
 
 func isAllowedFileType(contentType string) bool {
 	allowedTypes := map[string]bool{
-		"image/jpeg": true,
-		"image/png":  true,
-		"image/gif":  true,
+		"image/jpeg":       true,
+		"image/png":        true,
+		"image/gif":        true,
+		"video/mp4":        true,
+		"video/webm":       true,
+		"video/quicktime":  true,
+		"video/x-msvideo":  true, // AVI
+		"video/x-matroska": true, // MKV
 	}
 	return allowedTypes[strings.ToLower(contentType)]
 }
