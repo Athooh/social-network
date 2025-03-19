@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import ProfileDropdown from './ProfileDropdown';
 import SearchBar from './SearchBar';
 import { useAuth } from '@/context/authcontext';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function Header() {
   const router = useRouter();
@@ -51,12 +52,7 @@ export default function Header() {
           >
             <i className="fas fa-envelope"></i>
           </Link>
-          <Link 
-            href="/notification" 
-            className={`${styles.iconLink} ${pathname === '/notification' ? styles.active : ''}`}
-          >
-            <i className="fas fa-bell"></i>
-          </Link>
+          <NotificationDropdown />
           <ProfileDropdown />
         </nav>
       </div>
