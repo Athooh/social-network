@@ -41,7 +41,7 @@ export default function Header() {
             <i className="fas fa-newspaper"></i>
           </Link>
           <Link 
-            href="/profile/1" 
+            href="/profile" 
             className={`${styles.iconLink} ${pathname.startsWith('/profile') ? styles.active : ''}`}
           >
             <i className="fas fa-user"></i>
