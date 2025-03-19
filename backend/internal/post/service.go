@@ -11,11 +11,11 @@ import (
 
 // Service defines the post service interface
 type Service interface {
-	CreatePost(userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error)
+	CreatePost(userID string, content, privacy string, image, video *multipart.FileHeader) (*models.Post, error)
 	GetPost(postID int64, userID string) (*models.Post, error)
 	GetUserPosts(userID, viewerID string) ([]*models.Post, error)
 	GetPublicPosts(limit, offset int) ([]*models.Post, error)
-	UpdatePost(postID int64, userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error)
+	UpdatePost(postID int64, userID string, content, privacy string, image, video *multipart.FileHeader) (*models.Post, error)
 	DeletePost(postID int64, userID string) error
 
 	// Privacy management
@@ -44,7 +44,7 @@ func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Log
 }
 
 // CreatePost creates a new post
-func (s *PostService) CreatePost(userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error) {
+func (s *PostService) CreatePost(userID string, content, privacy string, image, video *multipart.FileHeader) (*models.Post, error) {
 	// Validate privacy setting
 	if privacy != models.PrivacyPublic && privacy != models.PrivacyAlmostPrivate && privacy != models.PrivacyPrivate {
 		return nil, errors.New("invalid privacy setting")
@@ -65,6 +65,16 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image *
 			return nil, err
 		}
 		post.ImagePath = filename
+	}
+
+	// Handle video upload if provided
+	if video != nil {
+		filename, err := s.fileStore.SaveFile(video, "videos")
+		if err != nil {
+			s.log.Error("Failed to save post video: %v", err)
+			return nil, err
+		}
+		post.VideoPath = filename
 	}
 
 	// Save post to database
@@ -147,7 +157,7 @@ func (s *PostService) GetPublicPosts(limit, offset int) ([]*models.Post, error) 
 }
 
 // UpdatePost updates an existing post
-func (s *PostService) UpdatePost(postID int64, userID string, content, privacy string, image *multipart.FileHeader) (*models.Post, error) {
+func (s *PostService) UpdatePost(postID int64, userID string, content, privacy string, image, video *multipart.FileHeader) (*models.Post, error) {
 	// Get the existing post
 	post, err := s.repo.GetPostByID(postID)
 	if err != nil {
@@ -222,6 +232,13 @@ func (s *PostService) DeletePost(postID int64, userID string) error {
 	if post.ImagePath != "" {
 		if err := s.fileStore.DeleteFile(post.ImagePath); err != nil {
 			s.log.Warn("Failed to delete post image: %v", err)
+		}
+	}
+
+	// Delete the post video if exists
+	if post.VideoPath != "" {
+		if err := s.fileStore.DeleteFile(post.VideoPath); err != nil {
+			s.log.Warn("Failed to delete post video: %v", err)
 		}
 	}
 
