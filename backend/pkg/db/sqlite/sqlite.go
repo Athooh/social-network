@@ -121,6 +121,23 @@ type IndexInfo struct {
 	Unique  bool
 }
 
+// DiscoverModelStructs returns all exported struct types from the models package
+func DiscoverModelStructs() []interface{} {
+	// Define the models we know about
+	// This is still manual but only needs to be updated when adding a new model type
+	return []interface{}{
+		models.User{},
+		models.Session{},
+		models.Post{},
+		models.PostViewer{},
+		models.Comment{},
+		models.FollowRequest{},
+		models.Follower{},
+		models.UserStats{},
+		// Add new models here
+	}
+}
+
 // CreateMigrationFromStruct generates migration files from a struct
 func (db *DB) CreateMigrationFromStruct(modelStruct interface{}, migrationName string) error {
 	// Check if migration already exists for this table
@@ -202,33 +219,34 @@ func checkMigrationExists(migrationsPath string, tableName string) (bool, error)
 }
 
 func CreateMigrations(db *DB) error {
+	// Discover all model structs
+	logger.Info("Discovering model structs...")
+	modelStructs := DiscoverModelStructs()
+
 	// Generate migrations for all models
 	logger.Info("Generating database migrations...")
-	if err := db.CreateMigrationFromStruct(models.User{}, "create_users_table"); err != nil {
-		logger.Fatal("Failed to create users migration: %v", err)
-	}
-	if err := db.CreateMigrationFromStruct(models.Session{}, "create_sessions_table"); err != nil {
-		logger.Fatal("Failed to create sessions migration: %v", err)
-	}
-	if err := db.CreateMigrationFromStruct(models.Post{}, "create_posts_table"); err != nil {
-		logger.Fatal("Failed to create posts migration: %v", err)
-	}
-	if err := db.CreateMigrationFromStruct(models.PostViewer{}, "create_post_viewers_table"); err != nil {
-		logger.Fatal("Failed to create post viewers migration: %v", err)
-	}
-	if err := db.CreateMigrationFromStruct(models.Comment{}, "create_comments_table"); err != nil {
-		logger.Fatal("Failed to create comments migration: %v", err)
-	}
-	if err := db.CreateMigrationFromStruct(models.FollowRequest{}, "create_follow_requests_table"); err != nil {
-		logger.Fatal("Failed to create follow requests migration: %v", err)
-	}
-	if err := db.CreateMigrationFromStruct(models.Follower{}, "create_followers_table"); err != nil {
-		logger.Fatal("Failed to create followers migration: %v", err)
+	for _, model := range modelStructs {
+		// Get the struct name
+		t := reflect.TypeOf(model)
+		if t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+		structName := t.Name()
+
+		// Generate migration name
+		migrationName := fmt.Sprintf("create_%ss_table", camelToSnake(structName))
+
+		// Create migration
+		if err := db.CreateMigrationFromStruct(model, migrationName); err != nil {
+			logger.Fatal("Failed to create migration for %s: %v", structName, err)
+			return err
+		}
 	}
 
 	// Check for schema updates
 	if err := db.UpdateMigrations(); err != nil {
 		logger.Fatal("Failed to update migrations: %v", err)
+		return err
 	}
 
 	// Run migrations
@@ -540,16 +558,8 @@ func (db *DB) AutoMigrate(modelStructs ...interface{}) error {
 func (db *DB) UpdateMigrations() error {
 	logger.Info("Checking for schema changes...")
 
-	// Get all model structs that might have changed
-	modelStructs := []interface{}{
-		models.User{},
-		models.Session{},
-		models.Post{},
-		models.PostViewer{},
-		models.Comment{},
-		models.FollowRequest{},
-		models.Follower{},
-	}
+	// Discover all model structs
+	modelStructs := DiscoverModelStructs()
 
 	for _, model := range modelStructs {
 		if err := db.checkAndUpdateSchema(model); err != nil {
