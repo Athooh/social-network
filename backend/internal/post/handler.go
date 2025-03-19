@@ -40,6 +40,7 @@ type PostResponse struct {
 	UserID    string `json:"userId"`
 	Content   string `json:"content"`
 	ImageURL  string `json:"imageUrl,omitempty"`
+	VideoURL  string `json:"videoUrl,omitempty"`
 	Privacy   string `json:"privacy"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
@@ -61,12 +62,12 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok || userID <= "" {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized Attempt by user: %s", userID))
 		return
 	}
 
 	// Parse multipart form
-	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
+	if err := r.ParseMultipartForm(20 << 20); err != nil { // 20 MB max for videos
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to parse form data: %s", err.Error()))
 		return
 	}
@@ -74,12 +75,6 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Get form values
 	content := r.FormValue("content")
 	privacy := r.FormValue("privacy")
-
-	// Validate required fields
-	if content == "" {
-		h.sendError(w, http.StatusBadRequest, "Content field is missing")
-		return
-	}
 
 	if privacy == "" {
 		h.sendError(w, http.StatusBadRequest, "Privacy field is missing")
@@ -93,8 +88,21 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		imageFile = header
 	}
 
+	// Get video file if provided
+	var videoFile *multipart.FileHeader
+	if file, header, err := r.FormFile("video"); err == nil {
+		defer file.Close()
+		videoFile = header
+	}
+
+	// Validate required fields
+	if content == "" && imageFile == nil && videoFile == nil {
+		h.sendError(w, http.StatusBadRequest, "Content, image, or video field is required")
+		return
+	}
+
 	// Create post
-	post, err := h.service.CreatePost(userID, content, privacy, imageFile)
+	post, err := h.service.CreatePost(userID, content, privacy, imageFile, videoFile)
 	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create post: %s", err.Error()))
 		return
@@ -112,6 +120,10 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	if post.ImagePath != "" {
 		response.ImageURL = "/uploads/posts/" + post.ImagePath
+	}
+
+	if post.VideoPath != "" {
+		response.VideoURL = "/uploads/videos/" + post.VideoPath
 	}
 
 	// Return response
@@ -160,6 +172,10 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 		response.ImageURL = "/uploads/posts/" + post.ImagePath
 	}
 
+	if post.VideoPath != "" {
+		response.VideoURL = "/uploads/videos/" + post.VideoPath
+	}
+
 	// Return response
 	h.sendJSON(w, http.StatusOK, response)
 }
@@ -206,6 +222,10 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 
 		if post.ImagePath != "" {
 			postResp.ImageURL = "/uploads/posts/" + post.ImagePath
+		}
+
+		if post.VideoPath != "" {
+			postResp.VideoURL = "/uploads/videos/" + post.VideoPath
 		}
 
 		response = append(response, postResp)
@@ -267,6 +287,10 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 			postResp.ImageURL = "/uploads/posts/" + post.ImagePath
 		}
 
+		if post.VideoPath != "" {
+			postResp.VideoURL = "/uploads/videos/" + post.VideoPath
+		}
+
 		response = append(response, postResp)
 	}
 
@@ -279,7 +303,7 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok || userID <= "" {
-		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthrized Attempt bu user: %s", userID))
+		h.sendError(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized Attempt by user: %s", userID))
 		return
 	}
 
@@ -296,7 +320,7 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse multipart form
-	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
+	if err := r.ParseMultipartForm(20 << 20); err != nil { // 20 MB max for videos
 		h.sendError(w, http.StatusBadRequest, fmt.Sprintf("Failed to parse form data: %s", err.Error()))
 		return
 	}
@@ -318,8 +342,15 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		imageFile = header
 	}
 
+	// Get video file if provided
+	var videoFile *multipart.FileHeader
+	if file, header, err := r.FormFile("video"); err == nil {
+		defer file.Close()
+		videoFile = header
+	}
+
 	// Update post
-	post, err := h.service.UpdatePost(postID, userID, content, privacy, imageFile)
+	post, err := h.service.UpdatePost(postID, userID, content, privacy, imageFile, videoFile)
 	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update post: %s", err.Error()))
 		return
@@ -337,6 +368,10 @@ func (h *Handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	if post.ImagePath != "" {
 		response.ImageURL = "/uploads/posts/" + post.ImagePath
+	}
+
+	if post.VideoPath != "" {
+		response.VideoURL = "/uploads/videos/" + post.VideoPath
 	}
 
 	// Return response
