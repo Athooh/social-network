@@ -124,11 +124,35 @@ export const usePostService = () => {
     }
   };
 
+  const deletePost = async (postId) => {
+    try {
+      const response = await authenticatedFetch(`posts`, {
+        method: "DELETE",
+        body: JSON.stringify({ postId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to delete post"
+        );
+      }
+
+      showToast("Post deleted successfully!", "success");
+      return true;
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      showToast(error.message || "Error deleting post", "error");
+      throw error;
+    }
+  };
+
   return {
     createPost,
     getFeedPosts,
     likePost,
     addComment,
     getPostComments,
+    deletePost,
   };
 };
