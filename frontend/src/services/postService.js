@@ -1,9 +1,59 @@
 import { useAuth } from "@/context/authcontext";
 import { showToast } from "@/components/ui/ToastContainer";
 import { handleApiError } from "@/utils/errorHandler";
-
+import { useWebSocket, EVENT_TYPES } from "./websocketService";
+import { useState, useEffect, useCallback } from "react";
+import { BASE_URL } from "@/utils/constants";
 export const usePostService = () => {
   const { authenticatedFetch } = useAuth();
+  const { subscribe } = useWebSocket();
+  const [newPosts, setNewPosts] = useState([]);
+
+  // Subscribe to post_created events
+  useEffect(() => {
+    const unsubscribe = subscribe(EVENT_TYPES.POST_CREATED, (payload) => {
+      if (payload && payload.post) {
+        console.log("Received post_created event:", payload);
+
+        // Destructure user data with defaults
+        const {
+          UserData = {
+            firstName: "Unknown",
+            lastName: "User",
+            avatar: "/avatar4.png",
+          },
+        } = payload.post;
+
+        // Ensure avatar has absolute URL if it's a relative path
+        const avatar = UserData.avatar?.startsWith("http")
+          ? UserData.avatar
+          : `${BASE_URL}/uploads/${UserData.avatar}`;
+
+        // Ensure the post has all required fields
+        const formattedPost = {
+          ...payload.post,
+          userData: {
+            ...UserData,
+            avatar, // Use the processed avatar URL
+          },
+          likesCount: payload.post.LikesCount || 0,
+          comments: payload.post.comments || [],
+          createdAt: payload.post.createdAt || new Date().toISOString(),
+          imageUrl: payload.post.ImagePath?.String
+            ? `/uploads/${payload.post.ImagePath.String}`
+            : null,
+          videoUrl: payload.post.VideoPath?.String
+            ? `/uploads/${payload.post.VideoPath.String}`
+            : null,
+          content: payload.post.Content,
+        };
+
+        setNewPosts((prev) => [formattedPost, ...prev]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [subscribe]);
 
   const createPost = async (formData) => {
     try {
@@ -147,6 +197,13 @@ export const usePostService = () => {
     }
   };
 
+  // Clear new posts and return them
+  const getAndClearNewPosts = useCallback(() => {
+    const posts = [...newPosts];
+    setNewPosts([]);
+    return posts;
+  }, [newPosts]);
+
   return {
     createPost,
     getFeedPosts,
@@ -154,5 +211,7 @@ export const usePostService = () => {
     addComment,
     getPostComments,
     deletePost,
+    newPosts,
+    getAndClearNewPosts,
   };
 };
