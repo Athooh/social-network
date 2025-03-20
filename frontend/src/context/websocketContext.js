@@ -1,12 +1,13 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useWebSocket } from "@/services/websocketService";
 
 const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
   const websocketService = useWebSocket();
+
 
   return (
     <WebSocketContext.Provider value={websocketService}>

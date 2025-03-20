@@ -17,7 +17,6 @@ export const usePostService = () => {
       EVENT_TYPES.POST_CREATED,
       (payload) => {
         if (payload && payload.post) {
-
           // Destructure user data with defaults
           const {
             UserData = {
@@ -27,6 +26,8 @@ export const usePostService = () => {
             },
           } = payload.post;
 
+          console.log("Received post:", payload.post);
+
           // Ensure avatar has absolute URL if it's a relative path
           const avatar = UserData.avatar?.startsWith("http")
             ? UserData.avatar
@@ -35,6 +36,7 @@ export const usePostService = () => {
           // Ensure the post has all required fields
           const formattedPost = {
             ...payload.post,
+            id: payload.post.ID,
             userData: {
               ...UserData,
               avatar, // Use the processed avatar URL
@@ -56,7 +58,7 @@ export const usePostService = () => {
         }
       }
     );
-  }, [subscribe, currentUserId]);
+  }, [subscribe]);
 
   const createPost = async (formData) => {
     try {
@@ -245,7 +247,6 @@ export const usePostService = () => {
 
   const updatePostLikes = useCallback(
     (postId, likesCount, isLiked) => {
-
       // Convert postId to number to ensure consistent comparison
       const numericPostId = Number(postId);
 
@@ -256,7 +257,6 @@ export const usePostService = () => {
       const postExistsInAll = allPosts.some(
         (post) => Number(post.id) === numericPostId
       );
-
 
       // Update the newPosts state
       setNewPosts((prevPosts) =>

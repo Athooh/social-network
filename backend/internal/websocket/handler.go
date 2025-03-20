@@ -43,9 +43,11 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if a connection already exists for this user
+	// Check for existing connection and close it
 	// if h.hub.HasActiveClient(userID) {
-	// 	return
+	// 	h.log.Info("Closing existing connection for user: %s", userID)
+	// 	// Close existing connections for this user
+	// 	h.hub.CloseUserConnections(userID)
 	// }
 
 	// Upgrade HTTP connection to WebSocket
@@ -70,7 +72,11 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 
 	h.log.Info("New WebSocket connection established for user: %s", userID)
 
+	// Debug: Print existing connections
+
 	// Start goroutines for reading and writing
 	go client.ReadPump()
 	go client.WritePump()
+
+	h.log.Info("Current active connections for user %s: %d", userID, h.hub.GetActiveConnectionCount(userID))
 }

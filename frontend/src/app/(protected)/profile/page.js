@@ -6,7 +6,7 @@ import Header from '@/components/header/Header';
 import styles from '@/styles/ProfilePage.module.css';  // Combined styles for the profile page
 import { use } from 'react';
 import ProfileBanner from '@/components/profile/ProfileBanner';
-import ProfileAboutSection from '@/components/profile/ProfileAboutSection';
+import ProfileAboutSideBar from '@/components/profile/ProfileAboutSideBar';
 import CreatePost from '@/components/posts/CreatePost';
 import PostList from '@/components/posts/PostList';
 import ProfilePhotosGrid from '@/components/profile/ProfilePhotosGrid';
@@ -39,7 +39,7 @@ export default function ProfilePage({ params }) {
         
         <div className={styles.contentLayout}>
           <div className={styles.leftSidebar}>
-            <ProfileAboutSection />
+            <ProfileAboutSideBar />
           </div>
 
             <div className={styles.mainContent}>
