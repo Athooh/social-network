@@ -9,12 +9,19 @@ import { formatRelativeTime } from "@/utils/dateUtils";
 import { BASE_URL } from "@/utils/constants";
 import { useWebSocketContext } from "@/context/websocketContext";
 import { EVENT_TYPES } from "@/services/websocketService";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function Post({ post, onPostUpdated }) {
-  const { likePost, addComment, getPostComments, deletePost, updatePostLikes } =
-    usePostService();
+  const {
+    likePost,
+    addComment,
+    getPostComments,
+    deletePost,
+    deleteComment,
+    updatePostLikes,
+  } = usePostService();
   const { subscribe } = useWebSocketContext();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -22,7 +29,12 @@ export default function Post({ post, onPostUpdated }) {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentImage, setCommentImage] = useState(null);
   const [commentImagePreview, setCommentImagePreview] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalConfig, setConfirmModalConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Format the post data to match component expectations
   const formattedPost = {
@@ -69,7 +81,7 @@ export default function Post({ post, onPostUpdated }) {
 
   // Fetch comments when comment section is opened
   useEffect(() => {
-    if (showComments && comments.length === 0) {
+    if (showComments) {
       fetchComments();
     }
   }, [showComments]);
@@ -80,21 +92,56 @@ export default function Post({ post, onPostUpdated }) {
     setLoadingComments(true);
     try {
       const commentsData = await getPostComments(post.id);
-      setComments(commentsData);
+      if (commentsData) {
+        const formattedComments = commentsData.map((comment) => ({
+          ...comment,
+          imageUrl: comment.imageUrl ? `${BASE_URL}${comment.imageUrl}` : null,
+          authorName: `${comment.userData.firstName} ${comment.userData.lastName}`,
+          authorImage: comment.userData.avatar
+            ? comment.userData.avatar.startsWith("http")
+              ? comment.userData.avatar
+              : `${BASE_URL}/uploads/${comment.userData.avatar}`
+            : "/avatar4.png",
+        }));
+
+        formattedComments.forEach((comment) => {
+          comment.timestamp = formatRelativeTime(comment.createdAt);
+        });
+
+        setComments(formattedComments);
+      } else {
+        setComments([]);
+      }
     } catch (error) {
       console.error("Error fetching comments:", error);
+      setComments([]);
     } finally {
       setLoadingComments(false);
     }
   };
 
+  // Add state for comment deletion
+  const [commentToDelete, setCommentToDelete] = useState(null);
+
+  // Function to show confirmation modal with custom config
+  const showConfirmation = (config) => {
+    setConfirmModalConfig(config);
+    setShowConfirmModal(true);
+  };
+
+  // Update handleOptionClick to use the new confirmation approach
   const handleOptionClick = async (action) => {
     switch (action) {
       case "edit":
         console.log("Edit post");
         break;
       case "delete":
-        setShowDeleteModal(true);
+        showConfirmation({
+          title: "Delete Post",
+          message:
+            "Are you sure you want to delete this post? This action cannot be undone.",
+          onConfirm: confirmDelete,
+        });
         break;
       case "follow":
         console.log("Follow user");
@@ -104,6 +151,42 @@ export default function Post({ post, onPostUpdated }) {
         break;
     }
     setShowOptions(false);
+  };
+
+  // Function to handle comment deletion
+  const handleDeleteComment = (comment) => {
+    showConfirmation({
+      title: "Delete Comment",
+      message:
+        "Are you sure you want to delete this comment? This action cannot be undone.",
+      onConfirm: () => confirmDeleteComment(comment.id),
+    });
+  };
+
+  // Function to confirm comment deletion
+  const confirmDeleteComment = async (commentId) => {
+    try {
+      await deleteComment(commentId);
+      // Remove the deleted comment from the state
+      setComments(comments.filter((comment) => comment.id !== commentId));
+      if (onPostUpdated) onPostUpdated();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    } finally {
+      setShowConfirmModal(false);
+    }
+  };
+
+  // Update the existing confirmDelete function
+  const confirmDelete = async () => {
+    try {
+      await deletePost(post.id);
+      if (onPostUpdated) onPostUpdated();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setShowConfirmModal(false);
+    }
   };
 
   const handleLike = async () => {
@@ -119,6 +202,13 @@ export default function Post({ post, onPostUpdated }) {
     }
   };
 
+  const avatar = currentUser?.avatar
+    ? currentUser.avatar.startsWith("http")
+      ? currentUser.avatar
+      : `${BASE_URL}/uploads/${currentUser.avatar}`
+    : "/avatar4.png";
+  const currentUserFullName = `${currentUser.firstName} ${currentUser.lastName}`;
+
   const handleComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim() && !commentImage) {
@@ -127,16 +217,25 @@ export default function Post({ post, onPostUpdated }) {
     }
 
     try {
-      const newComment = await addComment(post.id, commentText, commentImage);
+      let newComment;
+      if (post.id) {
+        newComment = await addComment(post.id, commentText, commentImage);
+      } else {
+        console.error("Post ID is required to add a comment");
+        return;
+      }
 
+      const commentImageUrl = newComment.imagePath
+        ? `${BASE_URL}/uploads/comments/${newComment.imagePath}`
+        : null;
       // Format the new comment to match our component's expected format
       const formattedComment = {
         id: newComment.id,
-        authorName: user?.name || "You",
-        authorImage: user?.profilePicture || "/avatar4.png",
+        authorName: currentUserFullName || "You",
+        authorImage: avatar,
         content: commentText,
         timestamp: "just now",
-        imageUrl: newComment.image || null,
+        imageUrl: commentImageUrl,
       };
 
       setComments((prev) => [...prev, formattedComment]);
@@ -171,23 +270,47 @@ export default function Post({ post, onPostUpdated }) {
     }
   };
 
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const isCurrentUserPost = currentUser?.id === post.userId;
 
-  const isCurrentUserPost = userData?.id === post.userId;
+  // Update the comment rendering to include delete button for owner
+  const renderComments = () => {
+    return comments.map((comment) => {
+      const isCommentOwner = currentUser?.id === comment.userData.id;
 
-  const confirmDelete = async () => {
-    try {
-      await deletePost(post.id);
-      if (onPostUpdated) onPostUpdated();
-    } catch (error) {
-      console.error("Error deleting post:", error);
-    } finally {
-      setShowDeleteModal(false);
-    }
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
+      return (
+        <div key={comment.id} className={styles.comment}>
+          <img
+            src={comment.authorImage}
+            alt={comment.authorName}
+            className={styles.commentAvatar}
+          />
+          <div className={styles.commentContent}>
+            <div className={styles.commentBubble}>
+              <h4>{comment.authorName}</h4>
+              <p>{comment.content}</p>
+              {comment.imageUrl && (
+                <div className={styles.commentImage}>
+                  <img src={comment.imageUrl} alt="Comment attachment" />
+                </div>
+              )}
+            </div>
+            <div className={styles.commentActions}>
+              <button>Like</button>
+              <button>Reply</button>
+              {isCommentOwner && (
+                <button
+                  className={styles.deleteCommentBtn}
+                  onClick={() => handleDeleteComment(comment)}
+                >
+                  Delete
+                </button>
+              )}
+              <span>{comment.timestamp}</span>
+            </div>
+          </div>
+        </div>
+      );
+    });
   };
 
   // Add this useEffect to handle real-time like updates from WebSocket
@@ -333,7 +456,7 @@ export default function Post({ post, onPostUpdated }) {
         <div className={styles.commentsSection}>
           <form onSubmit={handleComment} className={styles.commentForm}>
             <img
-              src={user?.profilePicture || "/avatar4.png"}
+              src={avatar}
               alt="Your avatar"
               className={styles.commentAvatar}
             />
@@ -381,66 +504,23 @@ export default function Post({ post, onPostUpdated }) {
             </div>
           )}
 
-          {!loadingComments && commentsList.length === 0 && (
+          {!loadingComments && comments && comments.length === 0 && (
             <div className={styles.noComments}>
               <p>No comments yet. Be the first to comment!</p>
             </div>
           )}
 
-          {commentsList.map((comment) => (
-            <div key={comment.id} className={styles.comment}>
-              <img
-                src={comment.authorImage}
-                alt={comment.authorName}
-                className={styles.commentAvatar}
-              />
-              <div className={styles.commentContent}>
-                <div className={styles.commentBubble}>
-                  <h4>{comment.authorName}</h4>
-                  <p>{comment.content}</p>
-                  {comment.imageUrl && (
-                    <div className={styles.commentImage}>
-                      <img src={comment.imageUrl} alt="Comment attachment" />
-                    </div>
-                  )}
-                </div>
-                <div className={styles.commentActions}>
-                  <button>Like</button>
-                  <button>Reply</button>
-                  <span>{comment.timestamp}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+          {comments && renderComments()}
         </div>
       )}
 
-      {showDeleteModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h2>Delete Post</h2>
-              <button className={styles.closeButton} onClick={cancelDelete}>
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            <div className={styles.modalContent}>
-              <p className={styles.deleteConfirmText}>
-                Are you sure you want to delete this post? This action cannot be
-                undone.
-              </p>
-              <div className={styles.modalFooter}>
-                <button className={styles.cancelBtn} onClick={cancelDelete}>
-                  Cancel
-                </button>
-                <button className={styles.deleteBtn} onClick={confirmDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmModalConfig.onConfirm}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+      />
     </article>
   );
 }
