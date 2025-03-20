@@ -47,6 +47,7 @@ const ToastContainer = () => {
 // Export the component and a function to show toasts
 export const showToast = (() => {
   let toastContainer = null;
+  let counter = 0; // Add a counter to ensure uniqueness
 
   return (message, type = "info", duration = 3000) => {
     if (!toastContainer) {
@@ -55,12 +56,15 @@ export const showToast = (() => {
       toastContainer = div;
     }
 
+    // Use both timestamp and counter to ensure uniqueness
+    const id = `${Date.now()}-${counter++}`;
+
     const event = new CustomEvent("showToast", {
       detail: {
         message,
         type,
         duration,
-        id: Date.now(),
+        id,
       },
     });
     document.dispatchEvent(event);
