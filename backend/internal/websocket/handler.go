@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Athooh/social-network/internal/auth"
+	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 	ws "github.com/Athooh/social-network/pkg/websocket"
 	"github.com/google/uuid"
@@ -38,14 +39,14 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		httputil.SendError(w, http.StatusUnauthorized, "(WebSocket) Unauthorized", false)
 		return
 	}
 
 	// Upgrade HTTP connection to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		h.log.Error("Failed to upgrade connection: %v", err)
+		httputil.SendError(w, http.StatusInternalServerError, "(WebSocket) Failed to upgrade connection", false)
 		return
 	}
 
