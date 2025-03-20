@@ -10,6 +10,7 @@ import { BASE_URL } from "@/utils/constants";
 import { useWebSocketContext } from "@/context/websocketContext";
 import { EVENT_TYPES } from "@/services/websocketService";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { useWebSocket } from "@/services/websocketService";
 
 export default function Post({ post, onPostUpdated }) {
   const {
@@ -20,7 +21,7 @@ export default function Post({ post, onPostUpdated }) {
     deleteComment,
     updatePostLikes,
   } = usePostService();
-  const { subscribe } = useWebSocketContext();
+  const { subscribe } = useWebSocket();
   const { currentUser } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -190,6 +191,11 @@ export default function Post({ post, onPostUpdated }) {
   };
 
   const handleLike = async () => {
+    if (!post.id || post.id === 0) {
+      showToast("Cannot like this post yet. Please refresh the page.", "error");
+      return;
+    }
+
     try {
       const response = await likePost(post.id);
       // Update local state
@@ -199,6 +205,7 @@ export default function Post({ post, onPostUpdated }) {
       if (onPostUpdated) onPostUpdated();
     } catch (error) {
       console.error("Error liking post:", error);
+      showToast("Failed to like post", "error");
     }
   };
 
@@ -275,7 +282,7 @@ export default function Post({ post, onPostUpdated }) {
   // Update the comment rendering to include delete button for owner
   const renderComments = () => {
     return comments.map((comment) => {
-      const isCommentOwner = currentUser?.id === comment.userData.id;
+      const isCommentOwner = currentUser?.id === comment.userData?.id;
 
       return (
         <div key={comment.id} className={styles.comment}>
