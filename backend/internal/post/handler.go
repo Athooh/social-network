@@ -216,7 +216,7 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
 		}
 		if comment.ImagePath.String != "" {
-			commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+			commentResp.ImageURL = "/uploads/" + comment.ImagePath.String
 		}
 		response.Comments = append(response.Comments, commentResp)
 	}
@@ -358,7 +358,7 @@ func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 				UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
 			}
 			if comment.ImagePath.String != "" {
-				commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+				commentResp.ImageURL = "/uploads/" + comment.ImagePath.String
 			}
 			postResp.Comments = append(postResp.Comments, commentResp)
 		}
@@ -555,17 +555,17 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	// Get form values
 	content := r.FormValue("content")
 
-	// Validate required fields
-	if content == "" {
-		h.sendError(w, http.StatusBadRequest, "Content field is missing")
-		return
-	}
-
 	// Get image file if provided
 	var imageFile *multipart.FileHeader
 	if file, header, err := r.FormFile("image"); err == nil {
 		defer file.Close()
 		imageFile = header
+	}
+
+	// Validate required fields
+	if content == "" && imageFile == nil {
+		h.sendError(w, http.StatusBadRequest, "Content or image field is missing please provide one")
+		return
 	}
 
 	// Create comment
@@ -587,7 +587,7 @@ func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if comment.ImagePath.String != "" {
-		response.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+		response.ImageURL = "/uploads/" + comment.ImagePath.String
 	}
 
 	// Return response
@@ -636,7 +636,7 @@ func (h *Handler) GetPostComments(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if comment.ImagePath.String != "" {
-			commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+			commentResp.ImageURL = "/uploads/" + comment.ImagePath.String
 		}
 
 		response = append(response, commentResp)
@@ -764,7 +764,7 @@ func (h *Handler) GetFeedPosts(w http.ResponseWriter, r *http.Request) {
 				UserData:  comment.UserData,
 			}
 			if comment.ImagePath.String != "" {
-				commentResp.ImageURL = "/uploads/comments/" + comment.ImagePath.String
+				commentResp.ImageURL = "/uploads/" + comment.ImagePath.String
 			}
 			postResp.Comments = append(postResp.Comments, commentResp)
 		}
