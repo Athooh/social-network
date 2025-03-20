@@ -24,16 +24,20 @@ type LoginRequest struct {
 
 // UserResponse represents the user data returned to the client
 type UserResponse struct {
-	ID          string    `json:"id"`
-	Email       string    `json:"email"`
-	FirstName   string    `json:"firstName"`
-	LastName    string    `json:"lastName"`
-	DateOfBirth string    `json:"dateOfBirth"`
-	Avatar      string    `json:"avatar"`
-	Nickname    string    `json:"nickname"`
-	AboutMe     string    `json:"aboutMe"`
-	IsPublic    bool      `json:"isPublic"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID             string    `json:"id"`
+	Email          string    `json:"email"`
+	FirstName      string    `json:"firstName"`
+	LastName       string    `json:"lastName"`
+	DateOfBirth    string    `json:"dateOfBirth"`
+	Avatar         string    `json:"avatar"`
+	Nickname       string    `json:"nickname"`
+	AboutMe        string    `json:"aboutMe"`
+	IsPublic       bool      `json:"isPublic"`
+	CreatedAt      time.Time `json:"createdAt"`
+	NumPosts       int       `json:"numPosts"`
+	GroupsJoined   int       `json:"groupsJoined"`
+	FollowersCount int       `json:"followersCount"`
+	FollowingCount int       `json:"followingCount"`
 	// UserStats   models.UserStats `json:"userStats"`
 }
 
@@ -50,4 +54,3 @@ type Session struct {
 	UserID    string
 	ExpiresAt time.Time
 }
-

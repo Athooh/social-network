@@ -49,28 +49,33 @@ func (r *SQLiteRepository) Create(user *User) error {
 
 // GetByID retrieves a user by ID
 func (r *SQLiteRepository) GetByID(id string) (*User, error) {
-	query := `
-		SELECT id, email, password, first_name, last_name, date_of_birth, 
-		       avatar, nickname, about_me, is_public, created_at, updated_at
-		FROM users
-		WHERE id = ?
-	`
+    query := `
+        SELECT u.id, u.email, u.password, u.first_name, u.last_name, u.date_of_birth, 
+               u.avatar, u.nickname, u.about_me, u.is_public, u.created_at, u.updated_at,
+               COALESCE(us.posts_count, 0) AS posts_count,
+               COALESCE(us.groups_joined, 0) AS groups_joined,
+               COALESCE(us.followers_count, 0) AS followers_count,
+               COALESCE(us.following_count, 0) AS following_count
+        FROM users u
+        LEFT JOIN user_statss us ON u.id = us.user_id
+        WHERE u.id = ?
+    `
 
-	var user User
-	err := r.db.QueryRow(query, id).Scan(
-		&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.DateOfBirth,
-		&user.Avatar, &user.Nickname, &user.AboutMe, &user.IsPublic, &user.CreatedAt, &user.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("user not found")
-		}
-		return nil, err
-	}
+    var user User
+    err := r.db.QueryRow(query, id).Scan(
+        &user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.DateOfBirth,
+        &user.Avatar, &user.Nickname, &user.AboutMe, &user.IsPublic, &user.CreatedAt, &user.UpdatedAt,
+        &user.PostsCount, &user.GroupsJoined, &user.FollowersCount, &user.FollowingCount,
+    )
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, errors.New("user not found")
+        }
+        return nil, err
+    }
 
-	return &user, nil
+    return &user, nil
 }
-
 // GetByEmail retrieves a user by email
 func (r *SQLiteRepository) GetByEmail(email string) (*User, error) {
 	query := `

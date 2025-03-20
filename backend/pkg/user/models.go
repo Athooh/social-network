@@ -25,4 +25,8 @@ type User struct {
 	IsPublic    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	PostsCount     int
+    GroupsJoined   int
+    FollowersCount int
+    FollowingCount int
 }

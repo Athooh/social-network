@@ -102,16 +102,20 @@ func (s *Service) GetCurrentUser(r *http.Request) (*models.UserResponse, error) 
 
 	// Return user data without sensitive information
 	return &models.UserResponse{
-		ID:          user.ID,
-		Email:       user.Email,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		DateOfBirth: user.DateOfBirth,
-		Avatar:      user.Avatar,
-		Nickname:    user.Nickname,
-		AboutMe:     user.AboutMe,
-		IsPublic:    user.IsPublic,
-		CreatedAt:   user.CreatedAt,
+		ID:             user.ID,
+		Email:          user.Email,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		DateOfBirth:    user.DateOfBirth,
+		Avatar:         user.Avatar,
+		Nickname:       user.Nickname,
+		AboutMe:        user.AboutMe,
+		IsPublic:       user.IsPublic,
+		CreatedAt:      user.CreatedAt,
+		NumPosts:       user.PostsCount,
+		FollowersCount: user.FollowersCount,
+		FollowingCount: user.FollowingCount,
+		GroupsJoined:   user.GroupsJoined,
 	}, nil
 }
 
