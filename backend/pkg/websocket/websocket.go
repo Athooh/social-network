@@ -173,6 +173,19 @@ func prepareMessage(msgType string, payload interface{}) (string, []byte) {
 	return msgType, data
 }
 
+// HasActiveClient checks if a user already has an active client connection
+func (h *Hub) HasActiveClient(userID string) bool {
+	h.Mu.RLock()
+	defer h.Mu.RUnlock()
+
+	for client := range h.Clients {
+		if client.UserID == userID && client.IsActive {
+			return true
+		}
+	}
+	return false
+}
+
 // ReadPump pumps messages from the WebSocket connection to the hub
 func (c *Client) ReadPump() {
 	defer func() {
