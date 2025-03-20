@@ -39,8 +39,7 @@ const contacts = [
 const pageSize = 10;
 
 export default function Home() {
-  const { getFeedPosts, createPost, newPosts, getAndClearNewPosts } =
-    usePostService();
+  const { getFeedPosts, newPosts, getAndClearNewPosts } = usePostService();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -115,11 +114,6 @@ export default function Home() {
     [loading, hasMore, page, loadPosts]
   );
 
-  // Handle post creation
-  const handlePostCreated = (newPost) => {
-    setPosts((prev) => [newPost, ...prev]);
-  };
-
   return (
     <ProtectedRoute>
       <Header />
@@ -129,13 +123,13 @@ export default function Home() {
         </aside>
         <main>
           <section className={styles.createPostSection}>
-            <CreatePost onPostCreated={handlePostCreated} />
+            <CreatePost />
           </section>
           <section className={styles.feedSection}>
             {posts.map((post, index) => {
               // Create a unique key that combines post.id with a suffix
               const uniqueKey = `post-${post.id}`;
-              
+
               if (posts.length === index + 1) {
                 return (
                   <div ref={lastPostElementRef} key={`${uniqueKey}-container`}>
@@ -148,10 +142,10 @@ export default function Home() {
                 );
               } else {
                 return (
-                  <Post 
-                    key={uniqueKey} 
-                    post={post} 
-                    onPostUpdated={refreshFeed} 
+                  <Post
+                    key={uniqueKey}
+                    post={post}
+                    onPostUpdated={refreshFeed}
                   />
                 );
               }
