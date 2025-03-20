@@ -75,7 +75,7 @@ export default function ProfileDropdown() {
 
           <div className={styles.dropdownDivider} />
 
-          <Link href="/profile/1" className={styles.dropdownItem}>
+          <Link href="/profile" className={styles.dropdownItem}>
             <i className="fas fa-user"></i>
             View Profile
           </Link>
