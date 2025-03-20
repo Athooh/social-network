@@ -90,7 +90,7 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 // GetPostByID retrieves a post by ID
 func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 	query := `
-		SELECT id, user_id, content, image_path, video_path, privacy, created_at, updated_at
+		SELECT id, user_id, content, image_path, video_path, privacy, likes_count, created_at, updated_at
 		FROM posts
 		WHERE id = ?
 	`
@@ -104,6 +104,7 @@ func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 		&imagePath,
 		&videoPath,
 		&post.Privacy,
+		&post.LikesCount,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)
@@ -127,7 +128,7 @@ func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 // GetPostsByUserID retrieves all posts by a user
 func (r *SQLiteRepository) GetPostsByUserID(userID string) ([]*models.Post, error) {
 	query := `
-		SELECT id, user_id, content, image_path, privacy, created_at, updated_at
+		SELECT id, user_id, content, image_path, video_path, privacy, likes_count, created_at, updated_at
 		FROM posts
 		WHERE user_id = ?
 		ORDER BY created_at DESC
@@ -150,6 +151,7 @@ func (r *SQLiteRepository) GetPostsByUserID(userID string) ([]*models.Post, erro
 			&imagePath,
 			&videoPath,
 			&post.Privacy,
+			&post.LikesCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
@@ -175,7 +177,7 @@ func (r *SQLiteRepository) GetPostsByUserID(userID string) ([]*models.Post, erro
 // GetPublicPosts retrieves public posts with pagination
 func (r *SQLiteRepository) GetPublicPosts(limit, offset int) ([]*models.Post, error) {
 	query := `
-		SELECT id, user_id, content, image_path, privacy, created_at, updated_at
+		SELECT id, user_id, content, image_path, video_path, privacy, likes_count, created_at, updated_at
 		FROM posts
 		WHERE privacy = 'public'
 		ORDER BY created_at DESC
@@ -199,6 +201,7 @@ func (r *SQLiteRepository) GetPublicPosts(limit, offset int) ([]*models.Post, er
 			&imagePath,
 			&videoPath,
 			&post.Privacy,
+			&post.LikesCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
