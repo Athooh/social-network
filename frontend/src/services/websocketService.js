@@ -8,9 +8,9 @@ import { BASE_URL } from "@/utils/constants";
 // Event types that match backend definitions
 export const EVENT_TYPES = {
   POST_CREATED: "post_created",
+  POST_LIKED: "post_liked",
   // Add more event types as needed
   // COMMENT_ADDED: 'comment_added',
-  // POST_LIKED: 'post_liked',
   // MESSAGE_RECEIVED: 'message_received',
 };
 
@@ -103,11 +103,8 @@ export const useWebSocket = () => {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("WebSocket message received:", data);
-
         // Update last message state
         setLastMessage(data);
-
         // Notify listeners for this event type
         if (data.type && eventListeners[data.type]) {
           eventListeners[data.type].forEach((callback) => {
