@@ -798,7 +798,8 @@ func (h *Handler) LikePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Toggle like status
-	if err := h.service.LikePost(postID, userID); err != nil {
+	isLiked, err := h.service.LikePost(postID, userID)
+	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to toggle like status: %s", err.Error()))
 		return
 	}
@@ -812,11 +813,13 @@ func (h *Handler) LikePost(w http.ResponseWriter, r *http.Request) {
 
 	// Return response
 	response := struct {
-		LikesCount int  `json:"likesCount"`
-		IsLiked    bool `json:"isLiked"`
+		PostID     int64 `json:"postId"`
+		LikesCount int   `json:"likesCount"`
+		IsLiked    bool  `json:"isLiked"`
 	}{
+		PostID:     post.ID,
 		LikesCount: int(post.LikesCount),
-		IsLiked:    true, // The service toggles, so if we're here, the action was successful
+		IsLiked:    isLiked,
 	}
 
 	h.sendJSON(w, http.StatusOK, response)
