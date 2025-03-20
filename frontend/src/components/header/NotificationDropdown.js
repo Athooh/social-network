@@ -11,6 +11,7 @@ export default function NotificationDropdown() {
       id: '1',
       type: 'message',
       sender: 'John Doe',
+      avatar: '/avatar1.png',
       timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
       read: false
     },
@@ -18,6 +19,7 @@ export default function NotificationDropdown() {
       id: '2',
       type: 'reaction',
       sender: 'Jane Smith',
+      avatar: '/avatar2.png',
       action: 'liked',
       contentType: 'photo',
       timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
@@ -27,6 +29,7 @@ export default function NotificationDropdown() {
       id: '3',
       type: 'comment',
       sender: 'Mike Johnson',
+      avatar: '/avatar4.png',
       contentType: 'post',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
       read: false
@@ -35,6 +38,7 @@ export default function NotificationDropdown() {
       id: '4',
       type: 'friendRequest',
       sender: 'Sarah Wilson',
+      avatar: '/avatar5.png',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
       read: false
     },
@@ -42,6 +46,7 @@ export default function NotificationDropdown() {
       id: '5',
       type: 'invitation',
       sender: 'David Brown',
+      avatar: '/avatar6.png',
       contentType: 'group "Photography Club"',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
       read: false
@@ -79,6 +84,9 @@ export default function NotificationDropdown() {
       case 'message':
         return (
           <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+            </div>
             <span className={styles.text}>
               You have a new message from <strong>{notification.sender}</strong>
             </span>
@@ -87,6 +95,9 @@ export default function NotificationDropdown() {
       case 'reaction':
         return (
           <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+            </div>
             <span className={styles.text}>
               <strong>{notification.sender}</strong> {notification.action} your {notification.contentType}
             </span>
@@ -95,6 +106,9 @@ export default function NotificationDropdown() {
       case 'comment':
         return (
           <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+            </div>
             <span className={styles.text}>
               <strong>{notification.sender}</strong> commented on your {notification.contentType}
             </span>
@@ -103,6 +117,10 @@ export default function NotificationDropdown() {
       case 'friendRequest':
         return (
           <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+            </div>
+            <div className={styles.textBox}>
             <span className={styles.text}>
               Friend request from <strong>{notification.sender}</strong>
             </span>
@@ -120,11 +138,15 @@ export default function NotificationDropdown() {
                 Decline
               </button>
             </div>
+            </div>
           </div>
         );
       case 'invitation':
         return (
           <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+            </div>
             <span className={styles.text}>
               You have been invited to {notification.contentType} by <strong>{notification.sender}</strong>
             </span>
