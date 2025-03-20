@@ -17,7 +17,6 @@ export const usePostService = () => {
       EVENT_TYPES.POST_CREATED,
       (payload) => {
         if (payload && payload.post) {
-          console.log("Received post_created event:", payload);
 
           // Destructure user data with defaults
           const {
@@ -50,6 +49,7 @@ export const usePostService = () => {
               ? `/uploads/${payload.post.VideoPath.String}`
               : null,
             content: payload.post.Content,
+            privacy: payload.post.Privacy,
           };
 
           setNewPosts((prev) => [formattedPost, ...prev]);
@@ -130,8 +130,6 @@ export const usePostService = () => {
       }
 
       const data = await response.json();
-
-      console.log("data from like post", data);
 
       // Use the utility function to update posts
       updatePostLikes(postId, data.likesCount, data.isLiked);
@@ -216,6 +214,28 @@ export const usePostService = () => {
     }
   };
 
+  const deleteComment = async (commentId) => {
+    try {
+      const response = await authenticatedFetch(`posts/comments/${commentId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to delete comment"
+        );
+      }
+
+      showToast("Comment deleted successfully!", "success");
+      return true;
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      showToast(error.message || "Error deleting comment", "error");
+      throw error;
+    }
+  };
+
   // Clear new posts and return them
   const getAndClearNewPosts = useCallback(() => {
     const posts = [...newPosts];
@@ -225,7 +245,6 @@ export const usePostService = () => {
 
   const updatePostLikes = useCallback(
     (postId, likesCount, isLiked) => {
-      console.log("Updating post likes:", { postId, likesCount, isLiked });
 
       // Convert postId to number to ensure consistent comparison
       const numericPostId = Number(postId);
@@ -237,9 +256,7 @@ export const usePostService = () => {
       const postExistsInAll = allPosts.some(
         (post) => Number(post.id) === numericPostId
       );
-      console.log(
-        `Post ${numericPostId} exists in: newPosts=${postExistsInNew}, allPosts=${postExistsInAll}`
-      );
+
 
       // Update the newPosts state
       setNewPosts((prevPosts) =>
@@ -272,6 +289,7 @@ export const usePostService = () => {
     addComment,
     getPostComments,
     deletePost,
+    deleteComment,
     newPosts,
     getAndClearNewPosts,
     updatePostLikes,
