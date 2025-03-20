@@ -56,7 +56,6 @@ export default function Home() {
       try {
         const data = await getFeedPosts(pageNum, pageSize);
 
-        console.log("data", data);
         if (data.length < pageSize) {
           setHasMore(false);
         }
