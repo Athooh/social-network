@@ -7,10 +7,13 @@ import { showToast } from "@/components/ui/ToastContainer";
 import { useAuth } from "@/context/authcontext";
 import { formatRelativeTime } from "@/utils/dateUtils";
 import { BASE_URL } from "@/utils/constants";
+import { useWebSocketContext } from "@/context/websocketContext";
+import { EVENT_TYPES } from "@/services/websocketService";
 
 export default function Post({ post, onPostUpdated }) {
-  const { likePost, addComment, getPostComments, deletePost } =
+  const { likePost, addComment, getPostComments, deletePost, updatePostLikes } =
     usePostService();
+  const { subscribe } = useWebSocketContext();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -105,9 +108,11 @@ export default function Post({ post, onPostUpdated }) {
 
   const handleLike = async () => {
     try {
-      await likePost(post.id);
-      setIsLiked(!isLiked);
-      setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+      const response = await likePost(post.id);
+      // Update local state
+      setIsLiked(response.isLiked);
+      setLikesCount(response.likesCount);
+
       if (onPostUpdated) onPostUpdated();
     } catch (error) {
       console.error("Error liking post:", error);
@@ -184,6 +189,28 @@ export default function Post({ post, onPostUpdated }) {
   const cancelDelete = () => {
     setShowDeleteModal(false);
   };
+
+  // Add this useEffect to handle real-time like updates from WebSocket
+  useEffect(() => {
+    // Check if the post ID exists
+    if (!post.id) return;
+
+    // Subscribe to post like updates from WebSocket
+    const unsubscribe = subscribe(EVENT_TYPES.POST_LIKED, (payload) => {
+      // Make sure this update is for our post
+      if (Number(payload.postId) === Number(post.id)) {
+        setIsLiked(payload.isLiked);
+        setLikesCount(payload.likesCount);
+      }
+    });
+
+    // Clean up subscription when component unmounts
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, [post.id, subscribe]);
 
   return (
     <article className={styles.post}>
