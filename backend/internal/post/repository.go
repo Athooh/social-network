@@ -349,7 +349,7 @@ func (r *SQLiteRepository) CreateComment(comment *models.Comment) error {
 		comment.PostID,
 		comment.UserID,
 		comment.Content,
-		comment.ImagePath,
+		comment.ImagePath.String,
 		comment.CreatedAt,
 		comment.UpdatedAt,
 	).Scan(&comment.ID)
@@ -363,7 +363,7 @@ func (r *SQLiteRepository) GetCommentsByPostID(postID int64) ([]*models.Comment,
 		SELECT id, post_id, user_id, content, image_path, created_at, updated_at
 		FROM comments
 		WHERE post_id = ?
-		ORDER BY created_at ASC
+		ORDER BY created_at DESC
 	`
 
 	rows, err := r.db.Query(query, postID)
