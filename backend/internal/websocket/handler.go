@@ -43,6 +43,11 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if a connection already exists for this user
+	// if h.hub.HasActiveClient(userID) {
+	// 	return
+	// }
+
 	// Upgrade HTTP connection to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
