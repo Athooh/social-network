@@ -71,8 +71,7 @@ export const AuthProvider = ({ children }) => {
 
         setLoading(false);
       } catch (error) {
-        console.log("Token validation error", error);
-
+        console.error("Token validation error", error);
         handleLogout(false);
       }
     },
@@ -167,8 +166,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("userData", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
 
-        console.log("data", data);
-
         document.cookie = `token=${data.token}; path=/; max-age=${data.expires_in}; samesite=strict`;
 
         setCurrentUser(data.user);
@@ -223,7 +220,6 @@ export const AuthProvider = ({ children }) => {
 
       const authHeader = { Authorization: `Bearer ${storedToken}` };
 
-      console.log("Auth fetch", `${API_URL}/${url}`, options);
       const response = await fetch(`${API_URL}/${url}`, {
         ...options,
         headers: {
