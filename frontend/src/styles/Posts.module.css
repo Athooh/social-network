@@ -1117,4 +1117,18 @@
   100% {
     transform: scale(1);
   }
+}
+
+.deleteCommentBtn {
+  background: none;
+  border: none;
+  color: #f44336;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: var(--font-size-sm);
+}
+
+.deleteCommentBtn:hover {
+  text-decoration: underline;
 } 
