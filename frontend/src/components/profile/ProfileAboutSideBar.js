@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '@/styles/ProfileAboutSection.module.css';
+import styles from '@/styles/ProfileAboutSideBar.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPenToSquare,
@@ -12,7 +12,7 @@ import {
   faLocationDot
 } from '@fortawesome/free-solid-svg-icons';
 
-const ProfileAboutSection = ({ userInfo }) => {
+const ProfileAboutSideBar = ({ userInfo }) => {
   return (
     <div className={styles.aboutSection}>
       {/* About Section */}
@@ -67,4 +67,4 @@ const ProfileAboutSection = ({ userInfo }) => {
   );
 };
 
-export default ProfileAboutSection; 
+export default ProfileAboutSideBar; 
