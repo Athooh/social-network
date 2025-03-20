@@ -63,3 +63,35 @@ func (s *NotificationService) NotifyPostCreatedToSpecificUsers(post *models.Post
 
 	return nil
 }
+
+// NotifyPostLiked sends a notification when a post is liked or unliked
+func (s *NotificationService) NotifyPostLiked(post *models.Post, userID string, userName string, isLiked bool) error {
+	// Create event payload
+	payload := events.PostLikedPayload{
+		PostID:     post.ID,
+		UserID:     userID,
+		UserName:   userName,
+		IsLiked:    isLiked,
+		LikesCount: int(post.LikesCount),
+	}
+
+	// Create event
+	event := events.Event{
+		Type:    events.PostLiked,
+		Payload: payload,
+	}
+
+	// Notify the post owner if they're not the one who liked/unliked
+	// if post.UserID != userID {
+	// 	s.hub.BroadcastToUser(post.UserID, event)
+	// }
+
+	// Also broadcast to anyone viewing the post
+	eventJSON, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	s.hub.Broadcast <- eventJSON
+	return nil
+}
