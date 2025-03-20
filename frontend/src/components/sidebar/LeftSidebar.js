@@ -9,10 +9,10 @@ export default function LeftSidebar() {
   const person = JSON.parse(localStorage.getItem('userData'))
 
   const stats = [
-    { label: 'Posts', count: 120 },
-    { label: 'Groups', count: 12 },
-    { label: 'Followers', count: 1230 },
-    { label: 'Following', count: 300 },
+    { label: 'Posts', count: person.numPosts },
+    { label: 'Groups', count: person.groupsJoined },
+    { label: 'Followers', count: person.followersCount },
+    { label: 'Following', count: person.followingCount },
   ];
 
   const navLinks = [
