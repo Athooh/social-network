@@ -166,7 +166,7 @@ export default function Home() {
 
             {!loading && !hasMore && posts.length > 0 && (
               <div className={postStyles.endOfFeed}>
-                <p>You've reached the end of your feed!</p>
+                <p>You&apos;ve reached the end of your feed!</p>
               </div>
             )}
           </section>
