@@ -8,52 +8,55 @@ export const usePostService = () => {
   const { authenticatedFetch } = useAuth();
   const { subscribe } = useWebSocket();
   const [newPosts, setNewPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]);
+  const { currentUserId } = useAuth();
 
   // Subscribe to post_created events
   useEffect(() => {
-    const unsubscribe = subscribe(EVENT_TYPES.POST_CREATED, (payload) => {
-      if (payload && payload.post) {
-        console.log("Received post_created event:", payload);
+    const unsubscribePostCreated = subscribe(
+      EVENT_TYPES.POST_CREATED,
+      (payload) => {
+        if (payload && payload.post) {
+          console.log("Received post_created event:", payload);
 
-        // Destructure user data with defaults
-        const {
-          UserData = {
-            firstName: "Unknown",
-            lastName: "User",
-            avatar: "/avatar4.png",
-          },
-        } = payload.post;
+          // Destructure user data with defaults
+          const {
+            UserData = {
+              firstName: "Unknown",
+              lastName: "User",
+              avatar: "/avatar4.png",
+            },
+          } = payload.post;
 
-        // Ensure avatar has absolute URL if it's a relative path
-        const avatar = UserData.avatar?.startsWith("http")
-          ? UserData.avatar
-          : `${BASE_URL}/uploads/${UserData.avatar}`;
+          // Ensure avatar has absolute URL if it's a relative path
+          const avatar = UserData.avatar?.startsWith("http")
+            ? UserData.avatar
+            : `${BASE_URL}/uploads/${UserData.avatar}`;
 
-        // Ensure the post has all required fields
-        const formattedPost = {
-          ...payload.post,
-          userData: {
-            ...UserData,
-            avatar, // Use the processed avatar URL
-          },
-          likesCount: payload.post.LikesCount || 0,
-          comments: payload.post.comments || [],
-          createdAt: payload.post.createdAt || new Date().toISOString(),
-          imageUrl: payload.post.ImagePath?.String
-            ? `/uploads/${payload.post.ImagePath.String}`
-            : null,
-          videoUrl: payload.post.VideoPath?.String
-            ? `/uploads/${payload.post.VideoPath.String}`
-            : null,
-          content: payload.post.Content,
-        };
+          // Ensure the post has all required fields
+          const formattedPost = {
+            ...payload.post,
+            userData: {
+              ...UserData,
+              avatar, // Use the processed avatar URL
+            },
+            likesCount: payload.post.LikesCount || 0,
+            comments: payload.post.comments || [],
+            createdAt: payload.post.createdAt || new Date().toISOString(),
+            imageUrl: payload.post.ImagePath?.String
+              ? `/uploads/${payload.post.ImagePath.String}`
+              : null,
+            videoUrl: payload.post.VideoPath?.String
+              ? `/uploads/${payload.post.VideoPath.String}`
+              : null,
+            content: payload.post.Content,
+          };
 
-        setNewPosts((prev) => [formattedPost, ...prev]);
+          setNewPosts((prev) => [formattedPost, ...prev]);
+        }
       }
-    });
-
-    return () => unsubscribe();
-  }, [subscribe]);
+    );
+  }, [subscribe, currentUserId]);
 
   const createPost = async (formData) => {
     try {
@@ -96,7 +99,16 @@ export const usePostService = () => {
         );
       }
 
-      return await response.json();
+      const data = await response.json();
+
+      // Update allPosts state when fetching posts
+      if (page === 1) {
+        setAllPosts(data);
+      } else {
+        setAllPosts((prev) => [...prev, ...data]);
+      }
+
+      return data;
     } catch (error) {
       console.error("Error fetching posts:", error);
       showToast(error.message || "Error fetching posts", "error");
@@ -117,7 +129,14 @@ export const usePostService = () => {
         );
       }
 
-      return await response.json();
+      const data = await response.json();
+
+      console.log("data from like post", data);
+
+      // Use the utility function to update posts
+      updatePostLikes(postId, data.likesCount, data.isLiked);
+
+      return data;
     } catch (error) {
       console.error("Error liking post:", error);
       showToast(error.message || "Error liking post", "error");
@@ -204,6 +223,48 @@ export const usePostService = () => {
     return posts;
   }, [newPosts]);
 
+  const updatePostLikes = useCallback(
+    (postId, likesCount, isLiked) => {
+      console.log("Updating post likes:", { postId, likesCount, isLiked });
+
+      // Convert postId to number to ensure consistent comparison
+      const numericPostId = Number(postId);
+
+      // Debug: Check if posts exist
+      const postExistsInNew = newPosts.some(
+        (post) => Number(post.id) === numericPostId
+      );
+      const postExistsInAll = allPosts.some(
+        (post) => Number(post.id) === numericPostId
+      );
+      console.log(
+        `Post ${numericPostId} exists in: newPosts=${postExistsInNew}, allPosts=${postExistsInAll}`
+      );
+
+      // Update the newPosts state
+      setNewPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          Number(post.id) === numericPostId
+            ? { ...post, likesCount, isLiked }
+            : post
+        )
+      );
+
+      // Update allPosts state as well
+      setAllPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          Number(post.id) === numericPostId
+            ? { ...post, likesCount, isLiked }
+            : post
+        )
+      );
+
+      // Return the updated data so components can use it
+      return { postId: numericPostId, likesCount, isLiked };
+    },
+    [newPosts, allPosts]
+  );
+
   return {
     createPost,
     getFeedPosts,
@@ -213,5 +274,8 @@ export const usePostService = () => {
     deletePost,
     newPosts,
     getAndClearNewPosts,
+    updatePostLikes,
+    allPosts,
+    setAllPosts,
   };
 };
