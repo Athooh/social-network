@@ -27,7 +27,7 @@ type Service interface {
 	DeleteComment(commentID int64, userID string) error
 
 	// Like functionality
-	LikePost(postID int64, userID string) error
+	LikePost(postID int64, userID string) (bool, error)
 	UnlikePost(postID int64, userID string) error
 	GetFeedPosts(userID string, page, pageSize int) ([]*models.Post, error)
 	GetPostWithComments(postID int64, userID string) (*models.Post, []*models.Comment, error)
@@ -472,32 +472,65 @@ func (s *PostService) DeleteComment(commentID int64, userID string) error {
 }
 
 // LikePost handles liking a post
-func (s *PostService) LikePost(postID int64, userID string) error {
+func (s *PostService) LikePost(postID int64, userID string) (bool, error) {
+	var isLiked bool
 	// Check if the user can view the post
 	canView, err := s.repo.CanViewPost(postID, userID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !canView {
-		return errors.New("you don't have permission to like this post")
+		return false, errors.New("you don't have permission to like this post")
 	}
 
 	// Check if already liked
 	hasLiked, err := s.repo.HasLiked(postID, userID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if hasLiked {
 		if err := s.repo.UnlikePost(postID, userID); err != nil {
-			return err
+			return false, err
 		}
+		isLiked = false
 	} else {
 		if err := s.repo.LikePost(postID, userID); err != nil {
-			return err
+			return false, err
 		}
+		isLiked = true
 	}
 
-	return nil
+	// Get the updated post with current like count
+	post, err := s.repo.GetPostByID(postID)
+	if err != nil {
+		s.log.Error("Failed to get post for like notification: %v", err)
+		// Continue even if we can't get the post data
+	}
+
+	// Get user data for the notification
+	userData, err := s.repo.GetUserDataByID(userID)
+	if err != nil {
+		s.log.Warn("Failed to get user data for like notification: %v", err)
+		// Continue even if we can't get the user data
+	}
+
+	// Format the username
+	userName := "Unknown User"
+	if userData != nil {
+		if userData.FirstName != "" {
+			if userData.LastName != "" {
+				userName = userData.FirstName + " " + userData.LastName
+			} else {
+				userName = userData.FirstName
+			}
+		}
+	}
+	// Send notification via WebSocket if notification service is available
+	if s.notificationSvc != nil && post != nil {
+		go s.notificationSvc.NotifyPostLiked(post, userID, userName, isLiked)
+	}
+
+	return isLiked, nil
 }
 
 // UnlikePost handles unliking a post
