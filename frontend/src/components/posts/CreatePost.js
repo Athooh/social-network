@@ -192,7 +192,13 @@ export default function CreatePost() {
     <>
       <div className={styles.createPostCard}>
         <div className={styles.createPostHeader}>
-          <Image src="/avatar4.png" alt="Profile" width={40} height={40} className={styles.profilePic} />
+          <Image
+            src="/avatar4.png"
+            alt="Profile"
+            width={40}
+            height={40}
+            className={styles.profilePic}
+          />
           <div
             className={styles.createPostInput}
             onClick={() => setIsModalOpen(true)}
@@ -526,7 +532,12 @@ export default function CreatePost() {
                           onClick={() => toggleViewer(follower.id)}
                         >
                           <div className={styles.followerInfo}>
-                            <Image src={follower.avatar} width={40} height={40} alt={follower.name} />
+                            <Image
+                              src={follower.avatar}
+                              width={40}
+                              height={40}
+                              alt={follower.name}
+                            />
                             <span>{follower.name}</span>
                           </div>
                           <div className={styles.checkboxContainer}>

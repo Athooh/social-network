@@ -104,6 +104,7 @@ func (h *Hub) Run() {
 		case message := <-h.Broadcast:
 			h.Mu.RLock()
 			for client := range h.Clients {
+				logger.Warn("Sending message to client %s", client.UserID)
 				select {
 				case client.Send <- message:
 				default:
@@ -140,9 +141,9 @@ func (h *Hub) BroadcastToUser(userID string, message interface{}) {
 		if client.IsActive {
 			select {
 			case client.Send <- payload:
-				h.log.Debug("Sent message to user %s client %s", userID, client.ID)
+				h.log.Info("Sent message to user %s client %s", userID, client.ID)
 			default:
-				h.log.Debug("Failed to send message to user %s client %s", userID, client.ID)
+				h.log.Info("Failed to send message to user %s client %s", userID, client.ID)
 			}
 		}
 		client.Mu.Unlock()
@@ -178,8 +179,15 @@ func (h *Hub) HasActiveClient(userID string) bool {
 	h.Mu.RLock()
 	defer h.Mu.RUnlock()
 
-	for client := range h.Clients {
-		if client.UserID == userID && client.IsActive {
+	// Check if user has any active connections
+	clients, exists := h.UserClients[userID]
+	if !exists {
+		return false
+	}
+
+	// Check if any of the user's clients are active
+	for _, client := range clients {
+		if client.IsActive {
 			return true
 		}
 	}
@@ -207,6 +215,18 @@ func (c *Client) ReadPump() {
 				c.Hub.log.Error("WebSocket read error: %v", err)
 			}
 			break
+		}
+
+		// Handle ping/pong
+		var msg Message
+		if err := json.Unmarshal(message, &msg); err != nil {
+			c.Hub.log.Error("Error unmarshaling message: %v", err)
+			continue
+		}
+
+		if msg.Type == "ping" {
+			c.handlePing()
+			continue
 		}
 
 		// Process incoming messages if needed
@@ -256,4 +276,50 @@ func (c *Client) WritePump() {
 			}
 		}
 	}
+}
+
+func (h *Hub) GetActiveConnectionCount(userID string) int {
+	h.Mu.RLock()
+	defer h.Mu.RUnlock()
+
+	count := 0
+	for client := range h.Clients {
+		if client.UserID == userID && client.IsActive {
+			count++
+		}
+	}
+	return count
+}
+
+func (h *Hub) CloseUserConnections(userID string) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	if clients, exists := h.UserClients[userID]; exists {
+		for _, client := range clients {
+			if client.IsActive {
+				client.IsActive = false
+				client.Conn.Close()
+				h.Unregister <- client
+			}
+		}
+		// Clear the user's client list
+		delete(h.UserClients, userID)
+	}
+}
+
+func (c *Client) handlePing() {
+	pong := Message{
+		Type: "pong",
+	}
+
+	data, err := json.Marshal(pong)
+	if err != nil {
+		c.Hub.log.Error("Error marshaling pong message: %v", err)
+		return
+	}
+
+	c.Hub.log.Debug("Sending pong to client %s", c.ID)
+
+	c.Send <- data
 }
