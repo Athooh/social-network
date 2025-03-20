@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 export default function LeftSidebar() {
   const pathname = usePathname();
+  const person = JSON.parse(localStorage.getItem('userData'))
 
   const stats = [
     { label: 'Posts', count: 120 },
@@ -29,8 +30,8 @@ export default function LeftSidebar() {
     <div className={styles.sidebar}>
       <div className={styles.profileSection}>
         <img src="/avatar4.png" alt="Profile" className={styles.profilePic} />
-        <h2 className={styles.userName}>John Doe</h2>
-        <p className={styles.userProfession}>Web Developer</p>
+        <h2 className={styles.userName}>{person.firstName}</h2>
+        <p className={styles.userProfession}>{person.aboutMe}</p>
         
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
