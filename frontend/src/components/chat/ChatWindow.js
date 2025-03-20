@@ -19,8 +19,6 @@ const ChatWindow = ({ contact, onClose, onMinimize, isMinimized }) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    // Here you would typically handle sending the message
-    console.log('Sending message:', newMessage);
     setNewMessage('');
   };
 
