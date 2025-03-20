@@ -10,12 +10,10 @@ const CreateEventModal = ({ isOpen, onClose }) => {
     date: '',
     privacy: 'public',
     banner: null,
-    profilePic: null
   });
 
   const [bannerPreview, setBannerPreview] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(null);
-
+  
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];
     if (file) {
@@ -24,9 +22,6 @@ const CreateEventModal = ({ isOpen, onClose }) => {
         if (type === 'banner') {
           setBannerPreview(reader.result);
           setEventData(prev => ({ ...prev, banner: file }));
-        } else {
-          setProfilePreview(reader.result);
-          setEventData(prev => ({ ...prev, profilePic: file }));
         }
       };
       reader.readAsDataURL(file);
@@ -69,22 +64,7 @@ const CreateEventModal = ({ isOpen, onClose }) => {
               </label>
             </div>
 
-            {/* Profile Picture Upload */}
-            <div 
-              className={`${styles.profileUpload} ${profilePreview ? styles.hasImage : ''}`}
-              style={profilePreview ? { backgroundImage: `url(${profilePreview})` } : {}}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e, 'profile')}
-                id="profile-upload"
-              />
-              <label htmlFor="profile-upload">
-                <i className="fas fa-camera"></i>
-              </label>
             </div>
-          </div>
 
           <div className={styles.formFields}>
             <div className={styles.inputGroup}>
