@@ -5,6 +5,7 @@ type EventType string
 
 const (
 	PostCreated EventType = "post_created"
+	PostLiked   EventType = "post_liked"
 )
 
 // Event represents a WebSocket event
@@ -18,4 +19,13 @@ type PostCreatedPayload struct {
 	Post     interface{} `json:"post"`
 	UserID   string      `json:"userId"`
 	UserName string      `json:"userName"`
+}
+
+// PostLikedPayload represents the data sent when a post is liked/unliked
+type PostLikedPayload struct {
+	PostID     int64  `json:"postId"`
+	UserID     string `json:"userId"`
+	UserName   string `json:"userName"`
+	IsLiked    bool   `json:"isLiked"`
+	LikesCount int    `json:"likesCount"`
 }
