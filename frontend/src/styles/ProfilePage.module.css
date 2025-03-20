@@ -21,8 +21,9 @@
   }
   
   .rightSidebar {
-    top: 20px;
+    gap: 0;
     height: fit-content;
+    margin-top: 0;
   }
   
   /* Responsive layout */
