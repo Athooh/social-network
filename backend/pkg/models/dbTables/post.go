@@ -14,16 +14,17 @@ const (
 
 // Post represents a user post in the database
 type Post struct {
-	ID         int64          `db:"id,pk,autoincrement"`
-	UserID     string         `db:"user_id,notnull" index:"idx_post_user_id"`
-	Content    string         `db:"content,notnull"`
-	ImagePath  sql.NullString `db:"image_path"`
-	VideoPath  sql.NullString `db:"video_path"`
-	Privacy    string         `db:"privacy,notnull"`
-	LikesCount int64          `db:"likes_count,default=0"`
-	CreatedAt  time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`
-	UpdatedAt  time.Time      `db:"updated_at,notnull"`
-	UserData   *PostUserData  `db:"-"`
+	ID            int64          `db:"id,pk,autoincrement"`
+	UserID        string         `db:"user_id,notnull" index:"idx_post_user_id"`
+	Content       string         `db:"content,notnull"`
+	ImagePath     sql.NullString `db:"image_path"`
+	VideoPath     sql.NullString `db:"video_path"`
+	Privacy       string         `db:"privacy,notnull"`
+	LikesCount    int64          `db:"likes_count,default=0"`
+	CommentsCount int64          `db:"comments_count,default=0"`
+	CreatedAt     time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`
+	UpdatedAt     time.Time      `db:"updated_at,notnull"`
+	UserData      *PostUserData  `db:"-"`
 }
 
 // PostViewer represents which users can view a private post
