@@ -312,7 +312,7 @@ func (r *SQLiteRepository) CanViewPost(postID int64, userID string) (bool, error
 		return true, nil
 	case models.PrivacyAlmostPrivate:
 		// Check if the user is a follower of the post creator
-		query := "SELECT COUNT(*) FROM followers WHERE followed_id = ? AND follower_id = ?"
+		query := "SELECT COUNT(*) FROM followers WHERE following_id = ? AND follower_id = ?"
 		var count int
 		err := r.db.QueryRow(query, post.UserID, userID).Scan(&count)
 		if err != nil {
