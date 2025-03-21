@@ -4,6 +4,8 @@ import { handleApiError } from "@/utils/errorHandler";
 import { useWebSocket, EVENT_TYPES } from "./websocketService";
 import { useState, useEffect, useCallback } from "react";
 import { BASE_URL } from "@/utils/constants";
+
+
 export const usePostService = () => {
   const { authenticatedFetch } = useAuth();
   const { subscribe } = useWebSocket();
@@ -280,6 +282,62 @@ export const usePostService = () => {
     [newPosts, allPosts]
   );
 
+  const followUser = async(userId,userName) => {
+    try {
+      const response = await authenticatedFetch("follow/follow", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to follow User"
+        );
+      }
+
+      const data = await response.json();
+      console.log(" Follow Data >>",data)
+
+      if (data.success) {
+        if (data.autoFollowed) {
+          showToast(`You are now following ${userName}`, "success");
+        } else {
+          showToast(`Follow request Sent`, "success");
+        }
+       
+      }
+      return true;
+    } catch (error) {
+      showToast(error.message || "Error Following user", "error");
+      throw err
+     }
+  }
+  const unfollowUser = async(userId,userName) => {
+    try {
+      const response = await authenticatedFetch("follow/unfollow", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to follow User"
+        );
+      }
+
+      const data = await response.json();
+      console.log(" UnFollow Data >>", data)
+      
+      if (data.success) { 
+        showToast(`You unfollowed ${userName}`, "success");
+      } 
+      return true;
+    } catch (error) {
+      showToast(error.message || "Error UnFollowing user", "error");
+      throw err
+     }
+  }
+
   return {
     createPost,
     getFeedPosts,
@@ -293,5 +351,7 @@ export const usePostService = () => {
     updatePostLikes,
     allPosts,
     setAllPosts,
+    followUser,
+    unfollowUser,
   };
 };
