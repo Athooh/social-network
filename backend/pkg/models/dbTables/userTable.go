@@ -19,13 +19,12 @@ type User struct {
 }
 
 // UserStats represents additional statistics and metrics for a user
-type UserStats struct {
-	UserID           string    `db:"user_id,pk" index:"unique"`
-	PostsCount       int       `db:"posts_count,default=0"`
-	GroupsJoined     int       `db:"groups_joined,default=0"`
-	FollowersCount   int       `db:"followers_count,default=0"`
-	FollowingCount   int       `db:"following_count,default=0"`
-	LastActivityDate time.Time `db:"last_activity_date,default=CURRENT_TIMESTAMP"`
-	CreatedAt        time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
-	UpdatedAt        time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
+type UserStat struct {
+	UserID         string    `db:"user_id,pk" index:"unique"`
+	PostsCount     int       `db:"posts_count,default=0"`
+	GroupsJoined   int       `db:"groups_joined,default=0"`
+	FollowersCount int       `db:"followers_count,default=0"`
+	FollowingCount int       `db:"following_count,default=0"`
+	CreatedAt      time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
+	UpdatedAt      time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
 }
