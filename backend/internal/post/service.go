@@ -147,9 +147,20 @@ func (s *PostService) CreatePost(userID string, content, privacy string, image, 
 		userName = userData.FirstName
 	}
 
+	// Update user stats
+	newCount, err := s.repo.UpdateUserStats(userID, "posts_count", true)
+	if err != nil {
+		s.log.Error("Failed to update user stats: %v", err)
+	}
+
 	// Send notification based on privacy settings
 	if s.notificationSvc != nil {
 		go s.NotifyPostCreated(post, userID, userName)
+	}
+
+	// Notify user stats updated
+	if s.notificationSvc != nil {
+		go s.notificationSvc.NotifyUserStatsUpdated(userID, "Posts", newCount)
 	}
 
 	return post, nil
@@ -418,6 +429,17 @@ func (s *PostService) CreateComment(postID int64, userID string, content string,
 	if err := s.repo.CreateComment(comment); err != nil {
 		s.log.Error("Failed to create comment: %v", err)
 		return nil, err
+	}
+
+	// Update user stats
+	newCount, err := s.repo.UpdateUserStats(userID, "comments_count", true)
+	if err != nil {
+		s.log.Error("Failed to update user stats: %v", err)
+	}
+
+	// Notify user stats updated
+	if s.notificationSvc != nil {
+		go s.notificationSvc.NotifyUserStatsUpdated(userID, "Comments", newCount)
 	}
 
 	return comment, nil
