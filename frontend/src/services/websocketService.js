@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/context/authcontext";
 import { BASE_URL } from "@/utils/constants";
+import { showToast } from "@/components/ui/ToastContainer";
 
 // Event types that match backend definitions
 export const EVENT_TYPES = {
   POST_CREATED: "post_created",
   POST_LIKED: "post_liked",
+  USER_STATS_UPDATED: "user_stats_updated",
   // Add more event types as needed
   // COMMENT_ADDED: 'comment_added',
   // MESSAGE_RECEIVED: 'message_received',
@@ -18,6 +20,9 @@ let globalSocket = null;
 let globalListeners = {};
 let reconnectTimeout = null;
 let pingInterval = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 3000;
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -102,25 +107,54 @@ function connectWebSocket(token, setIsConnected, setLastMessage) {
   const ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
-    console.log("WebSocket connected");
+    console.log("WebSocket connection established");
     setIsConnected(true);
+    showToast("WebSocket connection established", "success");
+    // Reset reconnect attempts on successful connection
+    reconnectAttempts = 0;
   };
 
   ws.onclose = (event) => {
     console.log("WebSocket disconnected", event.code);
     setIsConnected(false);
+    showToast("WebSocket connection closed", "error");
     globalSocket = null;
 
     // Reconnect after delay unless it was a normal closure
     if (event.code !== 1000) {
-      reconnectTimeout = setTimeout(() => {
-        connectWebSocket(token, setIsConnected, setLastMessage);
-      }, 3000);
+      reconnectAttempts++;
+
+      if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+        // Exponential backoff: increase delay with each attempt
+        const delay =
+          BASE_RECONNECT_DELAY * Math.pow(1.5, reconnectAttempts - 1);
+        console.log(
+          `Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${
+            delay / 1000
+          } seconds`
+        );
+
+        reconnectTimeout = setTimeout(() => {
+          connectWebSocket(token, setIsConnected, setLastMessage);
+        }, delay);
+      } else {
+        console.log("Maximum reconnection attempts reached");
+        showToast(
+          "Connection lost. Please reload the page to reconnect.",
+          "error"
+        );
+      }
     }
   };
 
   ws.onmessage = (event) => {
     try {
+      // Check if the message is a ping response or other non-JSON message
+      if (event.data === "pong" || event.data === "ping") {
+        return;
+      }
+
+      // Try to parse the JSON data
       const data = JSON.parse(event.data);
       setLastMessage(data);
 
@@ -134,7 +168,12 @@ function connectWebSocket(token, setIsConnected, setLastMessage) {
         });
       }
     } catch (error) {
-      console.error("Error parsing WebSocket message:", error);
+      console.error(
+        "Error parsing WebSocket message:",
+        error,
+        "Raw message:",
+        event.data
+      );
     }
   };
 
