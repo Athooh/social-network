@@ -11,6 +11,7 @@ const (
 	FollowUpdate          EventType = "follow_update"
 	FollowRequest         EventType = "follow_request"
 	FollowRequestAccepted EventType = "follow_request_accepted"
+	CommentCountUpdate    EventType = "comment_count_update"
 )
 
 // Event represents a WebSocket event
