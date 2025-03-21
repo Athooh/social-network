@@ -4,8 +4,9 @@ package events
 type EventType string
 
 const (
-	PostCreated EventType = "post_created"
-	PostLiked   EventType = "post_liked"
+	PostCreated      EventType = "post_created"
+	PostLiked        EventType = "post_liked"
+	UserStatsUpdated EventType = "user_stats_updated"
 )
 
 // Event represents a WebSocket event
@@ -28,4 +29,10 @@ type PostLikedPayload struct {
 	UserName   string `json:"userName"`
 	IsLiked    bool   `json:"isLiked"`
 	LikesCount int    `json:"likesCount"`
+}
+
+type UserStatsUpdatedPayload struct {
+	UserID    string `json:"userId"`
+	StatsType string `json:"statsType"`
+	Count     int    `json:"count"`
 }
