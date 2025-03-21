@@ -41,23 +41,26 @@ type FollowerWithUser struct {
 	Follower
 	UserName   string
 	UserAvatar string
+	IsOnline   bool
 }
 
 // FollowService implements the Service interface
 type FollowService struct {
 	repo            Repository
 	userRepo        user.Repository
+	statusRepo      user.StatusRepository
 	log             *logger.Logger
 	notificationSvc *NotificationService
 }
 
 // NewService creates a new follow service
-func NewService(repo Repository, userRepo user.Repository, log *logger.Logger, wsHub *websocket.Hub) Service {
+func NewService(repo Repository, userRepo user.Repository, statusRepo user.StatusRepository, log *logger.Logger, wsHub *websocket.Hub) Service {
 	notificationSvc := NewNotificationService(wsHub, userRepo, log)
 
 	return &FollowService{
 		repo:            repo,
 		userRepo:        userRepo,
+		statusRepo:      statusRepo,
 		log:             log,
 		notificationSvc: notificationSvc,
 	}
@@ -273,10 +276,18 @@ func (s *FollowService) GetFollowers(userID string) ([]*FollowerWithUser, error)
 			continue
 		}
 
+		// Check if the user is online
+		isOnline, err := s.statusRepo.GetUserStatus(follower.FollowerID)
+		if err != nil {
+			s.log.Warn("Failed to get online status for user %s: %v", follower.FollowerID, err)
+			// Continue with isOnline = false as default
+		}
+
 		followerWithUser := &FollowerWithUser{
 			Follower:   *follower,
 			UserName:   fmt.Sprintf("%s %s", user.FirstName, user.LastName),
 			UserAvatar: user.Avatar,
+			IsOnline:   isOnline,
 		}
 
 		followersWithUser = append(followersWithUser, followerWithUser)
@@ -301,10 +312,18 @@ func (s *FollowService) GetFollowing(userID string) ([]*FollowerWithUser, error)
 			continue
 		}
 
+		// Check if the user is online
+		isOnline, err := s.statusRepo.GetUserStatus(follow.FollowingID)
+		if err != nil {
+			s.log.Warn("Failed to get online status for user %s: %v", follow.FollowingID, err)
+			// Continue with isOnline = false as default
+		}
+
 		followWithUser := &FollowerWithUser{
 			Follower:   *follow,
 			UserName:   fmt.Sprintf("%s %s", user.FirstName, user.LastName),
 			UserAvatar: user.Avatar,
+			IsOnline:   isOnline,
 		}
 
 		followingWithUser = append(followingWithUser, followWithUser)
