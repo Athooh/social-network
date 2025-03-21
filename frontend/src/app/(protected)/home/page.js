@@ -127,8 +127,8 @@ export default function Home() {
           </section>
           <section className={styles.feedSection}>
             {posts.map((post, index) => {
-              // Create a unique key that combines post.id with a suffix
-              const uniqueKey = `post-${post.id}`;
+              // Create a unique key that combines post.id with the index
+              const uniqueKey = `post-${post.id}-${index}`;
 
               if (posts.length === index + 1) {
                 return (
