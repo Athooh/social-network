@@ -11,22 +11,30 @@ type Repository interface {
 	Delete(id string) error
 }
 
+// StatusRepository defines the interface for user status operations
+type StatusRepository interface {
+	SetUserOnline(userID string) error
+	SetUserOffline(userID string) error
+	GetUserStatus(userID string) (bool, error)
+	GetFollowersForStatusUpdate(userID string) ([]string, error)
+}
+
 // User represents a user in the system
 type User struct {
-	ID          string
-	Email       string
-	Password    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
-	Avatar      string
-	Nickname    string
-	AboutMe     string
-	IsPublic    bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID             string
+	Email          string
+	Password       string
+	FirstName      string
+	LastName       string
+	DateOfBirth    string
+	Avatar         string
+	Nickname       string
+	AboutMe        string
+	IsPublic       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 	PostsCount     int
-    GroupsJoined   int
-    FollowersCount int
-    FollowingCount int
+	GroupsJoined   int
+	FollowersCount int
+	FollowingCount int
 }
