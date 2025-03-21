@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Athooh/social-network/internal/auth"
+	"github.com/Athooh/social-network/internal/user"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 	ws "github.com/Athooh/social-network/pkg/websocket"
@@ -13,15 +14,17 @@ import (
 
 // Handler handles WebSocket connections
 type Handler struct {
-	hub *ws.Hub
-	log *logger.Logger
+	hub           *ws.Hub
+	log           *logger.Logger
+	statusService *user.StatusService
 }
 
 // NewHandler creates a new WebSocket handler
-func NewHandler(hub *ws.Hub, log *logger.Logger) *Handler {
+func NewHandler(hub *ws.Hub, log *logger.Logger, statusService *user.StatusService) *Handler {
 	return &Handler{
-		hub: hub,
-		log: log,
+		hub:           hub,
+		log:           log,
+		statusService: statusService,
 	}
 }
 
@@ -43,13 +46,6 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check for existing connection and close it
-	// if h.hub.HasActiveClient(userID) {
-	// 	h.log.Info("Closing existing connection for user: %s", userID)
-	// 	// Close existing connections for this user
-	// 	h.hub.CloseUserConnections(userID)
-	// }
-
 	// Upgrade HTTP connection to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -65,18 +61,31 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 		Hub:      h.hub,
 		Send:     make(chan []byte, 256),
 		IsActive: true,
+		Done:     make(chan struct{}),
 	}
 
 	// Register client with hub
 	h.hub.Register <- client
 
-	h.log.Info("New WebSocket connection established for user: %s", userID)
+	// Mark user as online
+	if h.statusService != nil {
+		go h.statusService.SetUserOnline(userID)
+	}
 
-	// Debug: Print existing connections
+	h.log.Info("New WebSocket connection established for user: %s", userID)
 
 	// Start goroutines for reading and writing
 	go client.ReadPump()
 	go client.WritePump()
 
-	// h.log.Info("Current active connections for user %s: %d", userID, h.hub.GetActiveConnectionCount(userID))
+	// Add a deferred function to mark user as offline when all connections are closed
+	go func() {
+		// Wait for this client to be unregistered
+		<-client.Done // This would be a new channel we'd add to the Client struct
+
+		// Check if user has any remaining active connections
+		if !h.hub.HasActiveClient(userID) && h.statusService != nil {
+			h.statusService.SetUserOffline(userID)
+		}
+	}()
 }
