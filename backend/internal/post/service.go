@@ -90,6 +90,46 @@ func (s *PostService) NotifyPostCreated(post *models.Post, userID string, userNa
 	return nil
 }
 
+// NotifyPostCreated sends notifications about a new post to appropriate users
+func (s *PostService) NotifyCommentCountUpdate(postId int64, userID string, statsType string, count int) error {
+	if s.notificationSvc == nil {
+		return nil
+	}
+
+	post, err := s.repo.GetPostByID(postId)
+	if err != nil {
+		return err
+	}
+	// For public posts, notify all users
+	if post.Privacy == models.PrivacyPublic {
+		return s.notificationSvc.NotifyPostsCommentUpdate(userID, statsType, count)
+	}
+
+	// For private posts, only notify allowed viewers
+	if post.Privacy == models.PrivacyPrivate {
+		viewers, err := s.repo.GetPostViewers(post.ID)
+		if err != nil {
+			s.log.Error("Failed to get post viewers for notification: %v", err)
+			return err
+		}
+
+		return s.notificationSvc.NotifyPostsCommentUpdateToSpecifUsers(userID, statsType, count, viewers)
+	}
+
+	// For almost private posts, notify friends/followers
+	if post.Privacy == models.PrivacyAlmostPrivate {
+		followers, err := s.repo.GetUserFollowers(userID)
+		if err != nil {
+			s.log.Error("Failed to get user followers for notification: %v", err)
+			return err
+		}
+
+		return s.notificationSvc.NotifyPostsCommentUpdateToSpecifUsers(userID, statsType, count, followers)
+	}
+
+	return nil
+}
+
 // CreatePost creates a new post
 func (s *PostService) CreatePost(userID string, content, privacy string, image, video *multipart.FileHeader) (*models.Post, error) {
 	// Validate privacy setting
@@ -432,14 +472,14 @@ func (s *PostService) CreateComment(postID int64, userID string, content string,
 	}
 
 	// Update user stats
-	newCount, err := s.repo.UpdateUserStats(userID, "comments_count", true)
+	newCount, err := s.repo.UpdatePostCommentCount(postID)
 	if err != nil {
-		s.log.Error("Failed to update user stats: %v", err)
+		s.log.Error("Failed to Post comment count: %v", err)
 	}
 
 	// Notify user stats updated
 	if s.notificationSvc != nil {
-		go s.notificationSvc.NotifyUserStatsUpdated(userID, "Comments", newCount)
+		go s.NotifyCommentCountUpdate(postID, userID, "Comments", newCount)
 	}
 
 	return comment, nil
