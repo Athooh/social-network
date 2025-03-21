@@ -12,6 +12,7 @@ const (
 	FollowRequest         EventType = "follow_request"
 	FollowRequestAccepted EventType = "follow_request_accepted"
 	CommentCountUpdate    EventType = "comment_count_update"
+	UserStatusUpdate      EventType = "user_status_update"
 )
 
 // Event represents a WebSocket event
@@ -40,4 +41,11 @@ type UserStatsUpdatedPayload struct {
 	UserID    string `json:"userId"`
 	StatsType string `json:"statsType"`
 	Count     int    `json:"count"`
+}
+
+// UserStatusUpdatePayload represents the payload for a user_status_update event
+type UserStatusUpdatePayload struct {
+	UserID    string `json:"userId"`
+	IsOnline  bool   `json:"isOnline"`
+	Timestamp int64  `json:"timestamp"`
 }
