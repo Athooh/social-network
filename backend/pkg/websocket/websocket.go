@@ -118,15 +118,20 @@ func (h *Hub) Run() {
 }
 
 // BroadcastToAll sends a message to all connected clients
-func (h *Hub) BroadcastToAll(message interface{}) {
-	msgType, payload := prepareMessage("broadcast", message)
-	h.Broadcast <- payload
-	h.log.Debug("Broadcasting message type: %s to all clients", msgType)
-}
+// func (h *Hub) BroadcastToAll(message interface{}) {
+// 	msgType, payload := prepareMessage("broadcast", message)
+// 	h.Broadcast <- payload
+// 	h.log.Debug("Broadcasting message type: %s to all clients", msgType)
+// }
 
 // BroadcastToUser sends a message to a specific user's clients
 func (h *Hub) BroadcastToUser(userID string, message interface{}) {
-	_, payload := prepareMessage("user", message)
+	// _, payload := prepareMessage("user", message)
+	payload, err := json.Marshal(message)
+	if err != nil {
+		h.log.Error("Error marshaling message: %v", err)
+		return
+	}
 
 	h.Mu.RLock()
 	clients, exists := h.UserClients[userID]
@@ -164,15 +169,15 @@ func (h *Hub) BroadcastToUser(userID string, message interface{}) {
 // }
 
 // prepareMessage formats a message for sending
-func prepareMessage(msgType string, payload interface{}) (string, []byte) {
-	msg := Message{
-		Type:    msgType,
-		Payload: payload,
-	}
+// func prepareMessage(msgType string, payload interface{}) (string, []byte) {
+// 	msg := Message{
+// 		Type:    msgType,
+// 		Payload: payload,
+// 	}
 
-	data, _ := json.Marshal(msg)
-	return msgType, data
-}
+// 	data, _ := json.Marshal(msg)
+// 	return msgType, data
+// }
 
 // HasActiveClient checks if a user already has an active client connection
 func (h *Hub) HasActiveClient(userID string) bool {
