@@ -78,5 +78,5 @@ func (h *Handler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 	go client.ReadPump()
 	go client.WritePump()
 
-	h.log.Info("Current active connections for user %s: %d", userID, h.hub.GetActiveConnectionCount(userID))
+	// h.log.Info("Current active connections for user %s: %d", userID, h.hub.GetActiveConnectionCount(userID))
 }
