@@ -124,7 +124,7 @@ func (s *FollowService) FollowUser(followerID, followingID string) (bool, error)
 	}
 
 	// Send follow request notification
-	s.notificationSvc.SendFollowRequestNotification(followerID, followingID)
+	// s.notificationSvc.SendFollowRequestNotification(followerID, followingID)
 
 	return false, nil
 }
@@ -155,7 +155,7 @@ func (s *FollowService) UnfollowUser(followerID, followingID string) error {
 	s.notificationSvc.UpdateFollowerCounts(followerID, followingID, s.repo)
 
 	// Send notification
-	s.notificationSvc.SendFollowNotification(followerID, followingID, false)
+	// s.notificationSvc.SendFollowNotification(followerID, followingID, false)
 
 	return nil
 }
@@ -190,7 +190,7 @@ func (s *FollowService) AcceptFollowRequest(followerID, followingID string) erro
 	s.notificationSvc.UpdateFollowerCounts(followerID, followingID, s.repo)
 
 	// Send notification to the follower that their request was accepted
-	s.notificationSvc.SendFollowRequestAcceptedNotification(followerID, followingID)
+	// s.notificationSvc.SendFollowRequestAcceptedNotification(followerID, followingID)
 
 	return nil
 }
