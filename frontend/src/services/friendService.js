@@ -75,8 +75,6 @@ export const useFriendService = () => {
       if (!data) {
         return [];
       }
-
-      console.log(data);
       // Transform the data to match our component's expected format
       const formattedContacts = data.map((contact) => ({
         id: contact.ID,
@@ -85,7 +83,7 @@ export const useFriendService = () => {
           ? `${BASE_URL}/uploads/${contact.UserAvatar}`
           : "/avatar.png",
         isOnline: contact.IsOnline || false,
-        userId: contact.FollowerID,
+        contactId: contact.FollowingID,
       }));
 
       setContacts(formattedContacts);
