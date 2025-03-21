@@ -66,7 +66,7 @@ func NewService(repo Repository, userRepo user.Repository, log *logger.Logger, w
 func (s *FollowService) FollowUser(followerID, followingID string) (bool, error) {
 	// Check if users are the same
 	if followerID == followingID {
-		return false, errors.New("users cannot follow themselves")
+		return false, errors.New("you cannot follow yourself")
 	}
 
 	// Check if already following
@@ -133,7 +133,7 @@ func (s *FollowService) FollowUser(followerID, followingID string) (bool, error)
 func (s *FollowService) UnfollowUser(followerID, followingID string) error {
 	// Check if users are the same
 	if followerID == followingID {
-		return errors.New("users cannot unfollow themselves")
+		return errors.New("you cannot unfollow yourself")
 	}
 
 	// Check if actually following
