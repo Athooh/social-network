@@ -28,3 +28,11 @@ type UserStat struct {
 	CreatedAt      time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt      time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
 }
+
+// UserStatus represents a user's online status
+type UserStatus struct {
+	UserID       string    `db:"user_id,pk" index:"unique" references:"users(id) ON DELETE CASCADE"`
+	IsOnline     bool      `db:"is_online,default=FALSE"`
+	LastActivity time.Time `db:"last_activity,default=CURRENT_TIMESTAMP"`
+	UpdatedAt    time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
+}
