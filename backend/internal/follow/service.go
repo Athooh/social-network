@@ -33,6 +33,7 @@ type FollowRequestWithUser struct {
 	FollowRequest
 	FollowerName   string
 	FollowerAvatar string
+	MutualFriends  int
 }
 
 // FollowerWithUser extends Follower with user information
@@ -215,7 +216,7 @@ func (s *FollowService) DeclineFollowRequest(followerID, followingID string) err
 	return s.repo.UpdateFollowRequestStatus(followerID, followingID, string(StatusDeclined))
 }
 
-// GetPendingFollowRequests retrieves all pending follow requests for a user
+// GetPendingFollowRequests retrieves all pending follow requests for a user with mutual friends count
 func (s *FollowService) GetPendingFollowRequests(userID string) ([]*FollowRequestWithUser, error) {
 	requests, err := s.repo.GetPendingFollowRequests(userID)
 	if err != nil {
@@ -231,10 +232,18 @@ func (s *FollowService) GetPendingFollowRequests(userID string) ([]*FollowReques
 			continue
 		}
 
+		// Get mutual followers count
+		mutualCount, err := s.repo.GetMutualFollowersCount(userID, request.FollowerID)
+		if err != nil {
+			s.log.Warn("Failed to get mutual followers count: %v", err)
+			mutualCount = 0
+		}
+
 		requestWithUser := &FollowRequestWithUser{
 			FollowRequest:  *request,
 			FollowerName:   fmt.Sprintf("%s %s", follower.FirstName, follower.LastName),
 			FollowerAvatar: follower.Avatar,
+			MutualFriends:  mutualCount,
 		}
 
 		requestsWithUser = append(requestsWithUser, requestWithUser)
