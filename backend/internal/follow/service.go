@@ -1,0 +1,305 @@
+package follow
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/Athooh/social-network/pkg/logger"
+	"github.com/Athooh/social-network/pkg/user"
+	"github.com/Athooh/social-network/pkg/websocket"
+)
+
+// Service defines the follow service interface
+type Service interface {
+	// Follow/unfollow operations
+	FollowUser(followerID, followingID string) (bool, error)
+	UnfollowUser(followerID, followingID string) error
+
+	// Follow request operations
+	AcceptFollowRequest(followerID, followingID string) error
+	DeclineFollowRequest(followerID, followingID string) error
+	GetPendingFollowRequests(userID string) ([]*FollowRequestWithUser, error)
+
+	// Status checks
+	IsFollowing(followerID, followingID string) (bool, error)
+
+	// Retrieval operations
+	GetFollowers(userID string) ([]*FollowerWithUser, error)
+	GetFollowing(userID string) ([]*FollowerWithUser, error)
+}
+
+// FollowRequestWithUser extends FollowRequest with user information
+type FollowRequestWithUser struct {
+	FollowRequest
+	FollowerName   string
+	FollowerAvatar string
+}
+
+// FollowerWithUser extends Follower with user information
+type FollowerWithUser struct {
+	Follower
+	UserName   string
+	UserAvatar string
+}
+
+// FollowService implements the Service interface
+type FollowService struct {
+	repo            Repository
+	userRepo        user.Repository
+	log             *logger.Logger
+	notificationSvc *NotificationService
+}
+
+// NewService creates a new follow service
+func NewService(repo Repository, userRepo user.Repository, log *logger.Logger, wsHub *websocket.Hub) Service {
+	notificationSvc := NewNotificationService(wsHub, userRepo, log)
+
+	return &FollowService{
+		repo:            repo,
+		userRepo:        userRepo,
+		log:             log,
+		notificationSvc: notificationSvc,
+	}
+}
+
+// FollowUser handles the logic for a user following another user
+func (s *FollowService) FollowUser(followerID, followingID string) (bool, error) {
+	// Check if users are the same
+	if followerID == followingID {
+		return false, errors.New("users cannot follow themselves")
+	}
+
+	// Check if already following
+	isFollowing, err := s.repo.IsFollowing(followerID, followingID)
+	if err != nil {
+		return false, err
+	}
+
+	if isFollowing {
+		return false, errors.New("already following this user")
+	}
+
+	// Check if the target user's profile is public
+	isPublic, err := s.repo.IsUserProfilePublic(followingID)
+	if err != nil {
+		return false, err
+	}
+
+	// For public profiles, create follower relationship directly
+	if isPublic {
+		if err := s.repo.CreateFollower(followerID, followingID); err != nil {
+			return false, err
+		}
+
+		// Update follower counts
+		s.notificationSvc.UpdateFollowerCounts(followerID, followingID, s.repo)
+
+		// Send notification to the user being followed
+		s.notificationSvc.SendFollowNotification(followerID, followingID, true)
+
+		return true, nil
+	}
+
+	// For private profiles, create a follow request
+	// Check if a request already exists
+	existingRequest, err := s.repo.GetFollowRequest(followerID, followingID)
+	if err != nil {
+		return false, err
+	}
+
+	if existingRequest != nil {
+		if existingRequest.Status == string(StatusPending) {
+			return false, errors.New("follow request already pending")
+		}
+
+		// Update existing request back to pending
+		if err := s.repo.UpdateFollowRequestStatus(followerID, followingID, string(StatusPending)); err != nil {
+			return false, err
+		}
+	} else {
+		// Create new follow request
+		if err := s.repo.CreateFollowRequest(followerID, followingID); err != nil {
+			return false, err
+		}
+	}
+
+	// Send follow request notification
+	s.notificationSvc.SendFollowRequestNotification(followerID, followingID)
+
+	return false, nil
+}
+
+// UnfollowUser handles the logic for a user unfollowing another user
+func (s *FollowService) UnfollowUser(followerID, followingID string) error {
+	// Check if users are the same
+	if followerID == followingID {
+		return errors.New("users cannot unfollow themselves")
+	}
+
+	// Check if actually following
+	isFollowing, err := s.repo.IsFollowing(followerID, followingID)
+	if err != nil {
+		return err
+	}
+
+	if !isFollowing {
+		return errors.New("not following this user")
+	}
+
+	// Remove follower relationship
+	if err := s.repo.DeleteFollower(followerID, followingID); err != nil {
+		return err
+	}
+
+	// Update follower counts
+	s.notificationSvc.UpdateFollowerCounts(followerID, followingID, s.repo)
+
+	// Send notification
+	s.notificationSvc.SendFollowNotification(followerID, followingID, false)
+
+	return nil
+}
+
+// AcceptFollowRequest accepts a pending follow request
+func (s *FollowService) AcceptFollowRequest(followerID, followingID string) error {
+	// Verify the request exists and is pending
+	request, err := s.repo.GetFollowRequest(followerID, followingID)
+	if err != nil {
+		return err
+	}
+
+	if request == nil {
+		return errors.New("follow request not found")
+	}
+
+	if request.Status != string(StatusPending) {
+		return errors.New("follow request is not pending")
+	}
+
+	// Update request status
+	if err := s.repo.UpdateFollowRequestStatus(followerID, followingID, string(StatusAccepted)); err != nil {
+		return err
+	}
+
+	// Create follower relationship
+	if err := s.repo.CreateFollower(followerID, followingID); err != nil {
+		return err
+	}
+
+	// Update follower counts
+	s.notificationSvc.UpdateFollowerCounts(followerID, followingID, s.repo)
+
+	// Send notification to the follower that their request was accepted
+	s.notificationSvc.SendFollowRequestAcceptedNotification(followerID, followingID)
+
+	return nil
+}
+
+// DeclineFollowRequest declines a pending follow request
+func (s *FollowService) DeclineFollowRequest(followerID, followingID string) error {
+	// Verify the request exists and is pending
+	request, err := s.repo.GetFollowRequest(followerID, followingID)
+	if err != nil {
+		return err
+	}
+
+	if request == nil {
+		return errors.New("follow request not found")
+	}
+
+	if request.Status != string(StatusPending) {
+		return errors.New("follow request is not pending")
+	}
+
+	// Update request status
+	return s.repo.UpdateFollowRequestStatus(followerID, followingID, string(StatusDeclined))
+}
+
+// GetPendingFollowRequests retrieves all pending follow requests for a user
+func (s *FollowService) GetPendingFollowRequests(userID string) ([]*FollowRequestWithUser, error) {
+	requests, err := s.repo.GetPendingFollowRequests(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var requestsWithUser []*FollowRequestWithUser
+	for _, request := range requests {
+		// Get follower user info
+		follower, err := s.userRepo.GetByID(request.FollowerID)
+		if err != nil {
+			s.log.Warn("Failed to get follower info: %v", err)
+			continue
+		}
+
+		requestWithUser := &FollowRequestWithUser{
+			FollowRequest:  *request,
+			FollowerName:   fmt.Sprintf("%s %s", follower.FirstName, follower.LastName),
+			FollowerAvatar: follower.Avatar,
+		}
+
+		requestsWithUser = append(requestsWithUser, requestWithUser)
+	}
+
+	return requestsWithUser, nil
+}
+
+// IsFollowing checks if a user is following another user
+func (s *FollowService) IsFollowing(followerID, followingID string) (bool, error) {
+	return s.repo.IsFollowing(followerID, followingID)
+}
+
+// GetFollowers retrieves all followers of a user with user information
+func (s *FollowService) GetFollowers(userID string) ([]*FollowerWithUser, error) {
+	followers, err := s.repo.GetFollowers(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var followersWithUser []*FollowerWithUser
+	for _, follower := range followers {
+		// Get follower user info
+		user, err := s.userRepo.GetByID(follower.FollowerID)
+		if err != nil {
+			s.log.Warn("Failed to get follower info: %v", err)
+			continue
+		}
+
+		followerWithUser := &FollowerWithUser{
+			Follower:   *follower,
+			UserName:   fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+			UserAvatar: user.Avatar,
+		}
+
+		followersWithUser = append(followersWithUser, followerWithUser)
+	}
+
+	return followersWithUser, nil
+}
+
+// GetFollowing retrieves all users a user is following with user information
+func (s *FollowService) GetFollowing(userID string) ([]*FollowerWithUser, error) {
+	following, err := s.repo.GetFollowing(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var followingWithUser []*FollowerWithUser
+	for _, follow := range following {
+		// Get following user info
+		user, err := s.userRepo.GetByID(follow.FollowingID)
+		if err != nil {
+			s.log.Warn("Failed to get following user info: %v", err)
+			continue
+		}
+
+		followWithUser := &FollowerWithUser{
+			Follower:   *follow,
+			UserName:   fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+			UserAvatar: user.Avatar,
+		}
+
+		followingWithUser = append(followingWithUser, followWithUser)
+	}
+
+	return followingWithUser, nil
+}
