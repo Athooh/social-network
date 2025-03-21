@@ -41,6 +41,7 @@ type Repository interface {
 
 	// New method
 	GetUserFollowers(userID string) ([]string, error)
+	UpdateUserStats(userID string, statsType string, increment bool) (int, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -58,7 +59,6 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 	now := time.Now()
 	post.CreatedAt = now
 	post.UpdatedAt = now
-	fmt.Println("video path", post.VideoPath.String)
 
 	query := `
 		INSERT INTO posts (user_id, content, image_path, video_path, privacy, created_at, updated_at)
@@ -605,4 +605,136 @@ func (r *SQLiteRepository) GetUserFollowers(userID string) ([]string, error) {
 	}
 
 	return followerIDs, nil
+}
+
+// UpdateUserStats updates or inserts a user's statistics
+func (r *SQLiteRepository) UpdateUserStats(userID string, statsType string, increment bool) (int, error) {
+	// If statsType is posts_count, get the actual count from posts table
+	if statsType == "posts_count" {
+		var postsCount int
+		countQuery := "SELECT COUNT(*) FROM posts WHERE user_id = ?"
+		err := r.db.QueryRow(countQuery, userID).Scan(&postsCount)
+		if err != nil {
+			return 0, err
+		}
+
+		// Now update the user_stats table with the actual count
+		return r.updateUserStatsWithValue(userID, statsType, postsCount)
+	}
+
+	// For other stats types, proceed with the original logic
+	return r.updateUserStatsNormal(userID, statsType, increment)
+}
+
+// Helper method for the original increment/decrement logic
+func (r *SQLiteRepository) updateUserStatsNormal(userID string, statsType string, increment bool) (int, error) {
+	// Check if user stats record exists
+	var exists bool
+	checkQuery := "SELECT EXISTS(SELECT 1 FROM user_stats WHERE user_id = ?)"
+	err := r.db.QueryRow(checkQuery, userID).Scan(&exists)
+	if err != nil {
+		return 0, err
+	}
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	now := time.Now()
+	var newCount int
+
+	if exists {
+		// Update existing record
+		var updateQuery string
+		var selectQuery string
+		if increment {
+			updateQuery = fmt.Sprintf("UPDATE user_stats SET %s = %s + 1, updated_at = ? WHERE user_id = ?", statsType, statsType)
+		} else {
+			updateQuery = fmt.Sprintf("UPDATE user_stats SET %s = CASE WHEN %s > 0 THEN %s - 1 ELSE 0 END, updated_at = ? WHERE user_id = ?", statsType, statsType, statsType)
+		}
+		_, err = tx.Exec(updateQuery, now, userID)
+		if err != nil {
+			return 0, err
+		}
+
+		// Get the new count
+		selectQuery = fmt.Sprintf("SELECT %s FROM user_stats WHERE user_id = ?", statsType)
+		err = tx.QueryRow(selectQuery, userID).Scan(&newCount)
+	} else {
+		// Create new record with default values
+		var value int
+		if increment {
+			value = 1
+		} else {
+			value = 0
+		}
+		insertQuery := fmt.Sprintf("INSERT INTO user_stats (user_id, %s, created_at, updated_at) VALUES (?, ?, ?, ?)", statsType)
+		_, err = tx.Exec(insertQuery, userID, value, now, now)
+		if err != nil {
+			return 0, err
+		}
+
+		newCount = value
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return newCount, nil
+}
+
+// Helper method to update stats with a specific value
+func (r *SQLiteRepository) updateUserStatsWithValue(userID string, statsType string, value int) (int, error) {
+	// Check if user stats record exists
+	var exists bool
+	checkQuery := "SELECT EXISTS(SELECT 1 FROM user_stats WHERE user_id = ?)"
+	err := r.db.QueryRow(checkQuery, userID).Scan(&exists)
+	if err != nil {
+		return 0, err
+	}
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	now := time.Now()
+
+	if exists {
+		// Update existing record with the provided value
+		updateQuery := fmt.Sprintf("UPDATE user_stats SET %s = ?, updated_at = ? WHERE user_id = ?", statsType)
+		_, err = tx.Exec(updateQuery, value, now, userID)
+	} else {
+		// Create new record with the provided value
+		insertQuery := fmt.Sprintf("INSERT INTO user_stats (user_id, %s, created_at, updated_at) VALUES (?, ?, ?, ?)", statsType)
+		_, err = tx.Exec(insertQuery, userID, value, now, now)
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return value, nil
 }
