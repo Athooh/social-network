@@ -18,6 +18,7 @@ type Client struct {
 	Send     chan []byte
 	Mu       sync.Mutex
 	IsActive bool
+	Done     chan struct{} // New channel to signal when client disconnects
 }
 
 // Hub maintains the set of active clients and broadcasts messages
@@ -204,6 +205,7 @@ func (c *Client) ReadPump() {
 	defer func() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
+		close(c.Done) // Signal that this client has disconnected
 	}()
 
 	c.Conn.SetReadLimit(512 * 1024) // 512KB max message size
@@ -327,4 +329,57 @@ func (c *Client) handlePing() {
 	c.Hub.log.Debug("Sending pong to client %s", c.ID)
 
 	c.Send <- data
+}
+
+// SetUserOnline marks a user as online and notifies their followers
+func (h *Hub) SetUserOnline(userID string) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	// Check if user already has active clients
+	clients, exists := h.UserClients[userID]
+	if exists && len(clients) > 0 {
+		// User is already online, no need to broadcast again
+		return
+	}
+
+	h.log.Info("User %s is now online", userID)
+
+	// We'll implement the notification in the follow package
+}
+
+// SetUserOffline marks a user as offline and notifies their followers
+func (h *Hub) SetUserOffline(userID string) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	// Check if user still has any active clients
+	clients, exists := h.UserClients[userID]
+	if exists && len(clients) > 0 {
+		// User still has active connections, don't mark as offline
+		return
+	}
+
+	h.log.Info("User %s is now offline", userID)
+
+	// We'll implement the notification in the follow package
+}
+
+// BroadcastUserStatus sends a user's online status to specified recipients
+func (h *Hub) BroadcastUserStatus(userID string, isOnline bool, recipientIDs []string) {
+	for _, recipientID := range recipientIDs {
+		// Don't send status update to the user themselves
+		if recipientID == userID {
+			continue
+		}
+
+		h.BroadcastToUser(recipientID, map[string]interface{}{
+			"type": "user_status_update",
+			"payload": map[string]interface{}{
+				"userId":    userID,
+				"isOnline":  isOnline,
+				"timestamp": time.Now().Unix(),
+			},
+		})
+	}
 }
