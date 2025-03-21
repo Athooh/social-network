@@ -214,7 +214,8 @@ export default function Post({ post, onPostUpdated }) {
       ? currentUser.avatar
       : `${BASE_URL}/uploads/${currentUser.avatar}`
     : "/avatar4.png";
-  const currentUserFullName = `${currentUser.firstName} ${currentUser.lastName}`;
+  
+ const currentUserFullName = currentUser?.firstName + " " + currentUser?.lastName;
 
   const handleComment = async (e) => {
     e.preventDefault();
