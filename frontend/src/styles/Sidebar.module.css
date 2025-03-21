@@ -277,3 +277,18 @@
   gap: var(--spacing-sm);
 }
 
+.emptyState {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md);
+  min-height: 100px;
+}
+
