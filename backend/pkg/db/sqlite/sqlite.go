@@ -133,7 +133,7 @@ func DiscoverModelStructs() []interface{} {
 		models.Comment{},
 		models.FollowRequest{},
 		models.Follower{},
-		models.UserStats{},
+		models.UserStat{},
 		models.PostLike{},
 		// Add new models here
 	}
