@@ -116,3 +116,45 @@ func (s *NotificationService) NotifyUserStatsUpdated(userID string, statsType st
 
 	return nil
 }
+
+func (s *NotificationService) NotifyPostsCommentUpdateToSpecifUsers(userID string, statsType string, count int, recipientIDs []string) error {
+	// Create event payload
+	payload := events.UserStatsUpdatedPayload{
+		UserID:    userID,
+		StatsType: statsType,
+		Count:     count,
+	}
+
+	// Create event
+	event := events.Event{
+		Type:    events.CommentCountUpdate,
+		Payload: payload,
+	}
+
+	// Send to each specific recipient including the current
+	for _, recipientID := range recipientIDs {
+		s.hub.BroadcastToUser(recipientID, event)
+	}
+
+	return nil
+}
+
+func (s *NotificationService) NotifyPostsCommentUpdate(userID string, statsType string, count int) error {
+	// Create event payload
+	payload := events.UserStatsUpdatedPayload{
+		UserID:    userID,
+		StatsType: statsType,
+		Count:     count,
+	}
+
+	// Create event
+	event := events.Event{
+		Type:    events.CommentCountUpdate,
+		Payload: payload,
+	}
+
+	// Broadcast to the specific user
+	s.hub.BroadcastToUser(userID, event)
+
+	return nil
+}
