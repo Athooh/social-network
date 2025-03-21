@@ -26,6 +26,7 @@ type Repository interface {
 
 	// Comment methods
 	CreateComment(comment *models.Comment) error
+	UpdatePostCommentCount(postId int64) (int, error)
 	GetCommentsByPostID(postID int64) ([]*models.Comment, error)
 	DeleteComment(id int64) error
 
@@ -532,6 +533,7 @@ func (r *SQLiteRepository) GetFeedPosts(userID string, limit, offset int) ([]*mo
 			&videoPath,
 			&post.Privacy,
 			&post.LikesCount,
+			&post.CommentsCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
@@ -582,6 +584,63 @@ func (r *SQLiteRepository) GetUserDataByID(userID string) (*models.PostUserData,
 	}
 
 	return user, nil
+}
+
+func (r *SQLiteRepository) UpdatePostCommentCount(postId int64) (int, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	now := time.Now()
+
+	// Ensure the post exists and initialize `comments_count` if needed
+	initQuery := `
+		UPDATE posts 
+		SET comments_count = COALESCE(comments_count, (SELECT COUNT(*) FROM comments WHERE post_id = ?)), 
+		    updated_at = ? 
+		WHERE id = ?`
+	_, err = tx.Exec(initQuery, postId, now, postId)
+	if err != nil {
+		return 0, err
+	}
+
+	// Increment the comment count
+	updateQuery := "UPDATE posts SET comments_count = comments_count + 1, updated_at = ? WHERE id = ?"
+	result, err := tx.Exec(updateQuery, now, postId)
+	if err != nil {
+		return 0, err
+	}
+
+	// Ensure the post exists
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	if rowsAffected == 0 {
+		return 0, errors.New("post not found")
+	}
+
+	// Get the new count
+	var newCount int
+	selectQuery := "SELECT comments_count FROM posts WHERE id = ?"
+	err = tx.QueryRow(selectQuery, postId).Scan(&newCount)
+	if err != nil {
+		return 0, err
+	}
+
+	// Commit transaction
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return newCount, nil
 }
 
 // GetUserFollowers returns the IDs of users who follow the specified user
