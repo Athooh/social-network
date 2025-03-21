@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Athooh/social-network/internal/auth"
+	"github.com/Athooh/social-network/internal/follow"
 	"github.com/Athooh/social-network/internal/post"
 	websocketHandler "github.com/Athooh/social-network/internal/websocket"
 	"github.com/Athooh/social-network/pkg/logger"
@@ -44,23 +45,28 @@ func (rg *RouteGroup) Register(mux *http.ServeMux) {
 	}
 }
 
+// RouterConfig holds all dependencies needed for routing
+type RouterConfig struct {
+	AuthHandler    *auth.Handler
+	PostHandler    *post.Handler
+	WSHandler      *websocketHandler.Handler
+	FollowHandler  *follow.Handler
+	AuthMiddleware func(http.Handler) http.Handler
+	JWTMiddleware  func(http.Handler) http.Handler
+	Logger         *logger.Logger
+	UploadDir      string
+}
+
 // Router sets up the HTTP routes
-func Router(
-	authHandler *auth.Handler,
-	postHandler *post.Handler,
-	wsHandler *websocketHandler.Handler,
-	authMiddleware, jwtMiddleware func(http.Handler) http.Handler,
-	log *logger.Logger,
-	uploadDir string,
-) http.Handler {
+func Router(config RouterConfig) http.Handler {
 	// Create a new router
 	mux := http.NewServeMux()
 
 	// Define middleware chains
-	loggingMiddleware := log.HTTPMiddleware
+	loggingMiddleware := config.Logger.HTTPMiddleware
 	publicRouteMiddleware := middlewareChain(loggingMiddleware, middleware.CorsMiddleware)
-	authenticatedRouteMiddleware := middlewareChain(middleware.CorsMiddleware, jwtMiddleware, authMiddleware, loggingMiddleware)
-	wsMiddleware := middlewareChain(middleware.CorsMiddleware, jwtMiddleware)
+	authenticatedRouteMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware, config.AuthMiddleware, loggingMiddleware)
+	wsMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware)
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -74,45 +80,57 @@ func Router(
 
 	// Create route groups
 	publicAuthGroup := NewRouteGroup("/api/auth", publicRouteMiddleware)
-	publicAuthGroup.HandleFunc("/register", authHandler.Register)
-	publicAuthGroup.HandleFunc("/login", authHandler.LoginJWT)
+	publicAuthGroup.HandleFunc("/register", config.AuthHandler.Register)
+	publicAuthGroup.HandleFunc("/login", config.AuthHandler.LoginJWT)
 
 	protectedAuthGroup := NewRouteGroup("/api/auth", authenticatedRouteMiddleware)
-	protectedAuthGroup.HandleFunc("/logout", authHandler.Logout)
-	protectedAuthGroup.HandleFunc("/validate_token", authHandler.ValidateToken)
+	protectedAuthGroup.HandleFunc("/logout", config.AuthHandler.Logout)
+	protectedAuthGroup.HandleFunc("/validate_token", config.AuthHandler.ValidateToken)
 
 	protectedUserGroup := NewRouteGroup("/api/users", authenticatedRouteMiddleware)
-	protectedUserGroup.HandleFunc("/me", authHandler.Me)
+	protectedUserGroup.HandleFunc("/me", config.AuthHandler.Me)
+
+	// Add follow routes
+	protectedFollowGroup := NewRouteGroup("/api/follow", authenticatedRouteMiddleware)
+	protectedFollowGroup.HandleFunc("/follow", config.FollowHandler.FollowUser)
+	protectedFollowGroup.HandleFunc("/unfollow", config.FollowHandler.UnfollowUser)
+	protectedFollowGroup.HandleFunc("/accept", config.FollowHandler.AcceptFollowRequest)
+	protectedFollowGroup.HandleFunc("/decline", config.FollowHandler.DeclineFollowRequest)
+	protectedFollowGroup.HandleFunc("/requests", config.FollowHandler.GetPendingFollowRequests)
+	protectedFollowGroup.HandleFunc("/followers", config.FollowHandler.GetFollowers)
+	protectedFollowGroup.HandleFunc("/following", config.FollowHandler.GetFollowing)
+	protectedFollowGroup.HandleFunc("/is-following", config.FollowHandler.IsFollowing)
 
 	protectedPostGroup := NewRouteGroup("/api/posts", authenticatedRouteMiddleware)
 	protectedPostGroup.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			postHandler.CreatePost(w, r)
+			config.PostHandler.CreatePost(w, r)
 		case http.MethodGet:
-			postHandler.GetFeedPosts(w, r)
+			config.PostHandler.GetFeedPosts(w, r)
 		case http.MethodDelete:
-			postHandler.DeletePost(w, r)
+			config.PostHandler.DeletePost(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-	protectedPostGroup.HandleFunc("/comments/", postHandler.HandleComments)
-	protectedPostGroup.HandleFunc("/user/", postHandler.GetUserPosts)
-	protectedPostGroup.HandleFunc("/like/", postHandler.LikePost)
+	protectedPostGroup.HandleFunc("/comments/", config.PostHandler.HandleComments)
+	protectedPostGroup.HandleFunc("/user/", config.PostHandler.GetUserPosts)
+	protectedPostGroup.HandleFunc("/like/", config.PostHandler.LikePost)
 
 	// Add WebSocket route
 	wsRoute := NewRouteGroup("/ws", wsMiddleware)
-	wsRoute.HandleFunc("", wsHandler.HandleConnection)
+	wsRoute.HandleFunc("", config.WSHandler.HandleConnection)
 
 	// Register all groups
 	publicAuthGroup.Register(mux)
 	protectedAuthGroup.Register(mux)
 	protectedPostGroup.Register(mux)
+	protectedFollowGroup.Register(mux)
 	wsRoute.Register(mux)
 
 	// Serve static files
-	fileServer := http.FileServer(http.Dir(uploadDir))
+	fileServer := http.FileServer(http.Dir(config.UploadDir))
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", fileServer))
 
 	return mux
