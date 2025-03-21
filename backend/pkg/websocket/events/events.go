@@ -4,9 +4,13 @@ package events
 type EventType string
 
 const (
-	PostCreated      EventType = "post_created"
-	PostLiked        EventType = "post_liked"
-	UserStatsUpdated EventType = "user_stats_updated"
+	PostCreated           EventType = "post_created"
+	PostLiked             EventType = "post_liked"
+	PostCommented         EventType = "post_commented"
+	UserStatsUpdated      EventType = "user_stats_updated"
+	FollowUpdate          EventType = "follow_update"
+	FollowRequest         EventType = "follow_request"
+	FollowRequestAccepted EventType = "follow_request_accepted"
 )
 
 // Event represents a WebSocket event
