@@ -95,3 +95,24 @@ func (s *NotificationService) NotifyPostLiked(post *models.Post, userID string, 
 	s.hub.Broadcast <- eventJSON
 	return nil
 }
+
+// NotifyUserStatsUpdated sends a notification when a user's stats are updated
+func (s *NotificationService) NotifyUserStatsUpdated(userID string, statsType string, count int) error {
+	// Create event payload
+	payload := events.UserStatsUpdatedPayload{
+		UserID:    userID,
+		StatsType: statsType, // e.g., "followers", "following", "posts"
+		Count:     count,
+	}
+
+	// Create event
+	event := events.Event{
+		Type:    events.UserStatsUpdated,
+		Payload: payload,
+	}
+
+	// Broadcast to the specific user
+	s.hub.BroadcastToUser(userID, event)
+
+	return nil
+}
