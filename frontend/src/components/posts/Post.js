@@ -21,6 +21,8 @@ export default function Post({ post, onPostUpdated }) {
     deletePost,
     deleteComment,
     updatePostLikes,
+    followUser,
+    unfollowUser,
   } = usePostService();
   const { subscribe } = useWebSocket();
   const { currentUser } = useAuth();
@@ -146,10 +148,10 @@ export default function Post({ post, onPostUpdated }) {
         });
         break;
       case "follow":
-        console.log("Follow user");
+       await followUser(post.userId, formattedPost.authorName);
         break;
       case "unfollow":
-        console.log("Unfollow user");
+        await unfollowUser(post.userId,formattedPost.authorName);
         break;
     }
     setShowOptions(false);
