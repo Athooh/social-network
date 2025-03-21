@@ -57,7 +57,7 @@ func (r *SQLiteRepository) GetByID(id string) (*User, error) {
                COALESCE(us.followers_count, 0) AS followers_count,
                COALESCE(us.following_count, 0) AS following_count
         FROM users u
-        LEFT JOIN user_statss us ON u.id = us.user_id
+        LEFT JOIN user_stats us ON u.id = us.user_id
         WHERE u.id = ?
     `
 
