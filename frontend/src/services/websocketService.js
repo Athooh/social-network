@@ -10,6 +10,7 @@ export const EVENT_TYPES = {
   POST_CREATED: "post_created",
   POST_LIKED: "post_liked",
   USER_STATS_UPDATED: "user_stats_updated",
+  USER_STATUS_UPDATE: "user_status_update",
   // Add more event types as needed
   // COMMENT_ADDED: 'comment_added',
   // MESSAGE_RECEIVED: 'message_received',
@@ -187,3 +188,24 @@ function connectWebSocket(token, setIsConnected, setLastMessage) {
   // Store the socket globally
   globalSocket = ws;
 }
+
+export const closeWebSocketConnection = () => {
+  if (globalSocket) {
+    console.log("Closing WebSocket connection");
+    globalSocket.close();
+    globalSocket = null;
+  }
+
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+
+  if (pingInterval) {
+    clearInterval(pingInterval);
+    pingInterval = null;
+  }
+
+  globalListeners = {};
+  reconnectAttempts = 0;
+};
