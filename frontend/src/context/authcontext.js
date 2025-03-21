@@ -9,6 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import { showToast } from "@/components/ui/ToastContainer";
 import { handleApiError } from "@/utils/errorHandler";
+import { closeWebSocketConnection } from "@/services/websocketService";
 
 const API_URL = process.env.API_URL;
 
@@ -23,6 +24,9 @@ export const AuthProvider = ({ children }) => {
   // Memoize handleLogout to prevent unnecessary re-renders
   const handleLogout = useCallback(
     async (sendRequest = true) => {
+      // Close any active WebSocket connections
+      closeWebSocketConnection();
+
       if (sendRequest && token) {
         try {
           await fetch(`${API_URL}/auth/logout`, {
