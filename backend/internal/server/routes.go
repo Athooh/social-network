@@ -96,7 +96,7 @@ func Router(config RouterConfig) http.Handler {
 	protectedFollowGroup.HandleFunc("/unfollow", config.FollowHandler.UnfollowUser)
 	protectedFollowGroup.HandleFunc("/accept", config.FollowHandler.AcceptFollowRequest)
 	protectedFollowGroup.HandleFunc("/decline", config.FollowHandler.DeclineFollowRequest)
-	protectedFollowGroup.HandleFunc("/requests", config.FollowHandler.GetPendingFollowRequests)
+	protectedFollowGroup.HandleFunc("/pending-requests", config.FollowHandler.GetPendingFollowRequests)
 	protectedFollowGroup.HandleFunc("/followers", config.FollowHandler.GetFollowers)
 	protectedFollowGroup.HandleFunc("/following", config.FollowHandler.GetFollowing)
 	protectedFollowGroup.HandleFunc("/is-following", config.FollowHandler.IsFollowing)
