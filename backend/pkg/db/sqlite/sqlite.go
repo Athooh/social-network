@@ -135,6 +135,7 @@ func DiscoverModelStructs() []interface{} {
 		models.Follower{},
 		models.UserStat{},
 		models.PostLike{},
+		models.UserStatus{},
 		// Add new models here
 	}
 }
@@ -142,7 +143,10 @@ func DiscoverModelStructs() []interface{} {
 // CreateMigrationFromStruct generates migration files from a struct
 func (db *DB) CreateMigrationFromStruct(modelStruct interface{}, migrationName string) error {
 	// Check if migration already exists for this table
-	tableName := camelToSnake(reflect.TypeOf(modelStruct).Name()) + "s"
+	tableName := camelToSnake(reflect.TypeOf(modelStruct).Name())
+	if !strings.HasSuffix(tableName, "s") {
+		tableName += "s"
+	}
 	existingMigration, err := checkMigrationExists(db.config.MigrationsPath, tableName)
 	if err != nil {
 		return fmt.Errorf("failed to check existing migrations: %w", err)
@@ -235,7 +239,12 @@ func CreateMigrations(db *DB) error {
 		structName := t.Name()
 
 		// Generate migration name
-		migrationName := fmt.Sprintf("create_%ss_table", camelToSnake(structName))
+		tableName := camelToSnake(structName)
+		// Only add 's' if the name doesn't already end with 's'
+		if !strings.HasSuffix(tableName, "s") {
+			tableName += "s"
+		}
+		migrationName := fmt.Sprintf("create_%s_table", tableName)
 
 		// Create migration
 		if err := db.CreateMigrationFromStruct(model, migrationName); err != nil {
@@ -305,7 +314,11 @@ func extractTableInfoFromStruct(modelStruct interface{}) (TableInfo, error) {
 	}
 
 	// Get table name from struct name (convert CamelCase to snake_case and pluralize)
-	tableName := camelToSnake(t.Name()) + "s"
+	tableName := camelToSnake(t.Name())
+	// Only add 's' if the name doesn't already end with 's'
+	if !strings.HasSuffix(tableName, "s") {
+		tableName += "s"
+	}
 	tableInfo.Name = tableName
 
 	// Check for composite primary keys
@@ -624,7 +637,11 @@ func (db *DB) checkAndUpdateSchema(modelStruct interface{}) error {
 		t = t.Elem()
 	}
 
-	tableName := camelToSnake(t.Name()) + "s"
+	tableName := camelToSnake(t.Name())
+	// Only add 's' if the name doesn't already end with 's'
+	if !strings.HasSuffix(tableName, "s") {
+		tableName += "s"
+	}
 
 	// Extract current table info from struct
 	newTableInfo, err := extractTableInfoFromStruct(modelStruct)
