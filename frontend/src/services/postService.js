@@ -26,8 +26,6 @@ export const usePostService = () => {
             },
           } = payload.post;
 
-          console.log("Received post:", payload.post);
-
           // Ensure avatar has absolute URL if it's a relative path
           const avatar = UserData.avatar?.startsWith("http")
             ? UserData.avatar
