@@ -11,6 +11,7 @@ import { useWebSocketContext } from "@/context/websocketContext";
 import { EVENT_TYPES } from "@/services/websocketService";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { useWebSocket } from "@/services/websocketService";
+import Image from "next/image";
 
 export default function Post({ post, onPostUpdated }) {
   const {
@@ -287,18 +288,26 @@ export default function Post({ post, onPostUpdated }) {
 
       return (
         <div key={`comment-${comment.id}`} className={styles.comment}>
-          <img
-            src={comment.authorImage}
-            alt={comment.authorName}
+          <Image
+            src={comment.authorImage || '/avatar4.png'} 
+            alt={`${comment.authorName}'s avatar`} 
+            height={32}
+            width={32}
             className={styles.commentAvatar}
-          />
+            onError={(e) => {
+              // Fallback if image fails to load
+              e.target.src = '/avatar4.png';
+          }}
+        />
           <div className={styles.commentContent}>
             <div className={styles.commentBubble}>
               <h4>{comment.authorName}</h4>
               <p>{comment.content}</p>
               {comment.imageUrl && (
                 <div className={styles.commentImage}>
-                  <img src={comment.imageUrl} alt="Comment attachment" />
+                  <img src={comment.imageUrl}
+                    alt="Comment attachment"
+                  />
                 </div>
               )}
             </div>
