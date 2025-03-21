@@ -285,7 +285,7 @@ export default function Post({ post, onPostUpdated }) {
       const isCommentOwner = currentUser?.id === comment.userData?.id;
 
       return (
-        <div key={comment.id} className={styles.comment}>
+        <div key={`comment-${comment.id}`} className={styles.comment}>
           <img
             src={comment.authorImage}
             alt={comment.authorName}
@@ -327,7 +327,6 @@ export default function Post({ post, onPostUpdated }) {
 
     // Subscribe to post like updates from WebSocket
     const unsubscribe = subscribe(EVENT_TYPES.POST_LIKED, (payload) => {
-      console.log("Received post like update:", payload);
       // Make sure this update is for our post
       if (Number(payload.postId) === Number(post.id)) {
         setIsLiked(payload.isLiked);
