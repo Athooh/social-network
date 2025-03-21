@@ -14,6 +14,11 @@ import {
 import styles from '@/styles/EditProfileModal.module.css';
 
 const EditProfileModal = ({ isOpen, onClose, profileData }) => {
+  // Predefined lists of skills and interests
+  const predefinedTechSkills = ['JavaScript', 'React', 'Node.js', 'Python', 'Java', 'SQL', 'AWS'];
+  const predefinedSoftSkills = ['Communication', 'Teamwork', 'Leadership', 'Problem Solving', 'Time Management'];
+  const predefinedInterests = ['AI', 'Web Development', 'Mobile Development', 'Data Science', 'Cybersecurity'];
+
   const [formData, setFormData] = useState({
     bannerImage: profileData?.bannerUrl || '',
     profileImage: profileData?.profileUrl || '',
@@ -26,6 +31,9 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
     phone: profileData?.phone || '',
     website: profileData?.website || '',
     location: profileData?.location || '',
+    techSkills: profileData?.techSkills ? profileData.techSkills.split(',') : [],
+    softSkills: profileData?.softSkills ? profileData.softSkills.split(',') : [],
+    interests: profileData?.interests ? profileData.interests.split(',') : [],
   });
 
   const [bannerPreview, setBannerPreview] = useState(profileData?.bannerUrl || '');
@@ -52,14 +60,35 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+    }));
+  };
+
+  const handleSkillSelect = (type, value) => {
+    if (!formData[type].includes(value)) {
+      setFormData(prev => ({
+        ...prev,
+        [type]: [...prev[type], value],
+      }));
+    }
+  };
+
+  const handleRemoveSkill = (type, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [type]: prev[type].filter(item => item !== value),
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Handle form submission to backend
-    console.log('Form data:', formData);
+    const dataToSubmit = {
+      ...formData,
+      techSkills: formData.techSkills.join(','),
+      softSkills: formData.softSkills.join(','),
+      interests: formData.interests.join(','),
+    };
+    console.log('Form data:', dataToSubmit);
     onClose();
   };
 
@@ -248,8 +277,86 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                 />
               </div>
             </div>
-          </div>
+          
+            {/* Skills & Expertise */}
+            <div className={styles.fieldGroup}>
+              <h3>Skills & Expertise</h3>
+              {/* Technical Skills */}
+              <div className={styles.field}>
+                <label>
+                  <FontAwesomeIcon icon={faBriefcase} />
+                  Technical Skills
+                </label>
+                <select
+                  onChange={(e) => handleSkillSelect('techSkills', e.target.value)}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Select a technical skill</option>
+                  {predefinedTechSkills.map((skill, index) => (
+                    <option key={index} value={skill}>{skill}</option>
+                  ))}
+                </select>
+                <div className={styles.tags}>
+                  {formData.techSkills.map((skill, index) => (
+                    <span key={index} className={styles.tag}>
+                      {skill}
+                      <button type="button" onClick={() => handleRemoveSkill('techSkills', skill)}>×</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
 
+              {/* Soft Skills */}
+              <div className={styles.field}>
+                <label>
+                  <FontAwesomeIcon icon={faBriefcase} />
+                  Soft Skills
+                </label>
+                <select
+                  onChange={(e) => handleSkillSelect('softSkills', e.target.value)}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Select a soft skill</option>
+                  {predefinedSoftSkills.map((skill, index) => (
+                    <option key={index} value={skill}>{skill}</option>
+                  ))}
+                </select>
+                <div className={styles.tags}>
+                  {formData.softSkills.map((skill, index) => (
+                    <span key={index} className={styles.tag}>
+                      {skill}
+                      <button type="button" onClick={() => handleRemoveSkill('softSkills', skill)}>×</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Interests */}
+              <div className={styles.field}>
+                <label>
+                  <FontAwesomeIcon icon={faBriefcase} />
+                  Interests
+                </label>
+                <select
+                  onChange={(e) => handleSkillSelect('interests', e.target.value)}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Select an interest</option>
+                  {predefinedInterests.map((interest, index) => (
+                    <option key={index} value={interest}>{interest}</option>
+                  ))}
+                </select>
+                <div className={styles.tags}>
+                  {formData.interests.map((interest, index) => (
+                    <span key={index} className={styles.tag}>
+                      {interest}
+                      <button type="button" onClick={() => handleRemoveSkill('interests', interest)}>×</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>  
+          </div>
           <div className={styles.formActions}>
             <button type="button" onClick={onClose} className={styles.cancelButton}>
               Cancel
@@ -264,4 +371,4 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
   );
 };
 
-export default EditProfileModal; 
+export default EditProfileModal;

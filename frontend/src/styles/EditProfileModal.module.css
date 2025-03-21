@@ -137,7 +137,8 @@
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   padding: 12px;
   border: 1px solid #e4e6eb;
   border-radius: 6px;
@@ -156,6 +157,29 @@
   margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid #e4e6eb;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag {
+  background-color: #e0e0e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
 }
 
 .cancelButton,
