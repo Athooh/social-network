@@ -7,6 +7,7 @@ import (
 
 	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/internal/config"
+	"github.com/Athooh/social-network/internal/follow"
 	"github.com/Athooh/social-network/internal/post"
 	"github.com/Athooh/social-network/internal/server"
 	wsHandler "github.com/Athooh/social-network/internal/websocket"
@@ -77,6 +78,7 @@ func main() {
 	userRepo := user.NewSQLiteRepository(db.DB)
 	sessionRepo := session.NewSQLiteRepository(db.DB)
 	postRepo := post.NewSQLiteRepository(db.DB)
+	followRepo := follow.NewSQLiteRepository(db.DB)
 
 	// Set up session manager
 	sessionManager := session.NewSessionManager(
@@ -108,22 +110,25 @@ func main() {
 	authService := auth.NewService(userRepo, sessionManager, jwtConfig)
 	postNotificationSvc := post.NewNotificationService(wsHub)
 	postService := post.NewService(postRepo, fileStore, log, postNotificationSvc)
+	followService := follow.NewService(followRepo, userRepo, log, wsHub)
 
 	// Set up handlers
 	authHandler := auth.NewHandler(authService, fileStore)
 	postHandler := post.NewHandler(postService, log)
 	wsHandler := wsHandler.NewHandler(wsHub, log)
+	followHandler := follow.NewHandler(followService, log)
 
 	// Set up router with both session and JWT middleware
-	router := server.Router(
-		authHandler,
-		postHandler,
-		wsHandler,
-		authService.RequireAuth,
-		authService.RequireJWTAuth,
-		log,
-		cfg.FileStore.UploadDir,
-	)
+	router := server.Router(server.RouterConfig{
+		AuthHandler:    authHandler,
+		PostHandler:    postHandler,
+		WSHandler:      wsHandler,
+		FollowHandler:  followHandler,
+		AuthMiddleware: authService.RequireAuth,
+		JWTMiddleware:  authService.RequireJWTAuth,
+		Logger:         log,
+		UploadDir:      cfg.FileStore.UploadDir,
+	})
 
 	// Set up server
 	serverConfig := server.Config{
