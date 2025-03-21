@@ -25,6 +25,10 @@ type Repository interface {
 
 	// User profile check
 	IsUserProfilePublic(userID string) (bool, error)
+
+	// Mutual friends
+	GetMutualFollowers(userID1, userID2 string) ([]*Follower, error)
+	GetMutualFollowersCount(userID1, userID2 string) (int, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -285,4 +289,55 @@ func (r *SQLiteRepository) IsUserProfilePublic(userID string) (bool, error) {
 	}
 
 	return isPublic, nil
+}
+
+// GetMutualFollowers retrieves mutual followers between two users
+func (r *SQLiteRepository) GetMutualFollowers(userID1, userID2 string) ([]*Follower, error) {
+	query := `
+		SELECT f.id, f.follower_id, f.following_id, f.created_at
+		FROM followers f
+		JOIN followers f2 ON f.follower_id = f2.following_id AND f2.follower_id = f.following_id
+		WHERE f.follower_id = ? AND f2.follower_id = ?
+	`
+
+	rows, err := r.db.Query(query, userID1, userID2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var mutualFollowers []*Follower
+	for rows.Next() {
+		var follower Follower
+		err := rows.Scan(
+			&follower.ID,
+			&follower.FollowerID,
+			&follower.FollowingID,
+			&follower.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		mutualFollowers = append(mutualFollowers, &follower)
+	}
+
+	return mutualFollowers, rows.Err()
+}
+
+// GetMutualFollowersCount retrieves the count of mutual followers between two users
+func (r *SQLiteRepository) GetMutualFollowersCount(userID1, userID2 string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM followers f1
+		JOIN followers f2 ON f1.follower_id = f2.follower_id
+		WHERE f1.following_id = ? AND f2.following_id = ?
+	`
+
+	var count int
+	err := r.db.QueryRow(query, userID1, userID2).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
