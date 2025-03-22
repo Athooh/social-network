@@ -11,14 +11,16 @@ import (
 
 // Client represents a connected WebSocket client
 type Client struct {
-	ID       string
-	UserID   string
-	Conn     *websocket.Conn
-	Hub      *Hub
-	Send     chan []byte
-	Mu       sync.Mutex
-	IsActive bool
-	Done     chan struct{} // New channel to signal when client disconnects
+	ID           string
+	UserID       string
+	TabID        string // New field to identify browser tab
+	Conn         *websocket.Conn
+	Hub          *Hub
+	Send         chan []byte
+	Mu           sync.Mutex
+	IsActive     bool
+	Done         chan struct{} // New channel to signal when client disconnects
+	LastPingTime time.Time
 }
 
 // Hub maintains the set of active clients and broadcasts messages
@@ -43,6 +45,12 @@ type Hub struct {
 
 	// Logger
 	log *logger.Logger
+
+	// Status updater for online/offline notifications
+	statusUpdater StatusUpdater
+
+	heartbeatCheckInterval time.Duration
+	heartbeatTimeout       time.Duration
 }
 
 // Message represents a WebSocket message
@@ -54,29 +62,51 @@ type Message struct {
 // NewHub creates a new Hub instance
 func NewHub(log *logger.Logger) *Hub {
 	return &Hub{
-		Broadcast:   make(chan []byte),
-		Register:    make(chan *Client),
-		Unregister:  make(chan *Client),
-		Clients:     make(map[*Client]bool),
-		UserClients: make(map[string][]*Client),
-		Mu:          sync.RWMutex{},
-		log:         log,
+		Broadcast:              make(chan []byte),
+		Register:               make(chan *Client),
+		Unregister:             make(chan *Client),
+		Clients:                make(map[*Client]bool),
+		UserClients:            make(map[string][]*Client),
+		Mu:                     sync.RWMutex{},
+		log:                    log,
+		heartbeatCheckInterval: 60 * time.Second,
+		heartbeatTimeout:       120 * time.Second,
 	}
 }
 
 // Run starts the Hub
 func (h *Hub) Run() {
+	heartbeatTicker := time.NewTicker(h.heartbeatCheckInterval)
+	defer heartbeatTicker.Stop()
+
 	for {
 		select {
 		case client := <-h.Register:
 			h.Mu.Lock()
+
+			// Close ALL existing connections for this user
+			// This ensures only one connection per user
+			if clients, exists := h.UserClients[client.UserID]; exists {
+				for _, existingClient := range clients {
+					h.log.Debug("Closing existing connection for user: %s (client ID: %s)", client.UserID, existingClient.ID)
+					delete(h.Clients, existingClient)
+					close(existingClient.Send)
+
+					// Force close the connection
+					existingClient.Conn.Close()
+				}
+				// Clear all existing clients for this user
+				h.UserClients[client.UserID] = nil
+			}
+
+			// Register the new client
 			h.Clients[client] = true
 
-			// Add to user-specific clients map
-			h.UserClients[client.UserID] = append(h.UserClients[client.UserID], client)
+			// Set this as the only client for this user
+			h.UserClients[client.UserID] = []*Client{client}
 			h.Mu.Unlock()
 
-			h.log.Debug("Client registered: %s (User: %s)", client.ID, client.UserID)
+			h.log.Debug("Client registered: %s (User: %s, Tab: %s)", client.ID, client.UserID, client.TabID)
 
 		case client := <-h.Unregister:
 			h.Mu.Lock()
@@ -114,6 +144,9 @@ func (h *Hub) Run() {
 				}
 			}
 			h.Mu.RUnlock()
+
+		case <-heartbeatTicker.C:
+			h.checkHeartbeats()
 		}
 	}
 }
@@ -236,6 +269,84 @@ func (c *Client) ReadPump() {
 			continue
 		}
 
+		if msg.Type == "user_away" {
+
+			// Mark this client as inactive
+			c.IsActive = false
+
+			// Check if this was the user's last active connection
+			hasOtherActiveConnections := false
+
+			c.Hub.Mu.RLock()
+			clients, exists := c.Hub.UserClients[c.UserID]
+			if exists {
+				for _, otherClient := range clients {
+					if otherClient.ID != c.ID && otherClient.IsActive {
+						hasOtherActiveConnections = true
+						break
+					}
+				}
+			}
+			c.Hub.Mu.RUnlock()
+
+			// If no other active connections, mark user as offline
+			if !hasOtherActiveConnections {
+				userID := c.UserID
+				go func(userID string) {
+					c.Hub.SetUserOffline(userID)
+				}(userID)
+			}
+
+			continue
+		}
+
+		if msg.Type == "user_active" {
+
+			// Mark this client as active
+			c.Mu.Lock()
+			c.IsActive = true
+			c.Mu.Unlock()
+
+			// Check if this is the first active connection for this user
+			c.Hub.Mu.Lock() // Changed from RLock to Lock since we'll be modifying
+			wasOffline := true
+			clients, exists := c.Hub.UserClients[c.UserID]
+			if exists {
+				// Close any other active connections for this user
+				for _, otherClient := range clients {
+					if otherClient.ID != c.ID {
+						if otherClient.IsActive {
+							wasOffline = false
+							// Close the other connection
+							c.Hub.log.Info("Closing duplicate connection for user %s (client ID: %s)", c.UserID, otherClient.ID)
+							otherClient.IsActive = false
+							otherClient.Conn.Close()
+						}
+					}
+				}
+
+				// Clean up the user clients list to only include this client
+				newClients := []*Client{}
+				for _, otherClient := range clients {
+					if otherClient.ID == c.ID {
+						newClients = append(newClients, otherClient)
+					}
+				}
+				c.Hub.UserClients[c.UserID] = newClients
+			}
+			c.Hub.Mu.Unlock()
+
+			// If this is the first active connection, mark user as online
+			if wasOffline {
+				userID := c.UserID
+				go func(userID string) {
+					c.Hub.SetUserOnline(userID)
+				}(userID)
+			}
+
+			continue
+		}
+
 		// Process incoming messages if needed
 		// For now, we're just handling server -> client communication
 		c.Hub.log.Debug("Received message from client %s: %s", c.ID, string(message))
@@ -316,6 +427,8 @@ func (h *Hub) CloseUserConnections(userID string) {
 }
 
 func (c *Client) handlePing() {
+	c.LastPingTime = time.Now()
+
 	pong := Message{
 		Type: "pong",
 	}
@@ -327,7 +440,6 @@ func (c *Client) handlePing() {
 	}
 
 	c.Hub.log.Debug("Sending pong to client %s", c.ID)
-
 	c.Send <- data
 }
 
@@ -343,26 +455,59 @@ func (h *Hub) SetUserOnline(userID string) {
 		return
 	}
 
-	h.log.Info("User %s is now online", userID)
-
-	// We'll implement the notification in the follow package
+	// Notify status service
+	if h.statusUpdater != nil {
+		go func() {
+			if err := h.statusUpdater.SetUserOnline(userID); err != nil {
+				h.log.Error("Failed to set user online in status service: %v", err)
+			}
+		}()
+	}
 }
 
 // SetUserOffline marks a user as offline and notifies their followers
 func (h *Hub) SetUserOffline(userID string) {
 	h.Mu.Lock()
-	defer h.Mu.Unlock()
 
 	// Check if user still has any active clients
 	clients, exists := h.UserClients[userID]
-	if exists && len(clients) > 0 {
-		// User still has active connections, don't mark as offline
-		return
+	if exists {
+		for _, client := range clients {
+			if client.IsActive {
+				// Close the connection
+				client.IsActive = false
+				client.Conn.Close()
+			}
+		}
 	}
 
-	h.log.Info("User %s is now offline", userID)
+	// Remove all clients for this user
+	if exists {
+		delete(h.UserClients, userID)
+	}
 
-	// We'll implement the notification in the follow package
+	// Double check if user has any remaining connections
+	// This is a safety check to ensure we don't mark a user as offline
+	// if they have other active connections we might have missed
+	clients, exists = h.UserClients[userID]
+	if exists && len(clients) > 0 {
+		for _, client := range clients {
+			if client.IsActive {
+				break
+			}
+		}
+	}
+
+	h.Mu.Unlock()
+
+	// Notify status service
+	if h.statusUpdater != nil {
+		go func() {
+			if err := h.statusUpdater.SetUserOffline(userID); err != nil {
+				h.log.Error("Failed to set user offline in status service: %v", err)
+			}
+		}()
+	}
 }
 
 // BroadcastUserStatus sends a user's online status to specified recipients
@@ -381,5 +526,83 @@ func (h *Hub) BroadcastUserStatus(userID string, isOnline bool, recipientIDs []s
 				"timestamp": time.Now().Unix(),
 			},
 		})
+	}
+}
+
+func (h *Hub) checkHeartbeats() {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	now := time.Now()
+	for client := range h.Clients {
+		if client.IsActive && now.Sub(client.LastPingTime) > h.heartbeatTimeout {
+			h.log.Info("Client %s (User: %s) timed out due to missed heartbeats", client.ID, client.UserID)
+
+			// Mark client as inactive
+			client.IsActive = false
+
+			// Close connection
+			client.Conn.Close()
+
+			// Remove from active clients
+			delete(h.Clients, client)
+			close(client.Send)
+			close(client.Done)
+
+			// Update user-specific clients map
+			clients := h.UserClients[client.UserID]
+			for i, c := range clients {
+				if c.ID == client.ID {
+					h.UserClients[client.UserID] = append(clients[:i], clients[i+1:]...)
+					break
+				}
+			}
+
+			// Clean up empty user entries
+			if len(h.UserClients[client.UserID]) == 0 {
+				delete(h.UserClients, client.UserID)
+
+				// Mark user as offline if this was their last connection
+				userID := client.UserID
+				go func(userID string) {
+					// Call SetUserOffline outside of the lock
+					h.SetUserOffline(userID)
+				}(userID)
+			}
+		}
+	}
+}
+
+// SetStatusUpdater sets the status updater for the hub
+func (h *Hub) SetStatusUpdater(updater StatusUpdater) {
+	h.statusUpdater = updater
+}
+
+// HasClientWithID checks if a specific client ID exists and is active
+func (h *Hub) HasClientWithID(clientID string) bool {
+	h.Mu.RLock()
+	defer h.Mu.RUnlock()
+
+	for client := range h.Clients {
+		if client.ID == clientID && client.IsActive {
+			return true
+		}
+	}
+	return false
+}
+
+// CloseClientWithID closes a specific client connection
+func (h *Hub) CloseClientWithID(clientID string) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	for client := range h.Clients {
+		if client.ID == clientID {
+			client.IsActive = false
+			client.Conn.Close()
+			// Don't unregister here - let the ReadPump handle that
+			// when the connection actually closes
+			break
+		}
 	}
 }
