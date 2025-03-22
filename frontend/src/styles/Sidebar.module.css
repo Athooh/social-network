@@ -292,3 +292,8 @@
   min-height: 100px;
 }
 
+/* Add this new class for profile page contacts */
+.profileContacts {
+  margin-top: 20px; /* Adjust this value as needed */
+}
+
