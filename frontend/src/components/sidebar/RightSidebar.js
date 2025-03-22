@@ -7,6 +7,7 @@ import { useFriendService } from "@/services/friendService";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useUserStatus } from "@/services/userStatusService";
+import ContactsSection from "@/components/contacts/ContactsList";
 
 // Separate components for better organization
 const FriendRequestSection = ({
@@ -52,53 +53,6 @@ const FriendRequestSection = ({
     )}
   </section>
 );
-
-const ContactsSection = ({ contacts, isLoading }) => {
-  const { isUserOnline, initializeStatuses } = useUserStatus();
-
-  // Initialize online statuses from API data
-  useEffect(() => {
-    if (contacts && contacts.length > 0) {
-      initializeStatuses(contacts);
-    }
-  }, [contacts, initializeStatuses]);
-
-  return (
-    <section className={styles.contacts}>
-      <h2>Contacts</h2>
-      {isLoading ? (
-        <div className={styles.loadingContainer}>
-          <LoadingSpinner size="small" color="primary" />
-        </div>
-      ) : contacts.length === 0 ? (
-        <p className={styles.emptyState}>No contacts to display</p>
-      ) : (
-        contacts.map((contact) => {
-          // Use the API-provided status as default, then override with WebSocket updates
-
-          const isOnline = isUserOnline(contact.contactId, contact.isOnline);
-
-          return (
-            <div key={contact.id} className={styles.contactItem}>
-              <div className={styles.contactProfile}>
-                <div className={styles.contactImageWrapper}>
-                  <img src={contact.image} alt={contact.name} />
-                  <span
-                    className={`${styles.onlineStatus} ${
-                      isOnline ? styles.online : styles.offline
-                    }`}
-                  />
-                </div>
-                <span className={styles.contactName}>{contact.name}</span>
-              </div>
-            </div>
-          );
-        })
-      )}
-    </section>
-  );
-};
-
 const GroupsSection = ({ groups }) => (
   <section className={styles.groups}>
     <h2>Groups</h2>
@@ -159,6 +113,7 @@ export default function RightSidebar() {
       <ContactsSection
         contacts={displayedContacts}
         isLoading={isLoadingContacts}
+        isProfilePage={false}
       />
 
       <GroupsSection groups={groups} />
