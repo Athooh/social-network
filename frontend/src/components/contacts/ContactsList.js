@@ -2,10 +2,11 @@ import React, { useEffect } from "react";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
-import styles from "@/styles/ContactsList.module.css";
+import styles from "@/styles/Sidebar.module.css";
 import { useUserStatus } from "@/services/userStatusService";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-const ContactsList = ({ contacts }) => {
+const ContactsSection = ({ contacts, isLoading, isProfilePage = false }) => {
   const { isUserOnline, initializeStatuses } = useUserStatus();
 
   // Initialize online statuses from API data
@@ -16,48 +17,42 @@ const ContactsList = ({ contacts }) => {
   }, [contacts, initializeStatuses]);
 
   return (
-    <div className={styles.contactsSection}>
-      <div className={styles.sectionHeader}>
-        <h3>Contacts</h3>
-      </div>
-
-      <div className={styles.contactsList}>
-        {contacts.map((contact) => {
+    <section
+      className={`${styles.contacts} ${
+        isProfilePage ? styles.profileContacts : ""
+      }`}
+    >
+      <h2>Contacts</h2>
+      {isLoading ? (
+        <div className={styles.loadingContainer}>
+          <LoadingSpinner size="small" color="primary" />
+        </div>
+      ) : contacts.length === 0 ? (
+        <p className={styles.emptyState}>No contacts to display</p>
+      ) : (
+        contacts.map((contact) => {
           // Use the API-provided status as default, then override with WebSocket updates
-          const online = isUserOnline(contact.id, contact.isOnline);
+          const isOnline = isUserOnline(contact.contactId, contact.isOnline);
 
           return (
             <div key={contact.id} className={styles.contactItem}>
-              <div className={styles.avatarContainer}>
-                <Image
-                  src={contact.avatar}
-                  alt={contact.name}
-                  width={40}
-                  height={40}
-                  className={styles.avatar}
-                />
-                <span
-                  className={`${styles.onlineStatus} ${
-                    !online ? styles.offline : ""
-                  }`}
-                >
-                  <FontAwesomeIcon
-                    icon={faCircle}
-                    style={{
-                      color: online ? "#31a24c" : "#a3a3a3",
-                      border: "2px solid #fff",
-                      borderRadius: "50%",
-                    }}
+              <div className={styles.contactProfile}>
+                <div className={styles.contactImageWrapper}>
+                  <img src={contact.image} alt={contact.name} />
+                  <span
+                    className={`${styles.onlineStatus} ${
+                      isOnline ? styles.online : styles.offline
+                    }`}
                   />
-                </span>
+                </div>
+                <span className={styles.contactName}>{contact.name}</span>
               </div>
-              <span className={styles.contactName}>{contact.name}</span>
             </div>
           );
-        })}
-      </div>
-    </div>
+        })
+      )}
+    </section>
   );
 };
 
-export default ContactsList;
+export default ContactsSection;
