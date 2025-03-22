@@ -115,6 +115,9 @@ func main() {
 	followService := follow.NewService(followRepo, userRepo, statusRepo, log, wsHub)
 	statusService := userHandler.NewStatusService(statusRepo, wsHub, log)
 
+	// Connect the Hub to the StatusService
+	wsHub.SetStatusUpdater(statusService)
+
 	// Set up handlers
 	authHandler := auth.NewHandler(authService, fileStore)
 	postHandler := post.NewHandler(postService, log)
