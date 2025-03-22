@@ -1,37 +1,39 @@
 // src/app/profile/[id]/page.js
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Header from '@/components/header/Header';
-import styles from '@/styles/ProfilePage.module.css';  // Combined styles for the profile page
-import { use } from 'react';
-import ProfileBanner from '@/components/profile/ProfileBanner';
-import ProfileAboutSideBar from '@/components/profile/ProfileAboutSideBar';
-import CreatePost from '@/components/posts/CreatePost';
-import PostList from '@/components/posts/PostList';
-import ProfilePhotosGrid from '@/components/profile/ProfilePhotosGrid';
-import ContactsList from '@/components/contacts/ContactsList';
-import ProfileAbout from '@/components/profile/ProfileAbout';
+import React, { useState } from "react";
+import Header from "@/components/header/Header";
+import styles from "@/styles/ProfilePage.module.css"; // Combined styles for the profile page
+import { use } from "react";
+import ProfileBanner from "@/components/profile/ProfileBanner";
+import ProfileAboutSideBar from "@/components/profile/ProfileAboutSideBar";
+import CreatePost from "@/components/posts/CreatePost";
+import PostList from "@/components/posts/PostList";
+import ProfilePhotosGrid from "@/components/profile/ProfilePhotosGrid";
+import ContactsSection from "@/components/contacts/ContactsList";
+import ProfileAbout from "@/components/profile/ProfileAbout";
+import { useFriendService } from "@/services/friendService";
 
 export default function ProfilePage({ params }) {
-  const [activeSection, setActiveSection] = useState('posts');
+  const [activeSection, setActiveSection] = useState("posts");
   const resolvedParams = use(params);
+  const { contacts, isLoadingContacts } = useFriendService();
 
   // Example photos data
   const photos = [
-    { url: '/photo1.jpg' },
-    { url: '/photo2.jpg' },
-    { url: '/photo3.jpg' },
-    { url: '/photo4.jpg' },
-    { url: '/photo5.jpg' },
-    { url: '/photo6.jpg' },
+    { url: "/photo1.jpg" },
+    { url: "/photo2.jpg" },
+    { url: "/photo3.jpg" },
+    { url: "/photo4.jpg" },
+    { url: "/photo5.jpg" },
+    { url: "/photo6.jpg" },
   ];
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'about':
+      case "about":
         return <ProfileAbout />;
-      case 'posts':
+      case "posts":
         return (
           <div className={styles.contentLayout}>
             <div className={styles.leftSidebar}>
@@ -43,7 +45,11 @@ export default function ProfilePage({ params }) {
             </div>
             <div className={styles.rightSidebar}>
               <ProfilePhotosGrid photos={photos} totalPhotos={20} />
-              <ContactsList />
+              <ContactsSection
+                contacts={contacts}
+                isLoading={isLoadingContacts}
+                isProfilePage={true}
+              />
             </div>
           </div>
         );
