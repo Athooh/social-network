@@ -19,6 +19,7 @@ export const useUserStatus = () => {
     // Subscribe to user status updates
     const unsubscribe = subscribe(EVENT_TYPES.USER_STATUS_UPDATE, (payload) => {
       if (payload && payload.userId) {
+        console.log("Received user status update:", payload);
         setUserStatus(payload.userId, payload.isOnline);
       }
     });
