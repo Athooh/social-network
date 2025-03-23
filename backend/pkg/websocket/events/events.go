@@ -13,6 +13,10 @@ const (
 	FollowRequestAccepted EventType = "follow_request_accepted"
 	CommentCountUpdate    EventType = "comment_count_update"
 	UserStatusUpdate      EventType = "user_status_update"
+	GroupEventCreated     EventType = "group_event_created"
+	GroupEventUpdated     EventType = "group_event_updated"
+	GroupEventDeleted     EventType = "group_event_deleted"
+	EventResponseUpdated  EventType = "event_response_updated"
 )
 
 // Event represents a WebSocket event
