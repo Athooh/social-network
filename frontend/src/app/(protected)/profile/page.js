@@ -12,6 +12,7 @@ import PostList from "@/components/posts/PostList";
 import ProfilePhotosGrid from "@/components/profile/ProfilePhotosGrid";
 import ContactsSection from "@/components/contacts/ContactsList";
 import ProfileAbout from "@/components/profile/ProfileAbout";
+import ProfilePhotos from "@/components/profile/ProfilePhotos";
 import { useFriendService } from "@/services/friendService";
 
 export default function ProfilePage({ params }) {
@@ -53,6 +54,8 @@ export default function ProfilePage({ params }) {
             </div>
           </div>
         );
+      case "photos":
+        return <ProfilePhotos />;
       default:
         return null;
     }
