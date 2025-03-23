@@ -124,7 +124,7 @@ type IndexInfo struct {
 // DiscoverModelStructs returns all exported struct types from the models package
 func DiscoverModelStructs() []interface{} {
 	// Define the models we know about
-	// This is still manual but only needs to be updated when adding a new model type
+	// This is still manual but only needs to be updated when adding a new model type(Database Table)
 	return []interface{}{
 		models.User{},
 		models.Session{},
@@ -136,6 +136,12 @@ func DiscoverModelStructs() []interface{} {
 		models.UserStat{},
 		models.PostLike{},
 		models.UserStatus{},
+		models.Group{},
+		models.GroupMember{},
+		models.GroupChatMessage{},
+		models.GroupPost{},
+		models.GroupEvent{},
+		models.EventResponse{},
 		// Add new models here
 	}
 }
