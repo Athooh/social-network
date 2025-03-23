@@ -15,6 +15,7 @@ import ProfileAbout from "@/components/profile/ProfileAbout";
 import ProfilePhotos from "@/components/profile/ProfilePhotos";
 import ProfileGroups from "@/components/profile/ProfileGroups";
 import ProfileEvents from "@/components/profile/ProfileEvents";
+import ProfileConnections from "@/components/profile/ProfileConnections";
 import { useFriendService } from "@/services/friendService";
 
 export default function ProfilePage({ params }) {
@@ -60,6 +61,8 @@ export default function ProfilePage({ params }) {
         return <ProfilePhotos />;
       case "groups":
         return <ProfileGroups />;
+      case "connections":
+        return <ProfileConnections />;
       case "events":
         return <ProfileEvents />;
       default:
