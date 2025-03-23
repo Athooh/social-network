@@ -13,6 +13,7 @@ import ProfilePhotosGrid from "@/components/profile/ProfilePhotosGrid";
 import ContactsSection from "@/components/contacts/ContactsList";
 import ProfileAbout from "@/components/profile/ProfileAbout";
 import ProfilePhotos from "@/components/profile/ProfilePhotos";
+import ProfileGroups from "@/components/profile/ProfileGroups";
 import { useFriendService } from "@/services/friendService";
 
 export default function ProfilePage({ params }) {
@@ -56,6 +57,8 @@ export default function ProfilePage({ params }) {
         );
       case "photos":
         return <ProfilePhotos />;
+      case "groups":
+        return <ProfileGroups />;
       default:
         return null;
     }
