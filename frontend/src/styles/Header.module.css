@@ -229,7 +229,7 @@
   display: flex;
   align-items: center;
   background-color: var(--background-main);
-  border-radius: 20px;
+  border-radius: 8px;
   padding: 8px 16px;
   width: 240px;
   transition: width 0.2s ease;
