@@ -27,29 +27,31 @@ const ContactsSection = ({ contacts, isLoading, isProfilePage = false }) => {
         <div className={styles.loadingContainer}>
           <LoadingSpinner size="small" color="primary" />
         </div>
-      ) : contacts.length === 0 ? (
+      ) : !contacts ? (
         <p className={styles.emptyState}>No contacts to display</p>
       ) : (
-        contacts.map((contact) => {
-          // Use the API-provided status as default, then override with WebSocket updates
-          const isOnline = isUserOnline(contact.contactId, contact.isOnline);
+        contacts
+          .filter((contact) => contact !== null && contact !== undefined)
+          .map((contact) => {
+            // Use the API-provided status as default, then override with WebSocket updates
+            const isOnline = isUserOnline(contact.contactId, contact.isOnline);
 
-          return (
-            <div key={contact.id} className={styles.contactItem}>
-              <div className={styles.contactProfile}>
-                <div className={styles.contactImageWrapper}>
-                  <img src={contact.image} alt={contact.name} />
-                  <span
-                    className={`${styles.onlineStatus} ${
-                      isOnline ? styles.online : styles.offline
-                    }`}
-                  />
+            return (
+              <div key={contact.id} className={styles.contactItem}>
+                <div className={styles.contactProfile}>
+                  <div className={styles.contactImageWrapper}>
+                    <img src={contact.image} alt={contact.name} />
+                    <span
+                      className={`${styles.onlineStatus} ${
+                        isOnline ? styles.online : styles.offline
+                      }`}
+                    />
+                  </div>
+                  <span className={styles.contactName}>{contact.name}</span>
                 </div>
-                <span className={styles.contactName}>{contact.name}</span>
               </div>
-            </div>
-          );
-        })
+            );
+          })
       )}
     </section>
   );
