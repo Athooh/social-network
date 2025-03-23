@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/Athooh/social-network/internal/auth"
+	"github.com/Athooh/social-network/internal/event"
 	"github.com/Athooh/social-network/internal/follow"
+	"github.com/Athooh/social-network/internal/group"
 	"github.com/Athooh/social-network/internal/post"
 	websocketHandler "github.com/Athooh/social-network/internal/websocket"
 	"github.com/Athooh/social-network/pkg/logger"
@@ -51,6 +53,8 @@ type RouterConfig struct {
 	PostHandler    *post.Handler
 	WSHandler      *websocketHandler.Handler
 	FollowHandler  *follow.Handler
+	GroupHandler   *group.Handler
+	EventHandler   *event.Handler
 	AuthMiddleware func(http.Handler) http.Handler
 	JWTMiddleware  func(http.Handler) http.Handler
 	Logger         *logger.Logger
@@ -118,6 +122,69 @@ func Router(config RouterConfig) http.Handler {
 	protectedPostGroup.HandleFunc("/user/", config.PostHandler.GetUserPosts)
 	protectedPostGroup.HandleFunc("/like/", config.PostHandler.LikePost)
 
+	// Add group routes
+	protectedGroupGroup := NewRouteGroup("/api/groups", authenticatedRouteMiddleware)
+	protectedGroupGroup.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			config.GroupHandler.CreateGroup(w, r)
+		case http.MethodGet:
+			if r.URL.Query().Get("id") != "" {
+				config.GroupHandler.GetGroup(w, r)
+			} else {
+				config.GroupHandler.GetAllGroups(w, r)
+			}
+		case http.MethodPut:
+			config.GroupHandler.UpdateGroup(w, r)
+		case http.MethodDelete:
+			config.GroupHandler.DeleteGroup(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	protectedGroupGroup.HandleFunc("/user", config.GroupHandler.GetUserGroups)
+	protectedGroupGroup.HandleFunc("/members", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			config.GroupHandler.GetGroupMembers(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	protectedGroupGroup.HandleFunc("/invite", config.GroupHandler.InviteToGroup)
+	protectedGroupGroup.HandleFunc("/join", config.GroupHandler.JoinGroup)
+	protectedGroupGroup.HandleFunc("/leave", config.GroupHandler.LeaveGroup)
+	protectedGroupGroup.HandleFunc("/accept-invitation", config.GroupHandler.AcceptInvitation)
+	protectedGroupGroup.HandleFunc("/reject-invitation", config.GroupHandler.RejectInvitation)
+	protectedGroupGroup.HandleFunc("/accept-request", config.GroupHandler.AcceptJoinRequest)
+	protectedGroupGroup.HandleFunc("/reject-request", config.GroupHandler.RejectJoinRequest)
+	protectedGroupGroup.HandleFunc("/update-role", config.GroupHandler.UpdateMemberRole)
+	protectedGroupGroup.HandleFunc("/remove-member", config.GroupHandler.RemoveMember)
+
+	protectedGroupGroup.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			config.GroupHandler.CreateGroupPost(w, r)
+		case http.MethodGet:
+			config.GroupHandler.GetGroupPosts(w, r)
+		case http.MethodDelete:
+			config.GroupHandler.DeleteGroupPost(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Add Event routes
+	eventGroup := NewRouteGroup("/api/events", config.JWTMiddleware)
+	eventGroup.HandleFunc("/create", config.EventHandler.CreateEvent)
+	eventGroup.HandleFunc("/get", config.EventHandler.GetEvent)
+	eventGroup.HandleFunc("/group", config.EventHandler.GetGroupEvents)
+	eventGroup.HandleFunc("/update", config.EventHandler.UpdateEvent)
+	eventGroup.HandleFunc("/delete", config.EventHandler.DeleteEvent)
+	eventGroup.HandleFunc("/respond", config.EventHandler.RespondToEvent)
+	eventGroup.HandleFunc("/responses", config.EventHandler.GetEventResponses)
+	eventGroup.Register(mux)
+
 	// Add WebSocket route
 	wsRoute := NewRouteGroup("/ws", wsMiddleware)
 	wsRoute.HandleFunc("", config.WSHandler.HandleConnection)
@@ -127,6 +194,7 @@ func Router(config RouterConfig) http.Handler {
 	protectedAuthGroup.Register(mux)
 	protectedPostGroup.Register(mux)
 	protectedFollowGroup.Register(mux)
+	protectedGroupGroup.Register(mux)
 	wsRoute.Register(mux)
 
 	// Serve static files
