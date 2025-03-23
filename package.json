@@ -17,7 +17,7 @@
     "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
     "build": "npm run frontend:build && npm run backend:build",
     "start": "concurrently \"npm run frontend:start\" \"npm run backend:run\"",
-    "setup": "cd frontend && npm install",
+    "setup": "npm install -g concurrently && cd frontend && npm install",
     "clean": "npm run backend:clean"
   },
   "devDependencies": {
