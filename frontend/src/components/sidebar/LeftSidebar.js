@@ -12,17 +12,21 @@ export default function LeftSidebar() {
   const { subscribe, isConnected } = useWebSocket();
 
   useEffect(() => {
+    // Load user data from localStorage regardless of connection status
     const userData = JSON.parse(localStorage.getItem("userData"));
+    
+    if (userData) {
+      setPerson(userData);
+    }
 
-    if (!userData || !isConnected) {
+    // Only set up WebSocket subscription if connected
+    if (!isConnected) {
       return;
     }
 
-    setPerson(userData);
-
     // Subscribe to user stats updates
     const handleUserStatsUpdate = (payload) => {
-      if (payload.userId === userData.id) {
+      if (userData && payload.userId === userData.id) {
         const updatedUserData = { ...userData };
 
         // Update the specific stat that changed
@@ -47,7 +51,6 @@ export default function LeftSidebar() {
     );
 
     return () => {
-
       if (unsubscribe) unsubscribe();
     };
   }, [subscribe, isConnected]);
