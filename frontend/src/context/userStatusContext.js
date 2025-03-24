@@ -15,4 +15,10 @@ export const UserStatusProvider = ({ children }) => {
   );
 };
 
-export const useUserStatusContext = () => useContext(UserStatusContext);
+export const useUserStatusContext = () => {
+  const context = useContext(UserStatusContext);
+  if (!context) {
+    throw new Error("useUserStatusContext must be used within a UserStatusProvider");
+  }
+  return context;
+};
