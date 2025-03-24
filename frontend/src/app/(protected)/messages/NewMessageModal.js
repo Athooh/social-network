@@ -1,15 +1,49 @@
-import styles from '@/styles/Messages.module.css';
+import { useState, useEffect } from "react";
+import styles from "@/styles/Messages.module.css";
+import { useAuth } from "@/context/authcontext";
+import { useFriendService } from "@/services/friendService";
+import { useUserStatus } from "@/services/userStatusService";
+import { showToast } from "@/components/ui/ToastContainer";
 
-export default function NewMessageModal({ onClose }) {
+export default function NewMessageModal({ onClose, onSelectContact }) {
+  const { currentUser } = useAuth();
+  const { fetchContacts } = useFriendService();
+  const { isUserOnline } = useUserStatus();
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const loadContacts = async () => {
+      try {
+        const contactsList = await fetchContacts();
+        setContacts(contactsList);
+      } catch (error) {
+        console.error("Error loading contacts:", error);
+        showToast("Failed to load contacts", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContacts();
+  }, []);
+
+  const filteredContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSelectContact = (contact) => {
+    onSelectContact(contact);
+    onClose();
+  };
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
           <h3>New Message</h3>
-          <button 
-            className={styles.closeButton}
-            onClick={onClose}
-          >
+          <button className={styles.closeButton} onClick={onClose}>
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -18,12 +52,53 @@ export default function NewMessageModal({ onClose }) {
             type="text"
             placeholder="Search people..."
             className={styles.searchPeople}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
           />
           <div className={styles.suggestedPeople}>
-            {/* Add suggested contacts here */}
+            {loading ? (
+              <div className={styles.loadingContacts}>
+                <i className="fas fa-spinner fa-spin"></i>
+                <p>Loading contacts...</p>
+              </div>
+            ) : filteredContacts.length > 0 ? (
+              filteredContacts.map((contact) => (
+                <div
+                  key={contact.contactId}
+                  className={styles.contactItem}
+                  onClick={() => handleSelectContact(contact)}
+                >
+                  <div className={styles.contactAvatar}>
+                    <img
+                      src={contact.image || "/avatar.png"}
+                      alt={contact.name}
+                      className={styles.avatar}
+                    />
+                    <span
+                      className={`${styles.statusDot} ${
+                        isUserOnline(contact.contactId)
+                          ? styles.online
+                          : styles.offline
+                      }`}
+                    ></span>
+                  </div>
+                  <div className={styles.contactInfo}>
+                    <h4>{contact.name}</h4>
+                    <p>
+                      {isUserOnline(contact.contactId) ? "Online" : "Offline"}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.noResults}>
+                <p>No contacts found</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}
