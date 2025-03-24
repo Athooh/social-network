@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Athooh/social-network/internal/auth"
+	"github.com/Athooh/social-network/internal/chat"
 	"github.com/Athooh/social-network/internal/event"
 	"github.com/Athooh/social-network/internal/follow"
 	"github.com/Athooh/social-network/internal/group"
@@ -55,6 +56,7 @@ type RouterConfig struct {
 	FollowHandler  *follow.Handler
 	GroupHandler   *group.Handler
 	EventHandler   *event.Handler
+	ChatHandler    *chat.Handler
 	AuthMiddleware func(http.Handler) http.Handler
 	JWTMiddleware  func(http.Handler) http.Handler
 	Logger         *logger.Logger
@@ -174,16 +176,13 @@ func Router(config RouterConfig) http.Handler {
 		}
 	})
 
-	// Add Event routes
-	eventGroup := NewRouteGroup("/api/events", config.JWTMiddleware)
-	eventGroup.HandleFunc("/create", config.EventHandler.CreateEvent)
-	eventGroup.HandleFunc("/get", config.EventHandler.GetEvent)
-	eventGroup.HandleFunc("/group", config.EventHandler.GetGroupEvents)
-	eventGroup.HandleFunc("/update", config.EventHandler.UpdateEvent)
-	eventGroup.HandleFunc("/delete", config.EventHandler.DeleteEvent)
-	eventGroup.HandleFunc("/respond", config.EventHandler.RespondToEvent)
-	eventGroup.HandleFunc("/responses", config.EventHandler.GetEventResponses)
-	eventGroup.Register(mux)
+	// Add Chat routes
+	chatGroup := NewRouteGroup("/api/chat", config.JWTMiddleware)
+	chatGroup.HandleFunc("/send", config.ChatHandler.SendMessage)
+	chatGroup.HandleFunc("/messages", config.ChatHandler.GetMessages)
+	chatGroup.HandleFunc("/mark-read", config.ChatHandler.MarkAsRead)
+	chatGroup.HandleFunc("/contacts", config.ChatHandler.GetContacts)
+	chatGroup.HandleFunc("/typing", config.ChatHandler.SendTypingIndicator)
 
 	// Add WebSocket route
 	wsRoute := NewRouteGroup("/ws", wsMiddleware)
@@ -195,6 +194,7 @@ func Router(config RouterConfig) http.Handler {
 	protectedPostGroup.Register(mux)
 	protectedFollowGroup.Register(mux)
 	protectedGroupGroup.Register(mux)
+	chatGroup.Register(mux)
 	wsRoute.Register(mux)
 
 	// Serve static files
