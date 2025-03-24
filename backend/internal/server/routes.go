@@ -177,7 +177,7 @@ func Router(config RouterConfig) http.Handler {
 	})
 
 	// Add Chat routes
-	chatGroup := NewRouteGroup("/api/chat", config.JWTMiddleware)
+	chatGroup := NewRouteGroup("/api/chat", authenticatedRouteMiddleware)
 	chatGroup.HandleFunc("/send", config.ChatHandler.SendMessage)
 	chatGroup.HandleFunc("/messages", config.ChatHandler.GetMessages)
 	chatGroup.HandleFunc("/mark-read", config.ChatHandler.MarkAsRead)
