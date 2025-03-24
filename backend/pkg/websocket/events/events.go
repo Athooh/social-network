@@ -17,6 +17,11 @@ const (
 	GroupEventUpdated     EventType = "group_event_updated"
 	GroupEventDeleted     EventType = "group_event_deleted"
 	EventResponseUpdated  EventType = "event_response_updated"
+
+	// Chat events
+	PrivateMessage EventType = "private_message"
+	MessagesRead   EventType = "messages_read"
+	UserTyping     EventType = "user_typing"
 )
 
 // Event represents a WebSocket event
@@ -52,4 +57,30 @@ type UserStatusUpdatePayload struct {
 	UserID    string `json:"userId"`
 	IsOnline  bool   `json:"isOnline"`
 	Timestamp int64  `json:"timestamp"`
+}
+
+// PrivateMessagePayload represents the payload for a private_message event
+type PrivateMessagePayload struct {
+	MessageID    int64  `json:"messageId"`
+	SenderID     string `json:"senderId"`
+	ReceiverID   string `json:"receiverId"`
+	Content      string `json:"content"`
+	CreatedAt    string `json:"createdAt"`
+	IsRead       bool   `json:"isRead"`
+	SenderName   string `json:"senderName"`
+	SenderAvatar string `json:"senderAvatar"`
+}
+
+// MessagesReadPayload represents the payload for a messages_read event
+type MessagesReadPayload struct {
+	SenderID   string `json:"senderId"`
+	ReceiverID string `json:"receiverId"`
+	ReadAt     string `json:"readAt"`
+}
+
+// UserTypingPayload represents the payload for a user_typing event
+type UserTypingPayload struct {
+	SenderID   string `json:"senderId"`
+	ReceiverID string `json:"receiverId"`
+	Timestamp  string `json:"timestamp"`
 }
