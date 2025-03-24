@@ -27,7 +27,7 @@ const ContactsSection = ({ contacts, isLoading, isProfilePage = false }) => {
         <div className={styles.loadingContainer}>
           <LoadingSpinner size="small" color="primary" />
         </div>
-      ) : !contacts ? (
+      ) : !contacts || contacts.length === 0 ? (
         <p className={styles.emptyState}>No contacts to display</p>
       ) : (
         contacts
