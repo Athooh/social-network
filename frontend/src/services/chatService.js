@@ -9,19 +9,20 @@ export const CHAT_EVENT_TYPES = {
   USER_TYPING: "user_typing",
 };
 
-// Update the main EVENT_TYPES object in websocketService.js to include these
+// The EVENT_TYPES in websocketService.js already includes these events
 
 export const useChatService = () => {
-  const { user } = useAuth();
+  const { user, authenticatedFetch } = useAuth();
   const { subscribe, send } = useWebSocket();
   const [messages, setMessages] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load initial contacts and messages
   const loadContacts = useCallback(async () => {
     try {
-      const response = await fetch("/api/chat/contacts");
+      const response = await authenticatedFetch("chat/contacts");
       if (!response.ok) throw new Error("Failed to load contacts");
       const data = await response.json();
       return data;
@@ -29,14 +30,14 @@ export const useChatService = () => {
       console.error("Error loading contacts:", error);
       return [];
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   // Load messages for a specific contact
   const loadMessages = useCallback(
     async (contactId, limit = 50, offset = 0) => {
       try {
-        const response = await fetch(
-          `/api/chat/messages?userId=${contactId}&limit=${limit}&offset=${offset}`
+        const response = await authenticatedFetch(
+          `chat/messages?userId=${contactId}&limit=${limit}&offset=${offset}`
         );
         if (!response.ok) throw new Error("Failed to load messages");
         const data = await response.json();
@@ -53,85 +54,109 @@ export const useChatService = () => {
         return [];
       }
     },
-    []
+    [authenticatedFetch]
   );
 
   // Send a message to a contact
-  const sendMessage = useCallback(async (receiverId, content) => {
-    try {
-      const response = await fetch("/api/chat/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          receiverId,
-          content,
-        }),
-      });
+  const sendMessage = useCallback(
+    async (receiverId, content) => {
+      try {
+        const response = await authenticatedFetch("chat/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            receiverId,
+            content,
+          }),
+        });
 
-      if (!response.ok) throw new Error("Failed to send message");
-      const message = await response.json();
+        if (!response.ok) throw new Error("Failed to send message");
+        const message = await response.json();
 
-      // Update local messages state
-      setMessages((prev) => {
-        const contactMessages = prev[receiverId] || [];
-        return {
-          ...prev,
-          [receiverId]: [...contactMessages, message],
-        };
-      });
+        // Update local messages state
+        setMessages((prev) => {
+          const contactMessages = prev[receiverId] || [];
+          return {
+            ...prev,
+            [receiverId]: [...contactMessages, message],
+          };
+        });
 
-      return message;
-    } catch (error) {
-      console.error("Error sending message:", error);
-      throw error;
-    }
-  }, []);
+        return message;
+      } catch (error) {
+        console.error("Error sending message:", error);
+        throw error;
+      }
+    },
+    [authenticatedFetch]
+  );
 
   // Mark messages from a sender as read
-  const markMessagesAsRead = useCallback(async (senderId) => {
-    try {
-      await fetch("/api/chat/mark-read", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          senderId,
-        }),
-      });
+  const markMessagesAsRead = useCallback(
+    async (senderId) => {
+      try {
+        await authenticatedFetch("chat/mark-read", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            senderId,
+          }),
+        });
 
-      // Update unread counts locally
-      setUnreadCounts((prev) => ({
-        ...prev,
-        [senderId]: 0,
-      }));
-    } catch (error) {
-      console.error("Error marking messages as read:", error);
-    }
-  }, []);
+        // Update unread counts locally
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [senderId]: 0,
+        }));
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    },
+    [authenticatedFetch]
+  );
 
-  // Send typing indicator
-  const sendTypingIndicator = useCallback(async (receiverId) => {
-    try {
-      await fetch("/api/chat/typing", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          receiverId,
-        }),
-      });
-    } catch (error) {
-      console.error("Error sending typing indicator:", error);
-    }
-  }, []);
+  // Send typing indicator with debouncing
+  const sendTypingIndicator = useCallback(
+    (() => {
+      const typingTimeouts = {};
 
-  // Subscribe to WebSocket events
-  useEffect(() => {
-    if (!user?.id) return;
+      return async (receiverId) => {
+        // Clear any existing timeout for this receiver
+        if (typingTimeouts[receiverId]) {
+          clearTimeout(typingTimeouts[receiverId]);
+        }
+
+        // Set a new timeout - only send after 500ms of inactivity
+        typingTimeouts[receiverId] = setTimeout(async () => {
+          try {
+            await authenticatedFetch("chat/typing", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                receiverId,
+              }),
+            });
+
+            // Clear the timeout reference
+            delete typingTimeouts[receiverId];
+          } catch (error) {
+            console.error("Error sending typing indicator:", error);
+          }
+        }, 500); // 500ms debounce time
+      };
+    })(),
+    [authenticatedFetch]
+  );
+
+  // Initialize WebSocket subscriptions only once
+  const initializeWebSocketSubscriptions = useCallback(() => {
+    if (!user?.id || isInitialized) return;
 
     // Handle new messages
     const messageUnsubscribe = subscribe(
@@ -243,12 +268,22 @@ export const useChatService = () => {
       }
     );
 
+    setIsInitialized(true);
+
     return () => {
       messageUnsubscribe();
       readUnsubscribe();
       typingUnsubscribe();
     };
-  }, [user, subscribe]);
+  }, [user, subscribe, isInitialized]);
+
+  // Initialize WebSocket subscriptions when user is available
+  useEffect(() => {
+    if (user?.id && !isInitialized) {
+      const cleanup = initializeWebSocketSubscriptions();
+      return cleanup;
+    }
+  }, [user, initializeWebSocketSubscriptions, isInitialized]);
 
   return {
     loadContacts,
@@ -259,5 +294,6 @@ export const useChatService = () => {
     messages,
     typingUsers,
     unreadCounts,
+    initializeWebSocketSubscriptions,
   };
 };
