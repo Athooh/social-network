@@ -3,6 +3,7 @@ import { AuthProvider } from "@/context/authcontext";
 import ToastContainer from "@/components/ui/ToastContainer";
 import { WebSocketProvider } from "@/context/websocketContext";
 import { UserStatusProvider } from "@/context/userStatusContext";
+import { ChatProvider } from "@/context/chatContext";
 
 export const metadata = {
   title: "NoteBook",
@@ -21,7 +22,9 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <WebSocketProvider>
-            <UserStatusProvider>{children}</UserStatusProvider>
+            <UserStatusProvider>
+              <ChatProvider>{children}</ChatProvider>
+            </UserStatusProvider>
             <ToastContainer />
           </WebSocketProvider>
         </AuthProvider>
