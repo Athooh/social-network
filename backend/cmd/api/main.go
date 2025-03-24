@@ -17,6 +17,7 @@ import (
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/websocket"
 
+	"github.com/Athooh/social-network/internal/chat"
 	"github.com/Athooh/social-network/internal/event"
 	userHandler "github.com/Athooh/social-network/internal/user"
 	"github.com/Athooh/social-network/pkg/session"
@@ -85,6 +86,7 @@ func main() {
 	statusRepo := userHandler.NewSQLiteStatusRepository(db.DB)
 	groupRepo := group.NewSQLiteRepository(db.DB)
 	eventRepo := event.NewSQLiteRepository(db.DB)
+	chatRepo := chat.NewSQLiteRepository(db.DB)
 
 	// Set up session manager
 	sessionManager := session.NewSessionManager(
@@ -120,6 +122,8 @@ func main() {
 	statusService := userHandler.NewStatusService(statusRepo, wsHub, log)
 	eventService := event.NewService(eventRepo, fileStore, log, wsHub)
 	groupService := group.NewService(groupRepo, fileStore, log, wsHub, eventService)
+	chatService := chat.NewService(chatRepo, log, wsHub)
+
 	// Connect the Hub to the StatusService
 	wsHub.SetStatusUpdater(statusService)
 
@@ -130,6 +134,7 @@ func main() {
 	followHandler := follow.NewHandler(followService, log)
 	groupHandler := group.NewHandler(groupService, log)
 	eventHandler := event.NewHandler(eventService, log)
+	chatHandler := chat.NewHandler(chatService, log)
 
 	// Set up router with both session and JWT middleware
 	router := server.Router(server.RouterConfig{
@@ -139,6 +144,7 @@ func main() {
 		FollowHandler:  followHandler,
 		GroupHandler:   groupHandler,
 		EventHandler:   eventHandler,
+		ChatHandler:    chatHandler,
 		AuthMiddleware: authService.RequireAuth,
 		JWTMiddleware:  authService.RequireJWTAuth,
 		Logger:         log,
