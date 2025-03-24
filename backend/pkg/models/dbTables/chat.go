@@ -19,7 +19,8 @@ type PrivateMessage struct {
 
 // ChatContact represents a user that the current user can chat with
 type ChatContact struct {
-	UserID      string    `json:"userId" db:"user_id,pk" references:"users(id) ON DELETE CASCADE"`
+	ID          int64     `json:"id" db:"id,pk,autoincrement"`
+	UserID      string    `json:"userId" db:"user_id,notnull" references:"users(id) ON DELETE CASCADE"`
 	FirstName   string    `json:"firstName" db:"first_name,notnull"`
 	LastName    string    `json:"lastName" db:"last_name,notnull"`
 	Avatar      string    `json:"avatar" db:"avatar"`
@@ -27,4 +28,7 @@ type ChatContact struct {
 	LastMessage string    `json:"lastMessage,omitempty" db:"last_message"`
 	LastSent    time.Time `json:"lastSent,omitempty" db:"last_sent"`
 	UnreadCount int       `json:"unreadCount" db:"unread_count,default=0"`
+
+	// Populated fields (not stored in DB)
+	LastMessageSenderID string `json:"lastMessageSenderId,omitempty" db:"-"`
 }
