@@ -148,10 +148,10 @@ export default function Post({ post, onPostUpdated }) {
         });
         break;
       case "follow":
-       await followUser(post.userId, formattedPost.authorName);
+        await followUser(post.userId, formattedPost.authorName);
         break;
       case "unfollow":
-        await unfollowUser(post.userId,formattedPost.authorName);
+        await unfollowUser(post.userId, formattedPost.authorName);
         break;
     }
     setShowOptions(false);
@@ -217,8 +217,9 @@ export default function Post({ post, onPostUpdated }) {
       ? currentUser.avatar
       : `${BASE_URL}/uploads/${currentUser.avatar}`
     : "/avatar4.png";
-  
- const currentUserFullName = currentUser?.firstName + " " + currentUser?.lastName;
+
+  const currentUserFullName =
+    currentUser?.firstName + " " + currentUser?.lastName;
 
   const handleComment = async (e) => {
     e.preventDefault();
@@ -291,25 +292,23 @@ export default function Post({ post, onPostUpdated }) {
       return (
         <div key={`comment-${comment.id}`} className={styles.comment}>
           <Image
-            src={comment.authorImage || '/avatar4.png'} 
-            alt={`${comment.authorName}'s avatar`} 
+            src={comment.authorImage || "/avatar4.png"}
+            alt={`${comment.authorName}'s avatar`}
             height={32}
             width={32}
             className={styles.commentAvatar}
             onError={(e) => {
               // Fallback if image fails to load
-              e.target.src = '/avatar4.png';
-          }}
-        />
+              e.target.src = "/avatar4.png";
+            }}
+          />
           <div className={styles.commentContent}>
             <div className={styles.commentBubble}>
               <h4>{comment.authorName}</h4>
               <p>{comment.content}</p>
               {comment.imageUrl && (
                 <div className={styles.commentImage}>
-                  <img src={comment.imageUrl}
-                    alt="Comment attachment"
-                  />
+                  <img src={comment.imageUrl} alt="Comment attachment" />
                 </div>
               )}
             </div>
