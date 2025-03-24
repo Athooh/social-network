@@ -6,9 +6,13 @@ import styles from "@/styles/Posts.module.css";
 import { showToast } from "@/components/ui/ToastContainer";
 import EmojiPicker from "@/components/ui/EmojiPicker";
 import Image from "next/image";
+import { useFriendService } from "@/services/friendService";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { BASE_URL } from "@/utils/constants";
 
 export default function CreatePost() {
   const { createPost } = usePostService();
+  const { fetchUserFollowers } = useFriendService();
   const [postText, setPostText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -20,6 +24,8 @@ export default function CreatePost() {
   const [selectedViewers, setSelectedViewers] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
+  const [followersError, setFollowersError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -144,19 +150,42 @@ export default function CreatePost() {
     setShowEmojiPicker(false);
   };
 
-  const fetchFollowers = () => {
-    // Dummy data for followers
-    const dummyFollowers = [
-      { id: "1", name: "Alice Johnson", avatar: "/avatar1.png" },
-      { id: "2", name: "Bob Smith", avatar: "/avatar2.png" },
-      { id: "3", name: "Carol Williams", avatar: "/avatar3.png" },
-      { id: "4", name: "Dave Brown", avatar: "/avatar5.png" },
-      { id: "5", name: "Eve Davis", avatar: "/avatar6.png" },
-      { id: "6", name: "Frank Miller", avatar: "/avatar7.png" },
-      { id: "7", name: "Grace Wilson", avatar: "/avatar8.png" },
-    ];
+  const UserAvatar = `${BASE_URL}uploads/${
+    JSON.parse(localStorage.getItem("userData")).avatar
+      ? JSON.parse(localStorage.getItem("userData")).avatar
+      : "/avatar.png"
+  }`;
 
-    setFollowers(dummyFollowers);
+  const fetchFollowers = async () => {
+    setIsLoadingFollowers(true);
+    setFollowersError(null);
+
+    try {
+      const followersList = await fetchUserFollowers();
+
+      console.log("followersList", followersList);
+      if (followersList && followersList.length > 0) {
+        // Transform the data to match our component's expected format
+        const formattedFollowers = followersList.map((follower) => ({
+          id: follower.id,
+          name: follower.name,
+          avatar: follower.image,
+        }));
+        console.log("formattedFollowers", formattedFollowers);
+        setFollowers(formattedFollowers);
+      } else {
+        setFollowers([]);
+        setFollowersError(
+          "No followers found. Add some friends to share private posts with them."
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      setFollowers([]);
+      setFollowersError("Failed to load followers. Please try again later.");
+    } finally {
+      setIsLoadingFollowers(false);
+    }
   };
 
   const toggleViewer = (followerId) => {
@@ -192,8 +221,8 @@ export default function CreatePost() {
     <>
       <div className={styles.createPostCard}>
         <div className={styles.createPostHeader}>
-          <Image
-            src="/avatar4.png"
+          <img
+            src={UserAvatar}
             alt="Profile"
             width={40}
             height={40}
@@ -520,7 +549,17 @@ export default function CreatePost() {
                   </div>
 
                   <div className={styles.followersList}>
-                    {filteredFollowers().length > 0 ? (
+                    {isLoadingFollowers ? (
+                      <div className={styles.loadingContainer}>
+                        <LoadingSpinner size="small" color="primary" />
+                        <p>Loading followers...</p>
+                      </div>
+                    ) : followersError ? (
+                      <div className={styles.errorContainer}>
+                        <i className="fas fa-exclamation-circle"></i>
+                        <p>{followersError}</p>
+                      </div>
+                    ) : filteredFollowers().length > 0 ? (
                       filteredFollowers().map((follower) => (
                         <div
                           key={follower.id}
@@ -532,7 +571,7 @@ export default function CreatePost() {
                           onClick={() => toggleViewer(follower.id)}
                         >
                           <div className={styles.followerInfo}>
-                            <Image
+                            <img
                               src={follower.avatar}
                               width={40}
                               height={40}
@@ -549,7 +588,7 @@ export default function CreatePost() {
                       ))
                     ) : (
                       <div className={styles.noResults}>
-                        No followers found matching `${searchTerm}`
+                        No followers found matching `{searchTerm}`
                       </div>
                     )}
                   </div>
