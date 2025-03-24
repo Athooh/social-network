@@ -35,11 +35,11 @@ export const useFriendService = () => {
         // Transform the data to match our component's expected format
         const formattedRequests = data.map((request) => ({
           id: request.ID,
-          name: request.UserName,
+          name: request.FollowerName         ,
           image: request.FollowerAvatar
             ? `${BASE_URL}/uploads/${request.FollowerAvatar}`
             : "/avatar.png",
-          mutualFriends: request.MutualFriendsCount || 0,
+          mutualFriends: request.MutualFriends || 0,
           followerId: request.FollowerID,
         }));
         setFriendRequests(formattedRequests);
@@ -206,6 +206,43 @@ export const useFriendService = () => {
     fetchContacts();
   }, []);
 
+  // Add this function to the useFriendService hook
+  const fetchUserFollowers = async () => {
+    try {
+      const response = await authenticatedFetch("follow/followers", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to fetch followers"
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data) {
+        return [];
+      }
+
+      // Transform the data to match our component's expected format
+      const formattedFollowers = data.map((follower) => ({
+        id: follower.FollowerID,
+        name: follower.UserName,
+        image: follower.UserAvatar
+          ? `${BASE_URL}uploads/${follower.UserAvatar}`
+          : "/avatar.png",
+        isOnline: follower.IsOnline || false,
+      }));
+
+      return formattedFollowers;
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      return [];
+    }
+  };
+
   return {
     friendRequests,
     contacts,
@@ -213,6 +250,7 @@ export const useFriendService = () => {
     declineFriendRequest,
     fetchFriendRequests,
     fetchContacts,
+    fetchUserFollowers,
     isLoadingRequests,
     isLoadingContacts,
   };
