@@ -11,6 +11,10 @@ export const EVENT_TYPES = {
   POST_LIKED: "post_liked",
   USER_STATS_UPDATED: "user_stats_updated",
   USER_STATUS_UPDATE: "user_status_update",
+  // Chat events
+  PRIVATE_MESSAGE: "private_message",
+  MESSAGES_READ: "messages_read",
+  USER_TYPING: "user_typing",
   // Add more event types as needed
   // COMMENT_ADDED: 'comment_added',
   // MESSAGE_RECEIVED: 'message_received',
