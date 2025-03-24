@@ -43,32 +43,64 @@
     align-items: center;
     padding: 12px 16px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
   
   .conversationItem:hover {
-    background-color: #f3f4f6;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  
+  .conversationItem.unread {
+    background-color: rgba(0, 120, 255, 0.05);
   }
   
   .conversationItem.selected {
-    background-color: #e5e7eb;
+    background-color: rgba(0, 120, 255, 0.1);
+  }
+  
+  .avatarContainer {
+    position: relative;
+    margin-right: 12px;
   }
   
   .avatar {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    margin-right: 12px;
+    object-fit: cover;
+  }
+  
+  .statusIndicator {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    top: 0;
+    right: 0;
+  }
+  
+  .online {
+    background-color: #4caf50;
+  }
+  
+  .offline {
+    background-color: #9e9e9e;
   }
   
   .previewContent {
     flex: 1;
+    min-width: 0;
     overflow: hidden;
   }
   
   .previewContent h4 {
-    margin: 0;
-    font-size: 0.9rem;
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .previewContent p {
@@ -88,16 +120,21 @@
   }
   
   .timestamp {
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: 12px;
+    color: #888;
   }
   
   .unreadBadge {
-    background-color: #3b82f6;
+    background-color: #0078ff;
     color: white;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
   }
   
   .chatArea {
@@ -279,4 +316,277 @@
   .suggestedPeople {
     max-height: 300px;
     overflow-y: auto;
+  }
+  
+  .messageItem {
+    display: flex;
+    margin-bottom: 16px;
+    max-width: 80%;
+  }
+  
+  .messageItem.sent {
+    margin-left: auto;
+    flex-direction: row-reverse;
+  }
+  
+  .messageItem.received {
+    margin-right: auto;
+  }
+  
+  .messageAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin: 0 8px;
+    align-self: flex-end;
+  }
+  
+  .messageContent {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .messageText {
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+  
+  .sent .messageText {
+    background-color: #0084ff;
+    color: white;
+    border-top-right-radius: 4px;
+  }
+  
+  .received .messageText {
+    background-color: #f0f2f5;
+    color: #1c1e21;
+    border-top-left-radius: 4px;
+  }
+  
+  .messageTime {
+    font-size: 0.7rem;
+    color: #65676b;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .sent .messageTime {
+    justify-content: flex-end;
+  }
+  
+  .readStatus {
+    margin-left: 4px;
+  }
+  
+  .typingIndicatorContainer {
+    display: flex;
+    padding: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  
+  .typingDot {
+    width: 8px;
+    height: 8px;
+    background-color: #bcc0c4;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: typingAnimation 1.5s infinite ease-in-out;
+  }
+  
+  .typingDot:nth-child(1) {
+    animation-delay: 0s;
+  }
+  
+  .typingDot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typingDot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  
+  @keyframes typingAnimation {
+    0% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  
+  .userStatus {
+    font-size: 0.8rem;
+    color: #65676b;
+  }
+  
+  .typingIndicator {
+    font-style: italic;
+  }
+  
+  .emptyMessages {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #65676b;
+  }
+  
+  .loadingState, .emptyState {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+    color: #65676b;
+  }
+  
+  .loadingState i, .emptyState i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #65676b;
+  }
+  
+  .noChat {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background-color: #f0f2f5;
+  }
+  
+  .noChatContent {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .noChatContent i {
+    font-size: 4rem;
+    color: #65676b;
+    margin-bottom: 20px;
+  }
+  
+  .noChatContent h2 {
+    margin-bottom: 10px;
+    color: #1c1e21;
+  }
+  
+  .noChatContent p {
+    color: #65676b;
+    margin-bottom: 20px;
+  }
+  
+  .newChatButton {
+    padding: 8px 16px;
+    background-color: #0084ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .newChatButton:hover {
+    background-color: #0077e6;
+  }
+  
+  .contactItem {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+  }
+  
+  .contactItem:hover {
+    background-color: #f0f2f5;
+  }
+  
+  .contactAvatar {
+    position: relative;
+    margin-right: 12px;
+  }
+  
+  .contactAvatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  
+  .statusDot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  
+  .statusDot.online {
+    background-color: #44b700;
+  }
+  
+  .statusDot.offline {
+    background-color: #808080;
+  }
+  
+  .contactInfo h4 {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  
+  .contactInfo p {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: #65676b;
+  }
+  
+  .loadingContacts, .noResults {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #65676b;
+  }
+  
+  .loadingContacts i {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .boldName {
+    font-weight: 600;
+  }
+  
+  .boldPreview {
+    font-weight: 500;
+    color: #1c1e21;
+  }
+  
+  .boldTimestamp {
+    font-weight: 500;
+    color: #1c1e21;
+  }
+  
+  .messagePreview, .boldPreview {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .boldTimestamp {
+    color: #0078ff;
   }
