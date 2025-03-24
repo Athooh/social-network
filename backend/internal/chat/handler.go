@@ -2,9 +2,11 @@ package chat
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 )
@@ -27,13 +29,13 @@ func NewHandler(service Service, log *logger.Logger) *Handler {
 func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed %s", r.Method))
 		return
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -70,13 +72,13 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed %s", r.Method))
 		return
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -124,13 +126,13 @@ func (h *Handler) GetMessages(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed %s", r.Method))
 		return
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -165,13 +167,13 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method %s not allowed", r.Method))
 		return
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -192,13 +194,13 @@ func (h *Handler) GetContacts(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SendTypingIndicator(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed %s", r.Method))
 		return
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
