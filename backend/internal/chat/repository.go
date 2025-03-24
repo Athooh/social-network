@@ -57,7 +57,7 @@ func (r *SQLiteRepository) GetMessagesBetweenUsers(userID1, userID2 string, limi
 		SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
 		FROM private_messages
 		WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-		ORDER BY created_at DESC
+		ORDER BY created_at ASC
 		LIMIT ? OFFSET ?
 	`
 
@@ -186,6 +186,13 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 				LIMIT 1
 			) as last_message,
 			(
+				SELECT sender_id
+				FROM private_messages
+				WHERE (sender_id = ? AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = ?)
+				ORDER BY created_at DESC
+				LIMIT 1
+			) as last_message_sender_id,
+			(
 				SELECT created_at
 				FROM private_messages
 				WHERE (sender_id = ? AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = ?)
@@ -207,7 +214,7 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 		query,
 		userID, userID, userID,
 		userID, userID, userID,
-		userID, userID, userID, userID, userID,
+		userID, userID, userID, userID, userID, userID, userID,
 	)
 	if err != nil {
 		return nil, err
@@ -218,6 +225,7 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 	for rows.Next() {
 		var contact models.ChatContact
 		var lastMessage sql.NullString
+		var lastMessageSenderID sql.NullString
 		var lastSent sql.NullTime
 
 		err := rows.Scan(
@@ -227,6 +235,7 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 			&contact.Avatar,
 			&contact.IsOnline,
 			&lastMessage,
+			&lastMessageSenderID,
 			&lastSent,
 			&contact.UnreadCount,
 		)
@@ -236,6 +245,10 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 
 		if lastMessage.Valid {
 			contact.LastMessage = lastMessage.String
+		}
+
+		if lastMessageSenderID.Valid {
+			contact.LastMessageSenderID = lastMessageSenderID.String
 		}
 
 		if lastSent.Valid {
@@ -257,7 +270,7 @@ func (r *SQLiteRepository) CanSendMessage(senderID, receiverID string) (bool, er
 			WHERE (follower_id = ? AND following_id = ?) OR (follower_id = ? AND following_id = ?)
 		) OR EXISTS (
 			SELECT 1 FROM users
-			WHERE id = ? AND is_private = 0
+			WHERE id = ? AND is_public = 1
 		)
 	`
 
