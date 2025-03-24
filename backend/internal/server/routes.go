@@ -191,6 +191,7 @@ func Router(config RouterConfig) http.Handler {
 
 	// Register all groups
 	publicAuthGroup.Register(mux)
+	protectedUserGroup.Register(mux)
 	protectedAuthGroup.Register(mux)
 	protectedPostGroup.Register(mux)
 	protectedFollowGroup.Register(mux)

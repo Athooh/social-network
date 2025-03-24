@@ -5,19 +5,32 @@ import styles from "@/styles/Sidebar.module.css";
 import { usePathname } from "next/navigation";
 import { useWebSocket, EVENT_TYPES } from "@/services/websocketService";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/authcontext";
 
 export default function LeftSidebar() {
   const pathname = usePathname();
   const [person, setPerson] = useState(null);
   const { subscribe, isConnected } = useWebSocket();
 
+  const { fetchUserProfile } = useAuth();
   useEffect(() => {
-    // Load user data from localStorage regardless of connection status
-    const userData = JSON.parse(localStorage.getItem("userData"));
+    const loadUserData = async () => {
+      try {
+        
+        const userData = await fetchUserProfile();
+        console.log("User data loaded", userData);
+        if (userData) {
+          setPerson(userData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile", error);
+      }
+    };
+  
+    loadUserData();
+
+   
     
-    if (userData) {
-      setPerson(userData);
-    }
 
     // Only set up WebSocket subscription if connected
     if (!isConnected) {

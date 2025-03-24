@@ -123,6 +123,7 @@ export const AuthProvider = ({ children }) => {
 
         document.cookie = `token=${data.token}; path=/; max-age=86400; samesite=strict`;
         showToast("Logged in successfully!", "success");
+        fetchUserProfile()
         return true;
       } else {
         const errorMessage = data.message || data.error || "Login failed";
@@ -174,6 +175,7 @@ export const AuthProvider = ({ children }) => {
 
         setCurrentUser(data.user);
         setToken(data.token);
+
         showToast("Signed up successfully!", "success");
         return true;
       }
@@ -192,17 +194,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await authenticatedFetch(`users/me`, {
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         const data = await res.json();
 
-        localStorage.setItem("userData", JSON.stringify(data.user));
-        localStorage.setItem("token", data.token);
-
-        setCurrentUser(data.user);
-        setToken(data.token);
+        return data
       } else {
         handleLogout(true);
       }
@@ -253,6 +251,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     getAuthHeader,
     authenticatedFetch,
+    fetchUserProfile,
     currentUser,
     token,
     loading,
