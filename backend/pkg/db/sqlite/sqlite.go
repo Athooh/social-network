@@ -142,6 +142,8 @@ func DiscoverModelStructs() []interface{} {
 		models.GroupPost{},
 		models.GroupEvent{},
 		models.EventResponse{},
+		models.PrivateMessage{},
+		models.ChatContact{},
 		// Add new models here
 	}
 }
