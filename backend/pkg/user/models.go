@@ -17,6 +17,7 @@ type StatusRepository interface {
 	SetUserOffline(userID string) error
 	GetUserStatus(userID string) (bool, error)
 	GetFollowersForStatusUpdate(userID string) ([]string, error)
+	GetAllOnlineUsers() ([]string, error)
 }
 
 // User represents a user in the system
