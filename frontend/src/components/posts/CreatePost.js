@@ -151,7 +151,7 @@ export default function CreatePost() {
   };
 
   const UserAvatar = `${BASE_URL}uploads/${
-    JSON.parse(localStorage.getItem("userData")).avatar
+    JSON.parse(localStorage.getItem("userData"))?.avatar
       ? JSON.parse(localStorage.getItem("userData")).avatar
       : "/avatar.png"
   }`;
