@@ -115,17 +115,20 @@ func main() {
 	go wsHub.Run()
 
 	// Set up services
-	authService := auth.NewService(userRepo, sessionManager, jwtConfig)
+	authService := auth.NewService(userRepo, sessionManager, jwtConfig, statusRepo)
 	postNotificationSvc := post.NewNotificationService(wsHub)
 	postService := post.NewService(postRepo, fileStore, log, postNotificationSvc)
 	followService := follow.NewService(followRepo, userRepo, statusRepo, log, wsHub)
-	statusService := userHandler.NewStatusService(statusRepo, wsHub, log)
+	statusService := userHandler.NewStatusService(statusRepo, sessionRepo, wsHub, log)
 	eventService := event.NewService(eventRepo, fileStore, log, wsHub)
 	groupService := group.NewService(groupRepo, fileStore, log, wsHub, eventService)
 	chatService := chat.NewService(chatRepo, log, wsHub)
 
 	// Connect the Hub to the StatusService
 	wsHub.SetStatusUpdater(statusService)
+
+	// Run status cleanup to ensure consistency between sessions and online status
+	go statusService.CleanupUserStatuses()
 
 	// Set up handlers
 	authHandler := auth.NewHandler(authService, fileStore)
