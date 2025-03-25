@@ -14,4 +14,5 @@ type SessionStore interface {
 	DeleteUserSessions(userID string) error
 	CleanExpired() error
 	GetUserSessions(userID string) ([]models.Session, error)
+	HasValidSession(userID string) (bool, error)
 }
