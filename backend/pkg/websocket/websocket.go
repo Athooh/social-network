@@ -77,7 +77,11 @@ func NewHub(log *logger.Logger) *Hub {
 // Run starts the Hub
 func (h *Hub) Run() {
 	heartbeatTicker := time.NewTicker(h.heartbeatCheckInterval)
-	defer heartbeatTicker.Stop()
+	pingTicker := time.NewTicker(30 * time.Second) // Send ping every 30 seconds
+	defer func() {
+		heartbeatTicker.Stop()
+		pingTicker.Stop()
+	}()
 
 	for {
 		select {
@@ -147,6 +151,10 @@ func (h *Hub) Run() {
 
 		case <-heartbeatTicker.C:
 			h.checkHeartbeats()
+
+		case <-pingTicker.C:
+			// Send ping to all clients
+			h.sendPingToAllClients()
 		}
 	}
 }
@@ -605,4 +613,24 @@ func (h *Hub) CloseClientWithID(clientID string) {
 			break
 		}
 	}
+}
+
+// sendPingToAllClients sends a ping message to all connected clients
+func (h *Hub) sendPingToAllClients() {
+	pingMessage := []byte(`{"type":"ping"}`)
+
+	h.Mu.RLock()
+	for client := range h.Clients {
+		if client.IsActive {
+			select {
+			case client.Send <- pingMessage:
+				// Successfully sent ping
+			default:
+				// Client's send buffer is full, close the connection
+				close(client.Send)
+				delete(h.Clients, client)
+			}
+		}
+	}
+	h.Mu.RUnlock()
 }
