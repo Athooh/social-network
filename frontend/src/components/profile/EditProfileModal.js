@@ -88,7 +88,6 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
       softSkills: formData.softSkills.join(','),
       interests: formData.interests.join(','),
     };
-    console.log('Form data:', dataToSubmit);
     onClose();
   };
 
