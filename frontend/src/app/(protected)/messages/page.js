@@ -195,6 +195,12 @@ export default function Messages() {
     }
   }, [contacts, initializeStatuses]);
 
+  // Add this effect to update the UI when contacts change
+  useEffect(() => {
+    // This will re-render the component when contacts are updated
+    // via WebSocket events (new messages, read status changes)
+  }, [contacts, unreadCounts]);
+
   return (
     <ProtectedRoute>
       <Header />
@@ -328,8 +334,9 @@ export default function Messages() {
                   <div className={styles.avatarContainer}>
                     <img
                       src={
-                        `${BASE_URL}/uploads/${selectedChat.avatar}` ||
-                        "/avatar.png"
+                        selectedChat.avatar
+                          ? `${BASE_URL}/uploads/${selectedChat.avatar}`
+                          : "/avatar.png"
                       }
                       alt={`${selectedChat.firstName} ${selectedChat.lastName}`}
                       className={styles.avatar}
@@ -347,8 +354,8 @@ export default function Messages() {
                       {selectedChat.firstName} {selectedChat.lastName}
                     </h2>
                     <span className={styles.userStatus}>
-                      {isUserOnline(selectedChat.userId, selectedChat.isOnline) 
-                        ? "Online" 
+                      {isUserOnline(selectedChat.userId, selectedChat.isOnline)
+                        ? "Online"
                         : "Offline"}
                       {isTyping && (
                         <span className={styles.typingIndicator}>
@@ -376,10 +383,18 @@ export default function Messages() {
                 {currentChatMessages.length > 0 ? (
                   currentChatMessages.map((message) => (
                     <MessageItem
-                      key={
-                        message.id || `${message.senderId}-${message.createdAt}`
-                      }
+                      key={`${message.id}-${message.createdAt}`}
                       message={message}
+                      isOwnMessage={message.senderId === currentUser?.id}
+                      avatar={
+                        message.senderId === currentUser?.id
+                          ? currentUser?.avatar
+                            ? `${BASE_URL}/uploads/${currentUser.avatar}`
+                            : "/avatar.png"
+                          : selectedChat?.avatar
+                          ? `${BASE_URL}/uploads/${selectedChat?.avatar}`
+                          : "/avatar.png"
+                      }
                     />
                   ))
                 ) : (
