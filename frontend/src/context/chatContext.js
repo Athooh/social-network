@@ -27,7 +27,6 @@ export const ChatProvider = ({ children }) => {
     setLoading(true);
     try {
       const contactsList = await chatService.loadContacts();
-      console.log("contactsList", contactsList);
       setContacts(contactsList);
       setIsDataLoaded(true);
     } catch (error) {
