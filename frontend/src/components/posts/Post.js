@@ -137,7 +137,6 @@ export default function Post({ post, onPostUpdated }) {
   const handleOptionClick = async (action) => {
     switch (action) {
       case "edit":
-        console.log("Edit post");
         break;
       case "delete":
         showConfirmation({
