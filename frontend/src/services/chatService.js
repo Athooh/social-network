@@ -2,18 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useWebSocket, EVENT_TYPES } from "./websocketService";
 import { useAuth } from "@/context/authcontext";
 
-// Add chat event types to the WebSocket event types
-export const CHAT_EVENT_TYPES = {
-  PRIVATE_MESSAGE: "private_message",
-  MESSAGES_READ: "messages_read",
-  USER_TYPING: "user_typing",
-};
-
 // The EVENT_TYPES in websocketService.js already includes these events
 
 export const useChatService = () => {
-  const { user, authenticatedFetch } = useAuth();
-  const { subscribe, send } = useWebSocket();
+  const { currentUser, authenticatedFetch } = useAuth();
+  const { subscribe, getConnectionStatus } = useWebSocket();
   const [messages, setMessages] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({});
@@ -75,15 +68,6 @@ export const useChatService = () => {
         if (!response.ok) throw new Error("Failed to send message");
         const message = await response.json();
 
-        // Update local messages state
-        setMessages((prev) => {
-          const contactMessages = prev[receiverId] || [];
-          return {
-            ...prev,
-            [receiverId]: [...contactMessages, message],
-          };
-        });
-
         return message;
       } catch (error) {
         console.error("Error sending message:", error);
@@ -97,7 +81,7 @@ export const useChatService = () => {
   const markMessagesAsRead = useCallback(
     async (senderId) => {
       try {
-        await authenticatedFetch("chat/mark-read", {
+        const response = await authenticatedFetch("chat/mark-read", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -107,60 +91,68 @@ export const useChatService = () => {
           }),
         });
 
+        if (!response.ok) throw new Error("Failed to mark messages as read");
+
         // Update unread counts locally
         setUnreadCounts((prev) => ({
           ...prev,
           [senderId]: 0,
         }));
+
+        // Update message read status locally
+        setMessages((prev) => {
+          const senderMessages = prev[senderId] || [];
+          const updatedMessages = senderMessages.map((msg) => {
+            if (msg.senderId === senderId && !msg.isRead) {
+              return { ...msg, isRead: true, readAt: new Date().toISOString() };
+            }
+            return msg;
+          });
+
+          return {
+            ...prev,
+            [senderId]: updatedMessages,
+          };
+        });
+
+        return true;
       } catch (error) {
         console.error("Error marking messages as read:", error);
+        return false;
       }
     },
     [authenticatedFetch]
   );
 
-  // Send typing indicator with debouncing
+  // Send typing indicator
   const sendTypingIndicator = useCallback(
-    (() => {
-      const typingTimeouts = {};
-
-      return async (receiverId) => {
-        // Clear any existing timeout for this receiver
-        if (typingTimeouts[receiverId]) {
-          clearTimeout(typingTimeouts[receiverId]);
-        }
-
-        // Set a new timeout - only send after 500ms of inactivity
-        typingTimeouts[receiverId] = setTimeout(async () => {
-          try {
-            await authenticatedFetch("chat/typing", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                receiverId,
-              }),
-            });
-
-            // Clear the timeout reference
-            delete typingTimeouts[receiverId];
-          } catch (error) {
-            console.error("Error sending typing indicator:", error);
-          }
-        }, 500); // 500ms debounce time
-      };
-    })(),
+    async (receiverId) => {
+      try {
+        await authenticatedFetch("chat/typing", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            receiverId,
+          }),
+        });
+        return true;
+      } catch (error) {
+        console.error("Error sending typing indicator:", error);
+        return false;
+      }
+    },
     [authenticatedFetch]
   );
 
-  // Initialize WebSocket subscriptions only once
+  // Initialize WebSocket subscriptions
   const initializeWebSocketSubscriptions = useCallback(() => {
-    if (!user?.id || isInitialized) return;
+    if (!currentUser?.id || isInitialized) return;
 
     // Handle new messages
     const messageUnsubscribe = subscribe(
-      CHAT_EVENT_TYPES.PRIVATE_MESSAGE,
+      EVENT_TYPES.PRIVATE_MESSAGE,
       (payload) => {
         if (!payload) return;
 
@@ -176,7 +168,7 @@ export const useChatService = () => {
         } = payload;
 
         // Determine which contact this message belongs to
-        const contactId = user.id === senderId ? receiverId : senderId;
+        const contactId = currentUser.id === senderId ? receiverId : senderId;
 
         // Create message object
         const message = {
@@ -188,8 +180,8 @@ export const useChatService = () => {
           isRead,
           sender: {
             id: senderId,
-            firstName: senderName.split(" ")[0],
-            lastName: senderName.split(" ")[1] || "",
+            firstName: senderName?.split(" ")[0] || "",
+            lastName: senderName?.split(" ")[1] || "",
             avatar: senderAvatar,
           },
         };
@@ -197,6 +189,31 @@ export const useChatService = () => {
         // Update messages state
         setMessages((prev) => {
           const contactMessages = prev[contactId] || [];
+
+          // Check if message already exists to avoid duplicates
+          // This checks both server-generated IDs and content/timestamp for temp messages
+          const messageExists = contactMessages.some(
+            (msg) =>
+              msg.id === messageId ||
+              (msg.isTemp &&
+                msg.senderId === senderId &&
+                msg.content === content)
+          );
+
+          if (messageExists) {
+            // If it exists but might be a temp message, replace it with the server version
+            return {
+              ...prev,
+              [contactId]: contactMessages.map((msg) =>
+                msg.isTemp &&
+                msg.senderId === senderId &&
+                msg.content === content
+                  ? message
+                  : msg
+              ),
+            };
+          }
+
           return {
             ...prev,
             [contactId]: [...contactMessages, message],
@@ -204,7 +221,7 @@ export const useChatService = () => {
         });
 
         // Update unread counts if we're the receiver
-        if (receiverId === user.id && !isRead) {
+        if (receiverId === currentUser.id && !isRead) {
           setUnreadCounts((prev) => ({
             ...prev,
             [senderId]: (prev[senderId] || 0) + 1,
@@ -214,59 +231,61 @@ export const useChatService = () => {
     );
 
     // Handle messages read
-    const readUnsubscribe = subscribe(
-      CHAT_EVENT_TYPES.MESSAGES_READ,
-      (payload) => {
-        if (!payload) return;
+    const readUnsubscribe = subscribe(EVENT_TYPES.MESSAGES_READ, (payload) => {
+      if (!payload) return;
 
-        const { senderId, receiverId, readAt } = payload;
+      const { senderId, receiverId, readAt } = payload;
 
-        // If we're the sender, update our messages to the receiver as read
-        if (senderId === user.id) {
-          setMessages((prev) => {
-            const contactMessages = prev[receiverId] || [];
-            const updatedMessages = contactMessages.map((msg) => {
-              if (msg.senderId === user.id && !msg.isRead) {
-                return { ...msg, isRead: true, readAt };
-              }
-              return msg;
-            });
-
-            return {
-              ...prev,
-              [receiverId]: updatedMessages,
-            };
+      // If we're the sender, update our messages to the receiver as read
+      if (senderId === currentUser.id) {
+        setMessages((prev) => {
+          const contactMessages = prev[receiverId] || [];
+          const updatedMessages = contactMessages.map((msg) => {
+            if (msg.senderId === currentUser.id && !msg.isRead) {
+              return { ...msg, isRead: true, readAt };
+            }
+            return msg;
           });
-        }
+
+          return {
+            ...prev,
+            [receiverId]: updatedMessages,
+          };
+        });
       }
-    );
+
+      // If we're the receiver, update our unread count
+      if (receiverId === currentUser.id) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [senderId]: 0,
+        }));
+      }
+    });
 
     // Handle typing indicators
-    const typingUnsubscribe = subscribe(
-      CHAT_EVENT_TYPES.USER_TYPING,
-      (payload) => {
-        if (!payload) return;
+    const typingUnsubscribe = subscribe(EVENT_TYPES.USER_TYPING, (payload) => {
+      if (!payload) return;
 
-        const { senderId, timestamp } = payload;
+      const { senderId, timestamp } = payload;
 
-        // Set typing status
-        setTypingUsers((prev) => ({
-          ...prev,
-          [senderId]: parseInt(timestamp),
-        }));
+      // Set typing status
+      setTypingUsers((prev) => ({
+        ...prev,
+        [senderId]: parseInt(timestamp),
+      }));
 
-        // Clear typing status after 3 seconds
-        setTimeout(() => {
-          setTypingUsers((prev) => {
-            const current = { ...prev };
-            if (current[senderId] === parseInt(timestamp)) {
-              delete current[senderId];
-            }
-            return current;
-          });
-        }, 3000);
-      }
-    );
+      // Clear typing status after 3 seconds
+      setTimeout(() => {
+        setTypingUsers((prev) => {
+          const current = { ...prev };
+          if (current[senderId] === parseInt(timestamp)) {
+            delete current[senderId];
+          }
+          return current;
+        });
+      }, 3000);
+    });
 
     setIsInitialized(true);
 
@@ -275,15 +294,60 @@ export const useChatService = () => {
       readUnsubscribe();
       typingUnsubscribe();
     };
-  }, [user, subscribe, isInitialized]);
+  }, [currentUser, subscribe, isInitialized]);
 
-  // Initialize WebSocket subscriptions when user is available
+  // Add a polling mechanism to check connection status
   useEffect(() => {
-    if (user?.id && !isInitialized) {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 5;
+
+    const checkConnection = () => {
+      const isConnected = getConnectionStatus();
+
+      // If connected and not initialized, initialize
+      if (currentUser?.id && isConnected && !isInitialized) {
+        initializeWebSocketSubscriptions();
+      }
+
+      attempts++;
+    };
+
+    // Check immediately
+    checkConnection();
+
+    // Then check every second until initialized or max attempts reached
+    const interval = setInterval(() => {
+      if (isInitialized || attempts >= MAX_ATTEMPTS) {
+        clearInterval(interval);
+        return;
+      }
+      checkConnection();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [
+    currentUser,
+    getConnectionStatus,
+    isInitialized,
+    initializeWebSocketSubscriptions,
+  ]);
+
+  // Keep your existing useEffect as a backup
+  useEffect(() => {
+    // Only initialize if user exists, WebSocket is connected, and not already initialized
+    if (currentUser?.id && getConnectionStatus() && !isInitialized) {
       const cleanup = initializeWebSocketSubscriptions();
       return cleanup;
+    } else if (!currentUser?.id) {
+      // Reset initialization when user is not available
+      setIsInitialized(false);
     }
-  }, [user, initializeWebSocketSubscriptions, isInitialized]);
+  }, [
+    currentUser,
+    initializeWebSocketSubscriptions,
+    isInitialized,
+    getConnectionStatus,
+  ]);
 
   return {
     loadContacts,
@@ -294,6 +358,6 @@ export const useChatService = () => {
     messages,
     typingUsers,
     unreadCounts,
-    initializeWebSocketSubscriptions,
+    isInitialized,
   };
 };
