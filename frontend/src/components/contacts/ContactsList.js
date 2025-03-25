@@ -12,7 +12,6 @@ const ContactsSection = ({ contacts, isLoading, isProfilePage = false }) => {
   // Initialize online statuses from API data
   useEffect(() => {
     if (contacts && contacts.length > 0) {
-      console.log("Initializing statuses for contacts in ContactsList");
       initializeStatuses(contacts);
     }
   }, [contacts, initializeStatuses]);
