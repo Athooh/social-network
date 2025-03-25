@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Athooh/social-network/pkg/logger"
 	models "github.com/Athooh/social-network/pkg/models/authModels"
 	"github.com/Athooh/social-network/pkg/session"
 	"github.com/Athooh/social-network/pkg/user"
@@ -14,14 +15,16 @@ type Service struct {
 	userRepo       user.Repository
 	sessionManager *session.SessionManager
 	jwtConfig      JWTConfig
+	statusRepo     user.StatusRepository
 }
 
 // NewService creates a new authentication service
-func NewService(userRepo user.Repository, sessionManager *session.SessionManager, jwtConfig JWTConfig) *Service {
+func NewService(userRepo user.Repository, sessionManager *session.SessionManager, jwtConfig JWTConfig, statusRepo user.StatusRepository) *Service {
 	return &Service{
 		userRepo:       userRepo,
 		sessionManager: sessionManager,
 		jwtConfig:      jwtConfig,
+		statusRepo:     statusRepo,
 	}
 }
 
@@ -81,8 +84,19 @@ func (s *Service) Register(req models.RegisterRequest) (*models.TokenResponse, e
 	}, nil
 }
 
-// Logout ends a user's session
+// Logout ends a user's session and marks the user as offline
 func (s *Service) Logout(w http.ResponseWriter, r *http.Request) error {
+	// Get user ID from session before clearing it
+	userID, err := s.sessionManager.GetUserFromSession(r)
+	if err == nil && userID != "" {
+		// Mark user as offline in the status repository
+		if err := s.statusRepo.SetUserOffline(userID); err != nil {
+			// Log the error but continue with logout
+			logger.Error("Failed to mark user offline during logout: %v", err)
+		}
+	}
+
+	// Clear the session
 	return s.sessionManager.ClearSession(w, r)
 }
 
