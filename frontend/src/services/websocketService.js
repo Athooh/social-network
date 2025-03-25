@@ -126,11 +126,6 @@ export const useWebSocket = () => {
 
         globalSocket.onmessage = (event) => {
           try {
-            // Check if the message is a ping response or other non-JSON message
-            if (event.data === "pong" || event.data === "ping") {
-              return;
-            }
-
             // Split the message by newlines in case multiple JSON objects were sent
             const messages = event.data.split(/\n|\r\n/);
 
@@ -140,6 +135,18 @@ export const useWebSocket = () => {
               try {
                 // Try to parse each individual JSON message
                 const data = JSON.parse(message);
+
+                // Handle ping messages from server
+                if (data.type === "ping" || data.type === "pong") {
+                  if (
+                    globalSocket &&
+                    globalSocket.readyState === WebSocket.OPEN
+                  ) {
+                    globalSocket.send(JSON.stringify({ type: "pong" }));
+                  }
+                  continue; // Skip further processing for ping messages
+                }
+
                 setLastMessage(data);
 
                 // Handle event routing
