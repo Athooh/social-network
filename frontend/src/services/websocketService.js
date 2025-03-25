@@ -42,7 +42,13 @@ export const useWebSocket = () => {
   const eventListenersRef = useRef({});
   const lastStatusRef = useRef(null); // Track last sent status
 
+  // Add a ref to track if we're in browser environment
+  const isBrowser = useRef(typeof window !== "undefined");
+
   useEffect(() => {
+    // Only run in browser environment
+    if (!isBrowser.current) return;
+
     // Generate a unique ID for this browser tab if not already set
     if (!tabId) {
       tabId = `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -62,6 +68,7 @@ export const useWebSocket = () => {
         globalSocket.onopen = () => {
           console.log("WebSocket connected");
           setIsConnected(true);
+          window.__websocketConnected = true;
           showToast("WebSocket connection established", "success");
           reconnectAttempts = 0;
 
@@ -86,6 +93,7 @@ export const useWebSocket = () => {
         globalSocket.onclose = (event) => {
           console.log("WebSocket disconnected", event.code);
           setIsConnected(false);
+          window.__websocketConnected = false;
           showToast("WebSocket connection closed", "error");
           globalSocket = null;
 
@@ -258,14 +266,24 @@ export const useWebSocket = () => {
     };
   }, []);
 
+  // Add this to ensure we're returning the most up-to-date connection status
+  const getConnectionStatus = useCallback(() => {
+    if (!isBrowser.current) return false;
+    return window.__websocketConnected === true;
+  }, []);
+
   return {
-    isConnected,
+    isConnected: isBrowser.current ? getConnectionStatus() : false,
     lastMessage,
     subscribe,
+    getConnectionStatus,
   };
 };
 
 export const closeWebSocketConnection = () => {
+  // Check if we're in a browser environment
+  if (typeof window === "undefined") return;
+
   if (globalSocket) {
     console.log("Closing WebSocket connection");
     globalSocket.close();
