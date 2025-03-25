@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import styles from '@/styles/ChatWindow.module.css';
+import { useUserStatus } from "@/services/userStatusService";
 
 const ChatWindow = ({ contact, onClose, onMinimize, isMinimized }) => {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
+  const { isUserOnline } = useUserStatus();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,8 +32,8 @@ const ChatWindow = ({ contact, onClose, onMinimize, isMinimized }) => {
           <img src={contact.avatar} alt={contact.name} />
           <div className={styles.nameStatus}>
             <span className={styles.name}>{contact.name}</span>
-            <span className={`${styles.status} ${contact.online ? styles.online : styles.offline}`}>
-              {contact.online ? 'Active Now' : 'Offline'}
+            <span className={`${styles.status} ${isUserOnline(contact.userId, contact.online) ? styles.online : styles.offline}`}>
+              {isUserOnline(contact.userId, contact.online) ? 'Active Now' : 'Offline'}
             </span>
           </div>
         </div>
