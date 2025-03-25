@@ -24,6 +24,20 @@ export const AuthProvider = ({ children }) => {
   // Memoize handleLogout to prevent unnecessary re-renders
   const handleLogout = useCallback(
     async (sendRequest = true) => {
+      // First, send a user_away message to the WebSocket if connected
+      if (typeof window !== "undefined" && window.__websocketConnected) {
+        try {
+          const socket = globalSocket; // Access the global socket
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "user_away" }));
+            // Small delay to ensure the message is sent before closing
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        } catch (error) {
+          console.error("Error sending offline status before logout:", error);
+        }
+      }
+
       // Close any active WebSocket connections
       closeWebSocketConnection();
 
