@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/authcontext";
 import { showToast } from "@/components/ui/ToastContainer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWebSocket, EVENT_TYPES } from "./websocketService";
 import { BASE_URL } from "@/utils/constants";
 
@@ -56,7 +56,7 @@ export const useFriendService = () => {
   };
 
   // Fetch contacts (followers/following)
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     setIsLoadingContacts(true);
     try {
       const response = await authenticatedFetch("follow/following", {
@@ -94,7 +94,7 @@ export const useFriendService = () => {
     } finally {
       setIsLoadingContacts(false);
     }
-  };
+  }, [authenticatedFetch]);
 
   // Accept a friend request
   const acceptFriendRequest = async (userId) => {
