@@ -27,7 +27,7 @@ func (s *NotificationService) NotifyNewMessage(message *models.PrivateMessage) e
 
 	// Create event for the message
 	event := events.Event{
-		Type: "private_message",
+		Type: events.PrivateMessage,
 		Payload: map[string]interface{}{
 			"messageId":    message.ID,
 			"senderId":     message.SenderID,
@@ -40,6 +40,7 @@ func (s *NotificationService) NotifyNewMessage(message *models.PrivateMessage) e
 		},
 	}
 
+	fmt.Println("+======NotifyNewMessage event")
 	// Send to the recipient
 	s.hub.BroadcastToUser(message.ReceiverID, event)
 
@@ -57,7 +58,7 @@ func (s *NotificationService) NotifyMessageRead(senderID, receiverID string, rea
 
 	// Create event for the read status update
 	event := events.Event{
-		Type: "messages_read",
+		Type: events.MessagesRead,
 		Payload: map[string]interface{}{
 			"senderId":   senderID,
 			"receiverId": receiverID,
@@ -78,17 +79,18 @@ func (s *NotificationService) NotifyTyping(senderID, receiverID string) error {
 		return nil
 	}
 
-	// Create event for typing indicator
+	// Create event for the typing indicator
+	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	event := events.Event{
-		Type: "user_typing",
+		Type: events.UserTyping,
 		Payload: map[string]interface{}{
 			"senderId":   senderID,
 			"receiverId": receiverID,
-			"timestamp":  fmt.Sprintf("%d", time.Now().Unix()),
+			"timestamp":  fmt.Sprintf("%d", timestamp),
 		},
 	}
 
-	// Send to the recipient only
+	// Only notify the receiver
 	s.hub.BroadcastToUser(receiverID, event)
 
 	return nil
