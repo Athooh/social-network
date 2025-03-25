@@ -111,3 +111,19 @@ func (r *SQLiteRepository) GetUserSessions(userID string) ([]models.Session, err
 
 	return sessions, nil
 }
+
+// HasValidSession checks if a user has any valid (non-expired) sessions
+func (r *SQLiteRepository) HasValidSession(userID string) (bool, error) {
+	query := `
+		SELECT COUNT(*) FROM sessions 
+		WHERE user_id = ? AND expires_at > CURRENT_TIMESTAMP
+	`
+
+	var count int
+	err := r.db.QueryRow(query, userID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
