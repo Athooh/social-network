@@ -64,12 +64,10 @@ const sampleFriends = [
   ];
 
   const handleConfirm = (friendId) => {
-    console.log('Confirmed friend:', friendId);
     // Add your confirm logic here
   };
 
   const handleDelete = (friendId) => {
-    console.log('Deleted friend:', friendId);
     // Add your delete logic here
   };
 
