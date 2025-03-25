@@ -30,7 +30,7 @@ export default function Messages() {
     loading,
   } = useChatContext();
 
-  const { isUserOnline } = useUserStatus();
+  const { isUserOnline, initializeStatuses } = useUserStatus();
   const [selectedChat, setSelectedChat] = useState(null);
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [newMessageText, setNewMessageText] = useState("");
@@ -187,6 +187,14 @@ export default function Messages() {
   const isTyping =
     selectedChat && selectedChat.userId && typingUsers[selectedChat.userId];
 
+  // Add this effect to ensure status updates are reflected
+  useEffect(() => {
+    if (contacts && contacts.length > 0) {
+      // Initialize online statuses from API data
+      initializeStatuses(contacts);
+    }
+  }, [contacts, initializeStatuses]);
+
   return (
     <ProtectedRoute>
       <Header />
@@ -243,7 +251,9 @@ export default function Messages() {
                       />
                       <span
                         className={`${styles.statusIndicator} ${
-                          contact.isOnline ? styles.online : styles.offline
+                          isUserOnline(contact.userId, contact.isOnline)
+                            ? styles.online
+                            : styles.offline
                         }`}
                       ></span>
                     </div>
@@ -326,7 +336,7 @@ export default function Messages() {
                     />
                     <span
                       className={`${styles.statusIndicator} ${
-                        isUserOnline(selectedChat.userId)
+                        isUserOnline(selectedChat.userId, selectedChat.isOnline)
                           ? styles.online
                           : styles.offline
                       }`}
@@ -337,7 +347,9 @@ export default function Messages() {
                       {selectedChat.firstName} {selectedChat.lastName}
                     </h2>
                     <span className={styles.userStatus}>
-                      {isUserOnline(selectedChat.userId) ? "Online" : "Offline"}
+                      {isUserOnline(selectedChat.userId, selectedChat.isOnline) 
+                        ? "Online" 
+                        : "Offline"}
                       {isTyping && (
                         <span className={styles.typingIndicator}>
                           {" "}
