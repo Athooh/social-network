@@ -2,7 +2,6 @@ package chat
 
 import (
 	"database/sql"
-	"time"
 
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
 )
@@ -140,11 +139,11 @@ func (r *SQLiteRepository) GetUnreadMessagesCount(userID string) (map[string]int
 func (r *SQLiteRepository) MarkMessagesAsRead(senderID, receiverID string) error {
 	query := `
 		UPDATE private_messages
-		SET is_read = 1, read_at = ?
+		SET is_read = 1, read_at = CURRENT_TIMESTAMP
 		WHERE sender_id = ? AND receiver_id = ? AND is_read = 0
 	`
 
-	_, err := r.db.Exec(query, time.Now(), senderID, receiverID)
+	_, err := r.db.Exec(query, senderID, receiverID)
 	return err
 }
 
