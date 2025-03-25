@@ -30,7 +30,6 @@ const CreateEventModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', eventData);
     // Handle form submission here
     onClose();
   };
