@@ -6,19 +6,18 @@ import { useAuth } from "@/context/authcontext";
 import { formatRelativeTime } from "@/utils/dateUtils";
 import { BASE_URL } from "@/utils/constants";
 
-export default function MessageItem({ message }) {
+export default function MessageItem({ message, isOwnMessage, avatar }) {
   const { currentUser } = useAuth();
-  const isCurrentUserSender = message.senderId === currentUser?.id;
 
   return (
     <div
       className={`${styles.messageItem} ${
-        isCurrentUserSender ? styles.sent : styles.received
+        isOwnMessage ? styles.sent : styles.received
       }`}
     >
-      {!isCurrentUserSender && (
+      {!isOwnMessage && (
         <img
-          src={`${BASE_URL}/uploads/${message.sender.avatar}` || "/avatar.png"}
+          src={avatar || "/avatar.png"}
           alt={message.sender?.firstName || "User"}
           className={styles.messageAvatar}
         />
@@ -27,7 +26,7 @@ export default function MessageItem({ message }) {
         <div className={styles.messageText}>{message.content}</div>
         <div className={styles.messageTime}>
           {formatRelativeTime(new Date(message.createdAt))}
-          {isCurrentUserSender && (
+          {isOwnMessage && (
             <span className={styles.readStatus}>
               {message.isRead ? (
                 <i className="fas fa-check-double" title="Read"></i>
