@@ -12,6 +12,7 @@ const ContactsSection = ({ contacts, isLoading, isProfilePage = false }) => {
   // Initialize online statuses from API data
   useEffect(() => {
     if (contacts && contacts.length > 0) {
+      console.log("Initializing statuses for contacts in ContactsList");
       initializeStatuses(contacts);
     }
   }, [contacts, initializeStatuses]);
@@ -34,8 +35,9 @@ const ContactsSection = ({ contacts, isLoading, isProfilePage = false }) => {
           .filter((contact) => contact !== null && contact !== undefined)
           .map((contact) => {
             // Use the API-provided status as default, then override with WebSocket updates
+            console.log("contact", contact.contactId, contact.isOnline);
             const isOnline = isUserOnline(contact.contactId, contact.isOnline);
-
+            console.log(contact.contactId, "isOnline", isOnline);
             return (
               <div key={contact.id} className={styles.contactItem}>
                 <div className={styles.contactProfile}>
