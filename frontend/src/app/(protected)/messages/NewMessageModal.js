@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 import styles from "@/styles/Messages.module.css";
 import { useAuth } from "@/context/authcontext";
 import { useFriendService } from "@/services/friendService";
-import { useUserStatus } from "@/services/userStatusService";
 import { showToast } from "@/components/ui/ToastContainer";
 
 export default function NewMessageModal({ onClose, onSelectContact }) {
   const { currentUser } = useAuth();
   const { fetchContacts } = useFriendService();
-  const { isUserOnline } = useUserStatus();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,7 +25,7 @@ export default function NewMessageModal({ onClose, onSelectContact }) {
     };
 
     loadContacts();
-  }, []);
+  }, [fetchContacts]);
 
   const filteredContacts = contacts.filter((contact) =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -75,19 +73,9 @@ export default function NewMessageModal({ onClose, onSelectContact }) {
                       alt={contact.name}
                       className={styles.avatar}
                     />
-                    <span
-                      className={`${styles.statusDot} ${
-                        isUserOnline(contact.contactId)
-                          ? styles.online
-                          : styles.offline
-                      }`}
-                    ></span>
                   </div>
                   <div className={styles.contactInfo}>
                     <h4>{contact.name}</h4>
-                    <p>
-                      {isUserOnline(contact.contactId) ? "Online" : "Offline"}
-                    </p>
                   </div>
                 </div>
               ))
