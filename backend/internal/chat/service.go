@@ -107,12 +107,22 @@ func (s *ChatService) GetMessages(userID1, userID2 string, limit, offset int) ([
 
 // MarkAsRead marks messages from a sender to a receiver as read
 func (s *ChatService) MarkAsRead(senderID, receiverID string) error {
+	// Check if users can view messages
+	canSend, err := s.repo.CanSendMessage(receiverID, senderID)
+	if err != nil {
+		return err
+	}
+
+	if !canSend {
+		return errors.New("you cannot mark messages as read from this user")
+	}
+
 	// Mark messages as read in the database
 	if err := s.repo.MarkMessagesAsRead(senderID, receiverID); err != nil {
 		return err
 	}
 
-	// Send notification
+	// Send notification via WebSocket
 	go s.notificationSvc.NotifyMessageRead(senderID, receiverID, time.Now())
 
 	return nil
@@ -123,7 +133,7 @@ func (s *ChatService) GetContacts(userID string) ([]*models.ChatContact, error) 
 	return s.repo.GetChatContacts(userID)
 }
 
-// SendTypingIndicator sends a typing indicator notification
+// SendTypingIndicator sends a typing indicator to a receiver
 func (s *ChatService) SendTypingIndicator(senderID, receiverID string) error {
 	// Check if users can message each other
 	canSend, err := s.repo.CanSendMessage(senderID, receiverID)
@@ -132,9 +142,11 @@ func (s *ChatService) SendTypingIndicator(senderID, receiverID string) error {
 	}
 
 	if !canSend {
-		return errors.New("you cannot send messages to this user")
+		return errors.New("you cannot send typing indicators to this user")
 	}
 
-	// Send typing notification
-	return s.notificationSvc.NotifyTyping(senderID, receiverID)
+	// Send notification via WebSocket
+	go s.notificationSvc.NotifyTyping(senderID, receiverID)
+
+	return nil
 }
