@@ -79,3 +79,32 @@ func (r *SQLiteStatusRepository) GetFollowersForStatusUpdate(userID string) ([]s
 
 	return followerIDs, nil
 }
+
+// GetAllOnlineUsers returns the IDs of all users currently marked as online
+func (r *SQLiteStatusRepository) GetAllOnlineUsers() ([]string, error) {
+	query := `
+		SELECT user_id FROM user_status
+		WHERE is_online = TRUE
+	`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var userIDs []string
+	for rows.Next() {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userIDs, nil
+}
