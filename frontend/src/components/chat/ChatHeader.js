@@ -1,8 +1,11 @@
 'use client';
 
 import styles from '@/styles/Messages.module.css';
+import { useUserStatus } from "@/services/userStatusService";
 
 export default function ChatHeader({ contact }) {
+  const { isUserOnline } = useUserStatus();
+  
   if (!contact) return null;
   
   return (
@@ -15,8 +18,8 @@ export default function ChatHeader({ contact }) {
         />
         <div>
           <h2>{contact.name}</h2>
-          <span className={`${styles.statusIndicator} ${contact.online ? styles.online : styles.offline}`}>
-            {contact.online ? 'Online' : 'Offline'}
+          <span className={`${styles.statusIndicator} ${isUserOnline(contact.userId, contact.online) ? styles.online : styles.offline}`}>
+            {isUserOnline(contact.userId, contact.online) ? 'Online' : 'Offline'}
           </span>
         </div>
       </div>
