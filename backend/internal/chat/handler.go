@@ -190,7 +190,7 @@ func (h *Handler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	h.sendJSON(w, http.StatusOK, contacts)
 }
 
-// SendTypingIndicator handles sending typing indicators
+// SendTypingIndicator handles sending a typing indicator
 func (h *Handler) SendTypingIndicator(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
@@ -220,7 +220,7 @@ func (h *Handler) SendTypingIndicator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send typing indicator
+	// Send typing indicator via WebSocket
 	if err := h.service.SendTypingIndicator(userID, request.ReceiverID); err != nil {
 		h.log.Error("Failed to send typing indicator: %v", err)
 		h.sendError(w, http.StatusInternalServerError, err.Error())
