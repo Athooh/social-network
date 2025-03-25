@@ -163,7 +163,6 @@ export default function CreatePost() {
     try {
       const followersList = await fetchUserFollowers();
 
-      console.log("followersList", followersList);
       if (followersList && followersList.length > 0) {
         // Transform the data to match our component's expected format
         const formattedFollowers = followersList.map((follower) => ({
@@ -171,7 +170,6 @@ export default function CreatePost() {
           name: follower.name,
           avatar: follower.image,
         }));
-        console.log("formattedFollowers", formattedFollowers);
         setFollowers(formattedFollowers);
       } else {
         setFollowers([]);
