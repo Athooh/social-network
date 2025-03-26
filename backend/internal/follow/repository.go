@@ -29,6 +29,7 @@ type Repository interface {
 	// Mutual friends
 	GetMutualFollowers(userID1, userID2 string) ([]*Follower, error)
 	GetMutualFollowersCount(userID1, userID2 string) (int, error)
+	UpdateUserStats(userID string, statsType string, increment bool) (int, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
