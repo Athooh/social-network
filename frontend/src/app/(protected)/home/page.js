@@ -53,7 +53,7 @@ export default function Home() {
 
       setLoading(true);
       try {
-        const data = await getFeedPosts(pageNum, pageSize);
+        let data = await getFeedPosts(pageNum, pageSize);
 
         if (!data) {
           data = [];
