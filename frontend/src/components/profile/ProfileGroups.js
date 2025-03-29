@@ -129,7 +129,7 @@ const ProfileGroups = () => {
                 
                 <div className={groupStyles.groupActions}>
                   <button className={styles.inviteBtn}>
-                    <i className="fas fa-user-plus"></i> Invite
+                     View Group
                   </button>
                   <button className={styles.manageBtn}>
                     Manage Group
