@@ -5,7 +5,7 @@ import CreatePost from '@/components/posts/CreatePost';
 import LeftSidebar from '@/components/sidebar/LeftSidebar';
 import RightSidebar from '@/components/sidebar/RightSidebar';
 import styles from '@/styles/page.module.css';
-import groupStyles from '@/styles/Groups.module.css';
+import groupFeeds from "@/styles/GroupFeeds.module.css";
 import GroupPost from '@/components/groups/Group-Posts';
 // Sample group data
 const sampleGroups = [
@@ -109,18 +109,18 @@ export default function GroupFeeds() {
         </aside>
         <main className={styles.mainContent}>
           {sampleGroups.map(group => (
-            <div key={group.id} className={groupStyles.groupSection}>
-              <div className={groupStyles.groupHeader}>
-                <div className={groupStyles.groupInfo}>
+            <div key={group.id} className={groupFeeds.groupSection}>
+              <div className={groupFeeds.groupHeader}>
+                <div className={groupFeeds.groupInfo}>
                   <img 
                     src={group.banner} 
                     alt={group.name} 
-                    className={groupStyles.groupBanner}
+                    className={groupFeeds.groupBanner}
                   />
-                  <div className={groupStyles.groupDetails}>
+                  <div className={groupFeeds.groupDetails}>
                     <h2>{group.name}</h2>
                     <p>{group.description}</p>
-                    <div className={groupStyles.groupMeta}>
+                    <div className={groupFeeds.groupMeta}>
                       <span>
                         <i className={`fas ${group.privacy === 'private' ? 'fa-lock' : 'fa-globe'}`}></i>
                         {group.privacy === 'private' ? 'Private Group' : 'Public Group'}
@@ -130,11 +130,11 @@ export default function GroupFeeds() {
                     </div>
                   </div>
                 </div>
-                <div className={groupStyles.groupActions}>
-                  <button className={groupStyles.joinButton}>
+                <div className={groupFeeds.groupActions}>
+                  <button className={groupFeeds.joinButton}>
                     Join Group
                   </button>
-                  <button className={groupStyles.moreButton}>
+                  <button className={groupFeeds.moreButton}>
                     •••
                   </button>
                 </div>
