@@ -35,8 +35,8 @@ export default function Header() {
             <i className="fas fa-home"></i>
           </Link>
           <Link 
-            href="/posts" 
-            className={`${styles.iconLink} ${pathname === '/posts' ? styles.active : ''}`}
+            href="/group-feeds" 
+            className={`${styles.iconLink} ${pathname === '/group-feeds' ? styles.active : ''}`}
           >
             <i className="fas fa-newspaper"></i>
           </Link>

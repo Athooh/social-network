@@ -105,7 +105,7 @@ const ProfileConnections = () => {
           ))}
         </div>
 
-        {!showMore && contacts.length > 14 && (
+        {!showMore && contacts.length > 12 && (
           <button 
             className={styles.loadMoreButton}
             onClick={() => setShowMore(true)}
