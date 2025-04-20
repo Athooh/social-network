@@ -21,7 +21,7 @@ export const EVENT_TYPES = {
 };
 
 // Create a singleton WebSocket instance
-let globalSocket = null;
+export let globalSocket = null;
 let globalListeners = {};
 let reconnectTimeout = null;
 let pingInterval = null;
