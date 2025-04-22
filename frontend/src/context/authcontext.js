@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { showToast } from "@/components/ui/ToastContainer";
 import { handleApiError } from "@/utils/errorHandler";
 import { closeWebSocketConnection } from "@/services/websocketService";
+import { globalSocket } from "@/services/websocketService";
 
 const API_URL = process.env.API_URL;
 

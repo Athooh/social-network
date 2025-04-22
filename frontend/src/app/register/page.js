@@ -19,6 +19,8 @@ export default function Register() {
     avatar: null,
   });
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState({});
+
   const [isLoading, setIsLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const router = useRouter();
@@ -47,6 +49,31 @@ export default function Register() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
+    // Trim and validate required fields
+    const trimmedData = {
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim(),
+      password: formData.password.trim(),
+      dateOfBirth: formData.dateOfBirth.trim(),
+      nickname: formData.nickname.trim(),
+      aboutMe: formData.aboutMe.trim(),
+      avatar: formData.avatar,
+    };
+
+    const newErrors = {};
+    if (!trimmedData.firstName) newErrors.firstName = "First name is required";
+    if (!trimmedData.lastName) newErrors.lastName = "Last name is required";
+    if (!trimmedData.email) newErrors.email = "Email is required";
+    if (!trimmedData.password) newErrors.password = "Password is required";
+    if (!trimmedData.dateOfBirth)
+      newErrors.dateOfBirth = "Date of Birth is required";
+    setFormErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      setIsLoading(false);
+      return; // Don't proceed if there are errors
+    }
 
     try {
       const success = await signUp(formData);
@@ -80,6 +107,11 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
+              {formErrors.firstName && (
+                <span className={styles.fieldError}>
+                  {formErrors.firstName}
+                </span>
+              )}
             </div>
             <div className={styles.formGroup}>
               <input
@@ -90,6 +122,9 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
+              {formErrors.lastName && (
+                <span className={styles.fieldError}>{formErrors.lastName}</span>
+              )}
             </div>
           </div>
 
@@ -102,6 +137,9 @@ export default function Register() {
               onChange={handleChange}
               required
             />
+            {formErrors.email && (
+              <span className={styles.fieldError}>{formErrors.email}</span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
@@ -111,6 +149,9 @@ export default function Register() {
               placeholder="Password"
               name="password"
             />
+            {formErrors.password && (
+              <span className={styles.fieldError}>{formErrors.password}</span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
@@ -122,6 +163,12 @@ export default function Register() {
               onChange={handleChange}
               required
             />
+
+            {formErrors.dateOfBirth && (
+              <span className={styles.fieldError}>
+                {formErrors.dateOfBirth}
+              </span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
