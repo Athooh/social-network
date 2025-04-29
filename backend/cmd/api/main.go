@@ -9,6 +9,7 @@ import (
 	"github.com/Athooh/social-network/internal/config"
 	"github.com/Athooh/social-network/internal/follow"
 	"github.com/Athooh/social-network/internal/group"
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/internal/post"
 	"github.com/Athooh/social-network/internal/server"
 	wsHandler "github.com/Athooh/social-network/internal/websocket"
@@ -87,6 +88,7 @@ func main() {
 	groupRepo := group.NewSQLiteRepository(db.DB)
 	eventRepo := event.NewSQLiteRepository(db.DB)
 	chatRepo := chat.NewSQLiteRepository(db.DB)
+	notificationsRepo := notifications.NewSQLiteRepository(db.DB)
 
 	// Set up session manager
 	sessionManager := session.NewSessionManager(
@@ -123,6 +125,7 @@ func main() {
 	eventService := event.NewService(eventRepo, fileStore, log, wsHub)
 	groupService := group.NewService(groupRepo, fileStore, log, wsHub, eventService)
 	chatService := chat.NewService(chatRepo, log, wsHub)
+	notificationsService := notifications.NewService(notificationsRepo, userRepo, log, wsHub)
 
 	// Connect the Hub to the StatusService
 	wsHub.SetStatusUpdater(statusService)
@@ -138,20 +141,22 @@ func main() {
 	groupHandler := group.NewHandler(groupService, log)
 	eventHandler := event.NewHandler(eventService, log)
 	chatHandler := chat.NewHandler(chatService, log)
+	notificationHanler := notifications.NewHandler(notificationsService, log)
 
 	// Set up router with both session and JWT middleware
 	router := server.Router(server.RouterConfig{
-		AuthHandler:    authHandler,
-		PostHandler:    postHandler,
-		WSHandler:      wsHandler,
-		FollowHandler:  followHandler,
-		GroupHandler:   groupHandler,
-		EventHandler:   eventHandler,
-		ChatHandler:    chatHandler,
-		AuthMiddleware: authService.RequireAuth,
-		JWTMiddleware:  authService.RequireJWTAuth,
-		Logger:         log,
-		UploadDir:      cfg.FileStore.UploadDir,
+		AuthHandler:         authHandler,
+		PostHandler:         postHandler,
+		WSHandler:           wsHandler,
+		FollowHandler:       followHandler,
+		GroupHandler:        groupHandler,
+		EventHandler:        eventHandler,
+		ChatHandler:         chatHandler,
+		NotificationHanlder: notificationHanler,
+		AuthMiddleware:      authService.RequireAuth,
+		JWTMiddleware:       authService.RequireJWTAuth,
+		Logger:              log,
+		UploadDir:           cfg.FileStore.UploadDir,
 	})
 
 	// Set up server
