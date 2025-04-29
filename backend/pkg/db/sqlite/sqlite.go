@@ -144,6 +144,7 @@ func DiscoverModelStructs() []interface{} {
 		models.EventResponse{},
 		models.PrivateMessage{},
 		models.ChatContact{},
+		models.Notification{},
 		// Add new models here
 	}
 }
