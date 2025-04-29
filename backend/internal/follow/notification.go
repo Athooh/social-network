@@ -27,34 +27,34 @@ func NewNotificationService(hub *websocket.Hub, userRepo user.Repository, log *l
 }
 
 // SendFollowRequestNotification sends a notification when a user requests to follow another user
-func (s *NotificationService) SendFollowRequestNotification(followerID, followingID string) {
-	if s.hub == nil {
-		return
-	}
+// func (s *NotificationService) SendFollowRequestNotification(followerID, followingID string) {
+// 	if s.hub == nil {
+// 		return
+// 	}
 
-	// Get follower info
-	follower, err := s.userRepo.GetByID(followerID)
-	if err != nil {
-		s.log.Warn("Failed to get follower info for notification: %v", err)
-		return
-	}
+// 	// Get follower info
+// 	follower, err := s.userRepo.GetByID(followerID)
+// 	if err != nil {
+// 		s.log.Warn("Failed to get follower info for notification: %v", err)
+// 		return
+// 	}
 
-	followerName := fmt.Sprintf("%s %s", follower.FirstName, follower.LastName)
+// 	followerName := fmt.Sprintf("%s %s", follower.FirstName, follower.LastName)
 
-	// Create notification event
-	event := events.Event{
-		Type: events.FollowRequest,
-		Payload: map[string]interface{}{
-			"followerID":   followerID,
-			"followerName": followerName,
-			"avatar":       follower.Avatar,
-			"timestamp":    fmt.Sprintf("%d", time.Now().Unix()),
-		},
-	}
+// 	// Create notification event
+// 	event := events.Event{
+// 		Type: events.FollowRequest,
+// 		Payload: map[string]interface{}{
+// 			"followerID":   followerID,
+// 			"followerName": followerName,
+// 			"avatar":       follower.Avatar,
+// 			"timestamp":    fmt.Sprintf("%d", time.Now().Unix()),
+// 		},
+// 	}
 
-	// Send to the user receiving the follow request
-	s.hub.BroadcastToUser(followingID, event)
-}
+// 	// Send to the user receiving the follow request
+// 	s.hub.BroadcastToUser(followingID, event)
+// }
 
 // SendFollowRequestAcceptedNotification sends a notification when a follow request is accepted
 func (s *NotificationService) SendFollowRequestAcceptedNotification(followerID, followingID string) {
