@@ -60,7 +60,7 @@ func (s *PostService) NotifyPostCreated(post *models.Post, userID string, userNa
 		return nil
 	}
 
-	// For public posts, notify all users
+	// For publNewNotificationic posts, notify all users
 	if post.Privacy == models.PrivacyPublic {
 		return s.notificationSvc.NotifyPostCreated(post, userID, userName)
 	}
