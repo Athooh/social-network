@@ -8,6 +8,7 @@ import (
 	"github.com/Athooh/social-network/internal/event"
 	"github.com/Athooh/social-network/internal/follow"
 	"github.com/Athooh/social-network/internal/group"
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/internal/post"
 	websocketHandler "github.com/Athooh/social-network/internal/websocket"
 	"github.com/Athooh/social-network/pkg/logger"
@@ -50,17 +51,18 @@ func (rg *RouteGroup) Register(mux *http.ServeMux) {
 
 // RouterConfig holds all dependencies needed for routing
 type RouterConfig struct {
-	AuthHandler    *auth.Handler
-	PostHandler    *post.Handler
-	WSHandler      *websocketHandler.Handler
-	FollowHandler  *follow.Handler
-	GroupHandler   *group.Handler
-	EventHandler   *event.Handler
-	ChatHandler    *chat.Handler
-	AuthMiddleware func(http.Handler) http.Handler
-	JWTMiddleware  func(http.Handler) http.Handler
-	Logger         *logger.Logger
-	UploadDir      string
+	AuthHandler         *auth.Handler
+	PostHandler         *post.Handler
+	WSHandler           *websocketHandler.Handler
+	FollowHandler       *follow.Handler
+	GroupHandler        *group.Handler
+	EventHandler        *event.Handler
+	ChatHandler         *chat.Handler
+	NotificationHanlder *notifications.Handler
+	AuthMiddleware      func(http.Handler) http.Handler
+	JWTMiddleware       func(http.Handler) http.Handler
+	Logger              *logger.Logger
+	UploadDir           string
 }
 
 // Router sets up the HTTP routes
@@ -184,6 +186,9 @@ func Router(config RouterConfig) http.Handler {
 	chatGroup.HandleFunc("/contacts", config.ChatHandler.GetContacts)
 	chatGroup.HandleFunc("/typing", config.ChatHandler.SendTypingIndicator)
 
+	// Norificarion group routes
+	protectedNotificationGroup := NewRouteGroup("/api/notification", authenticatedRouteMiddleware)
+	protectedNotificationGroup.HandleFunc("/", config.NotificationHanlder.HandleNotifications)
 	// Add WebSocket route
 	wsRoute := NewRouteGroup("/ws", wsMiddleware)
 	wsRoute.HandleFunc("", config.WSHandler.HandleConnection)
@@ -194,6 +199,7 @@ func Router(config RouterConfig) http.Handler {
 	protectedPostGroup.Register(mux)
 	protectedFollowGroup.Register(mux)
 	protectedGroupGroup.Register(mux)
+	protectedNotificationGroup.Register(mux)
 	chatGroup.Register(mux)
 	wsRoute.Register(mux)
 
