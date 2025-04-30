@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
           if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: "user_away" }));
             // Small delay to ensure the message is sent before closing
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
         } catch (error) {
           console.error("Error sending offline status before logout:", error);
@@ -112,7 +112,13 @@ export const AuthProvider = ({ children }) => {
       handleLogout(false);
     }
   }, [validateToken]);
+  
   // Depend on memoized validateToken
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile(token);
+    }
+  }, [token, fetchUserProfile]);
 
   const login = async (formData) => {
     try {
