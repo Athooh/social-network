@@ -1,19 +1,17 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
-import styles from "@/styles/Posts.module.css";
-import { usePostService } from "@/services/postService";
-import { showToast } from "@/components/ui/ToastContainer";
-import { useAuth } from "@/context/authcontext";
-import { formatRelativeTime } from "@/utils/dateUtils";
-import { BASE_URL } from "@/utils/constants";
-import { useWebSocketContext } from "@/context/websocketContext";
-import { EVENT_TYPES } from "@/services/websocketService";
-import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import { useWebSocket } from "@/services/websocketService";
-import Image from "next/image";
+import styles from '@/styles/Posts.module.css';
+import { usePostService } from '@/services/postService';
+import { showToast } from '@/components/ui/ToastContainer';
+import { useAuth } from '@/context/authcontext';
+import { formatRelativeTime } from '@/utils/dateUtils';
+import { BASE_URL } from '@/utils/constants';
+import { useWebSocket } from '@/services/websocketService';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import Image from 'next/image';
 
-export default function GroupPost({ post, onPostUpdated }) {
+export default function GroupPost({ post, onPostUpdated, isDetailView = false }) {
   const {
     likePost,
     addComment,
@@ -25,7 +23,7 @@ export default function GroupPost({ post, onPostUpdated }) {
   const { subscribe } = useWebSocket();
   const { currentUser } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(isDetailView);
   const [commentText, setCommentText] = useState("");
   const [showOptions, setShowOptions] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -37,8 +35,10 @@ export default function GroupPost({ post, onPostUpdated }) {
     message: "",
     onConfirm: () => {},
   });
+  const [comments, setComments] = useState([]);
+  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
 
-  // Format the post data to match component expectations
+  // Format the post data
   const formattedPost = {
     id: post.id,
     authorName: post.userData
@@ -51,37 +51,19 @@ export default function GroupPost({ post, onPostUpdated }) {
       : "/avatar4.png",
     content: post.content,
     timestamp: formatRelativeTime(post.createdAt),
-    privacy: post.privacy,
     likes: post.likesCount || 0,
     commentCount: post.comments?.length || 0,
     image: post.imageUrl ? `${BASE_URL}${post.imageUrl}` : null,
     video: post.videoUrl ? `${BASE_URL}${post.videoUrl}` : null,
     userId: post.userId,
-    groupName: post.groupName, // Added group context
+    groupName: post.groupName,
   };
 
-  const [likesCount, setLikesCount] = useState(formattedPost.likes);
-  const [comments, setComments] = useState(post.comments || []);
-
-  // Handle click outside for options menu
   useEffect(() => {
-    if (showOptions) {
-      const handleClickOutside = (e) => {
-        if (!e.target.closest(`.${styles.postOptionsContainer}`)) {
-          setShowOptions(false);
-        }
-      };
-      document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
-    }
-  }, [showOptions]);
-
-  // Fetch comments when comment section is opened
-  useEffect(() => {
-    if (showComments) {
+    if (showComments || isDetailView) {
       fetchComments();
     }
-  }, [showComments]);
+  }, [showComments, isDetailView]);
 
   const fetchComments = async () => {
     if (loadingComments) return;
@@ -109,7 +91,6 @@ export default function GroupPost({ post, onPostUpdated }) {
     }
   };
 
-  // Simplified options menu for group posts
   const handleOptionClick = async (action) => {
     switch (action) {
       case "delete":
@@ -211,9 +192,11 @@ export default function GroupPost({ post, onPostUpdated }) {
     }
   };
 
-  const isCurrentUserPost = currentUser?.id === post.userId;
+  const showConfirmation = (config) => {
+    setConfirmModalConfig(config);
+    setShowConfirmModal(true);
+  };
 
-  // Render the post content
   return (
     <article className={styles.post}>
       <div className={styles.postHeader}>
@@ -296,7 +279,7 @@ export default function GroupPost({ post, onPostUpdated }) {
         </button>
       </div>
 
-      {showComments && (
+      {(showComments || isDetailView) && (
         <div className={styles.commentsSection}>
           <form onSubmit={handleComment} className={styles.commentForm}>
             <img
@@ -366,7 +349,6 @@ export default function GroupPost({ post, onPostUpdated }) {
                   width={32}
                   className={styles.commentAvatar}
                   onError={(e) => {
-                    // Fallback if image fails to load
                     e.target.src = "/avatar4.png";
                   }}
                 />
