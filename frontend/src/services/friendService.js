@@ -97,11 +97,12 @@ export const useFriendService = () => {
   }, [authenticatedFetch]);
 
   // Accept a friend request
-  const acceptFriendRequest = async (userId) => {
+  const acceptFriendRequest = async (followerId) => {
+
     try {
       const response = await authenticatedFetch("follow/accept", {
         method: "POST",
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ followerId }),
       });
 
       if (!response.ok) {
@@ -113,13 +114,15 @@ export const useFriendService = () => {
         );
       }
 
+
       const data = await response.json();
+
 
       if (data.success) {
         showToast("Friend request accepted", "success");
         // Remove the request from the list
         setFriendRequests((prev) =>
-          prev.filter((request) => request.followerId !== userId)
+          prev.filter((request) => request.followerId !== followerId)
         );
         // Refresh contacts list
         fetchContacts();
@@ -133,11 +136,11 @@ export const useFriendService = () => {
   };
 
   // Decline a friend request
-  const declineFriendRequest = async (userId) => {
+  const declineFriendRequest = async (followerId) => {
     try {
       const response = await authenticatedFetch("follow/decline", {
         method: "POST",
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ followerId }),
       });
 
       if (!response.ok) {
@@ -151,11 +154,13 @@ export const useFriendService = () => {
 
       const data = await response.json();
 
+      
+
       if (data.success) {
         showToast("Friend request declined", "success");
         // Remove the request from the list
         setFriendRequests((prev) =>
-          prev.filter((request) => request.followerId !== userId)
+          prev.filter((request) => request.followerId !== followerId)
         );
       }
 
