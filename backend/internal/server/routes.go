@@ -11,6 +11,7 @@ import (
 	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/internal/post"
 	websocketHandler "github.com/Athooh/social-network/internal/websocket"
+	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/middleware"
 )
@@ -188,7 +189,19 @@ func Router(config RouterConfig) http.Handler {
 
 	// Norificarion group routes
 	protectedNotificationGroup := NewRouteGroup("/api/notification", authenticatedRouteMiddleware)
-	protectedNotificationGroup.HandleFunc("", config.NotificationHanlder.HandleNotifications)
+	protectedNotificationGroup.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			config.NotificationHanlder.GetNotifications(w, r)
+		case http.MethodPut:
+			config.NotificationHanlder.MarkNotificationAsRead(w, r)
+		case http.MethodDelete:
+			config.NotificationHanlder.ClearAllNotifications(w, r)
+		default:
+			httputil.SendError(w, http.StatusMethodNotAllowed, "Method not allowed", false)
+		}
+	})
+	protectedNotificationGroup.HandleFunc("/read", config.NotificationHanlder.MarkAllNotificationsAsRead)
 	// Add WebSocket route
 	wsRoute := NewRouteGroup("/ws", wsMiddleware)
 	wsRoute.HandleFunc("", config.WSHandler.HandleConnection)
