@@ -215,6 +215,7 @@ func (s *NotificationService) SendCommentNotificationToOwner(userID, commenterID
 		Payload: map[string]interface{}{
 			"id":           dbNotification.ID,
 			"type":         "comment",
+			"senderId":     commenterID,
 			"senderName":   commenterName,
 			"senderAvatar": commenter.Avatar,
 			"message":      notification.Message,
