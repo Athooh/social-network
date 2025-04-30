@@ -39,7 +39,7 @@ type NewNotification struct {
 	UserId          string
 	SenderId        sql.NullString
 	NotficationType string
-	message         string
+	Message         string
 	TargetGroupID   sql.NullInt64
 	TargetEventID   sql.NullInt64
 }
@@ -63,7 +63,7 @@ func (s *NotificationService) CreateNotification(notification *NewNotification) 
 	newNotification := &models.Notification{
 		UserID:  notification.UserId,
 		Type:    notification.NotficationType,
-		Message: notification.message,
+		Message: notification.Message,
 		IsRead:  false,
 	}
 
