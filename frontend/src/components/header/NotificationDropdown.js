@@ -31,8 +31,8 @@ export default function NotificationDropdown() {
   }, []);
 
   // Handle friend request response (accept/decline)
-  const handleNotificationResponse = async (notificationId, action) => {
-    await handleFriendRequest(notificationId, action);
+  const handleNotificationResponse = async (followerId,notificationId, action) => {
+    await handleFriendRequest(followerId,notificationId, action);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -116,7 +116,7 @@ export default function NotificationDropdown() {
               <div className={styles.actions}>
                 <button
                   onClick={() =>
-                    handleNotificationResponse(notification.id, "accept")
+                    handleNotificationResponse(notification.senderId,notification.id, "accept")
                   }
                   className={styles.acceptButton}
                 >
@@ -124,7 +124,7 @@ export default function NotificationDropdown() {
                 </button>
                 <button
                   onClick={() =>
-                    handleNotificationResponse(notification.id, "decline")
+                    handleNotificationResponse(notification.senderId,notification.id, "decline")
                   }
                   className={styles.declineButton}
                 >
