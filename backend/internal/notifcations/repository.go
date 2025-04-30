@@ -14,6 +14,7 @@ type Repository interface {
 	MarkNotificationAsRead(notificationID int64) error
 	MarkAllNotificationsAsRead(userID string) error
 	ClearAllNotificationsDB(userId string) error
+	DeleteNotificationDb(notificationId int64) error
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -123,5 +124,10 @@ func (r *SQLiteRepository) MarkAllNotificationsAsRead(userID string) error {
 
 func (r *SQLiteRepository) ClearAllNotificationsDB(userId string) error {
 	_, err := r.db.Exec("DELETE FROM notifications WHERE user_id =  ?", userId)
+	return err
+}
+
+func (r *SQLiteRepository) DeleteNotificationDb(notificationId int64) error {
+	_, err := r.db.Exec("DELETE FROM notifications WHERE id = ?", notificationId)
 	return err
 }
