@@ -25,6 +25,9 @@ export const useNotificationService = () => {
       }
 
       const data = await response.json();
+    
+
+      console.log(" Data from the backend",data)
 
       if (data) {
         // Transform the data to match the component's expected format
@@ -61,7 +64,7 @@ export const useNotificationService = () => {
   // Mark a single notification as read
   const markNotificationAsRead = async (notificationId) => {
     try {
-      const response = await authenticatedFetch(`notifications/${notificationId}`, {
+      const response = await authenticatedFetch(`notification?notificationId=${notificationId}`, {
         method: "PUT",
       });
 
@@ -93,7 +96,7 @@ export const useNotificationService = () => {
   // Mark all notifications as read
   const markAllNotificationsAsRead = async () => {
     try {
-      const response = await authenticatedFetch("notifications/read", {
+      const response = await authenticatedFetch("notification/read", {
         method: "PUT",
       });
 
@@ -121,7 +124,7 @@ export const useNotificationService = () => {
   // Clear all notifications
   const clearAllNotifications = async () => {
     try {
-      const response = await authenticatedFetch("notifications", {
+      const response = await authenticatedFetch("notification", {
         method: "DELETE",
       });
 
