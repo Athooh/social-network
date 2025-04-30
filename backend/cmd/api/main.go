@@ -117,14 +117,14 @@ func main() {
 	go wsHub.Run()
 
 	// Set up services
+	notificationsService := notifications.NewService(notificationsRepo, userRepo, log, wsHub)
 	authService := auth.NewService(userRepo, sessionManager, jwtConfig, statusRepo)
-	postNotificationSvc := post.NewNotificationService(wsHub)
+	postNotificationSvc := post.NewNotificationService(wsHub, userRepo, notificationsService, log)
 	postService := post.NewService(postRepo, fileStore, log, postNotificationSvc)
 	statusService := userHandler.NewStatusService(statusRepo, sessionRepo, wsHub, log)
 	eventService := event.NewService(eventRepo, fileStore, log, wsHub)
 	groupService := group.NewService(groupRepo, fileStore, log, wsHub, eventService)
 	chatService := chat.NewService(chatRepo, log, wsHub)
-	notificationsService := notifications.NewService(notificationsRepo, userRepo, log, wsHub)
 	followService := follow.NewService(followRepo, userRepo, statusRepo, notificationsService, log, wsHub)
 
 	// Connect the Hub to the StatusService
