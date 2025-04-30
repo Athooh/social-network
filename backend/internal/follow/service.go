@@ -1,9 +1,11 @@
 package follow
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/user"
 	"github.com/Athooh/social-network/pkg/websocket"
@@ -54,8 +56,8 @@ type FollowService struct {
 }
 
 // NewService creates a new follow service
-func NewService(repo Repository, userRepo user.Repository, statusRepo user.StatusRepository, log *logger.Logger, wsHub *websocket.Hub) Service {
-	notificationSvc := NewNotificationService(wsHub, userRepo, log)
+func NewService(repo Repository, userRepo user.Repository, statusRepo user.StatusRepository, notificationRepo notifications.Service, log *logger.Logger, wsHub *websocket.Hub) Service {
+	notificationSvc := NewNotificationService(wsHub, userRepo, notificationRepo, log)
 
 	return &FollowService{
 		repo:            repo,
@@ -66,14 +68,14 @@ func NewService(repo Repository, userRepo user.Repository, statusRepo user.Statu
 	}
 }
 
-// FollowUser handles the logic for a user following another user
+// FollowUser handles the logic for a user to follow another user
 func (s *FollowService) FollowUser(followerID, followingID string) (bool, error) {
 	// Check if users are the same
 	if followerID == followingID {
 		return false, errors.New("you cannot follow yourself")
 	}
 
-	// Check if already following
+	// Check אם already following
 	isFollowing, err := s.repo.IsFollowing(followerID, followingID)
 	if err != nil {
 		return false, err
@@ -111,6 +113,22 @@ func (s *FollowService) FollowUser(followerID, followingID string) (bool, error)
 		return false, err
 	}
 
+	// Get follower info for notification
+	follower, err := s.userRepo.GetByID(followerID)
+	if err != nil {
+		s.log.Warn("Failed to get follower info for notification: %v", err)
+		return false, err
+	}
+	followerName := fmt.Sprintf("%s %s", follower.FirstName, follower.LastName)
+
+	// Construct notification
+	newNotification := &notifications.NewNotification{
+		UserId:          followingID,
+		SenderId:        sql.NullString{String: followerID, Valid: true},
+		NotficationType: "friendRequest",
+		Message:         fmt.Sprintf("Friend request from %s", followerName),
+	}
+
 	if existingRequest != nil {
 		if existingRequest.Status == string(StatusPending) {
 			return false, errors.New("follow request already pending")
@@ -120,15 +138,18 @@ func (s *FollowService) FollowUser(followerID, followingID string) (bool, error)
 		if err := s.repo.UpdateFollowRequestStatus(followerID, followingID, string(StatusPending)); err != nil {
 			return false, err
 		}
+
+		// Send follow request notification with constructed notification
+		s.notificationSvc.SendFollowRequestNotification(followerID, followingID, newNotification, follower)
 	} else {
 		// Create new follow request
 		if err := s.repo.CreateFollowRequest(followerID, followingID); err != nil {
 			return false, err
 		}
-	}
 
-	// Send follow request notification
-	// s.notificationSvc.SendFollowRequestNotification(followerID, followingID)
+		// Send follow request notification with constructed notification
+		s.notificationSvc.SendFollowRequestNotification(followerID, followingID, newNotification, follower)
+	}
 
 	return false, nil
 }
