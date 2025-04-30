@@ -56,6 +56,7 @@ func (s *NotificationService) SendFollowRequestNotification(followerID, followin
 		Payload: map[string]interface{}{
 			"id":           dbNotification.ID,
 			"type":         notification.NotficationType,
+			"senderId":     followerID,
 			"senderName":   follower.FirstName + " " + follower.LastName,
 			"senderAvatar": follower.Avatar,
 			"message":      notification.Message,
