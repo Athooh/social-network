@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/pkg/logger"
 	"github.com/Athooh/social-network/pkg/user"
 	"github.com/Athooh/social-network/pkg/websocket"
@@ -12,49 +13,60 @@ import (
 
 // NotificationService handles sending notifications related to follow operations
 type NotificationService struct {
-	hub      *websocket.Hub
-	userRepo user.Repository
-	log      *logger.Logger
+	hub              *websocket.Hub
+	userRepo         user.Repository
+	log              *logger.Logger
+	notificationRepo notifications.Service
 }
 
 // NewNotificationService creates a new follow notification service
-func NewNotificationService(hub *websocket.Hub, userRepo user.Repository, log *logger.Logger) *NotificationService {
+func NewNotificationService(hub *websocket.Hub, userRepo user.Repository, notifcationRepo notifications.Service, log *logger.Logger) *NotificationService {
 	return &NotificationService{
-		hub:      hub,
-		userRepo: userRepo,
-		log:      log,
+		hub:              hub,
+		userRepo:         userRepo,
+		log:              log,
+		notificationRepo: notifcationRepo,
 	}
 }
 
-// SendFollowRequestNotification sends a notification when a user requests to follow another user
-// func (s *NotificationService) SendFollowRequestNotification(followerID, followingID string) {
-// 	if s.hub == nil {
-// 		return
-// 	}
+// SendFollowRequestNotification sends a WebSocket notification for a follow request
+func (s *NotificationService) SendFollowRequestNotification(followerID, followingID string, notification *notifications.NewNotification, follower *user.User) {
+	if s.hub == nil {
+		s.log.Warn("WebSocket hub is nil, cannot send follow request notification")
+		return
+	}
 
-// 	// Get follower info
-// 	follower, err := s.userRepo.GetByID(followerID)
-// 	if err != nil {
-// 		s.log.Warn("Failed to get follower info for notification: %v", err)
-// 		return
-// 	}
+	// Create notification in database
+	if err := s.notificationRepo.CreateNotification(notification); err != nil {
+		s.log.Error("Failed to create follow request notification: %v", err)
+		return
+	}
 
-// 	followerName := fmt.Sprintf("%s %s", follower.FirstName, follower.LastName)
+	// Retrieve the newly created notification to get its ID and CreatedAt
+	notifications, err := s.notificationRepo.GetNotifications(followingID, 1, 0)
+	if err != nil || len(notifications) == 0 {
+		s.log.Error("Failed to retrieve newly created notification: %v", err)
+		return
+	}
+	dbNotification := notifications[0]
 
-// 	// Create notification event
-// 	event := events.Event{
-// 		Type: events.FollowRequest,
-// 		Payload: map[string]interface{}{
-// 			"followerID":   followerID,
-// 			"followerName": followerName,
-// 			"avatar":       follower.Avatar,
-// 			"timestamp":    fmt.Sprintf("%d", time.Now().Unix()),
-// 		},
-// 	}
+	// Create WebSocket event
+	event := events.Event{
+		Type: events.HeaderNotificationUpdate,
+		Payload: map[string]interface{}{
+			"id":           dbNotification.ID,
+			"type":         notification.NotficationType,
+			"senderName":   follower.FirstName + " " + follower.LastName,
+			"senderAvatar": follower.Avatar,
+			"message":      notification.Message,
+			"createdAt":    dbNotification.CreatedAt.Format(time.RFC3339),
+			"isRead":       dbNotification.IsRead,
+		},
+	}
 
-// 	// Send to the user receiving the follow request
-// 	s.hub.BroadcastToUser(followingID, event)
-// }
+	// Send to the user receiving the follow request
+	s.hub.BroadcastToUser(followingID, event)
+}
 
 // SendFollowRequestAcceptedNotification sends a notification when a follow request is accepted
 func (s *NotificationService) SendFollowRequestAcceptedNotification(followerID, followingID string) {
