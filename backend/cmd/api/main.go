@@ -120,12 +120,12 @@ func main() {
 	authService := auth.NewService(userRepo, sessionManager, jwtConfig, statusRepo)
 	postNotificationSvc := post.NewNotificationService(wsHub)
 	postService := post.NewService(postRepo, fileStore, log, postNotificationSvc)
-	followService := follow.NewService(followRepo, userRepo, statusRepo, log, wsHub)
 	statusService := userHandler.NewStatusService(statusRepo, sessionRepo, wsHub, log)
 	eventService := event.NewService(eventRepo, fileStore, log, wsHub)
 	groupService := group.NewService(groupRepo, fileStore, log, wsHub, eventService)
 	chatService := chat.NewService(chatRepo, log, wsHub)
 	notificationsService := notifications.NewService(notificationsRepo, userRepo, log, wsHub)
+	followService := follow.NewService(followRepo, userRepo, statusRepo, notificationsService, log, wsHub)
 
 	// Connect the Hub to the StatusService
 	wsHub.SetStatusUpdater(statusService)
