@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import Header from '@/components/header/Header';
 import CreatePost from '@/components/posts/CreatePost';
 import LeftSidebar from '@/components/sidebar/LeftSidebar';
@@ -7,6 +8,7 @@ import RightSidebar from '@/components/sidebar/RightSidebar';
 import styles from '@/styles/page.module.css';
 import groupFeeds from "@/styles/GroupFeeds.module.css";
 import GroupPost from '@/components/groups/Group-Posts';
+
 // Sample group data
 const sampleGroups = [
   {
@@ -100,6 +102,12 @@ const sampleGroups = [
 ];
 
 export default function GroupFeeds() {
+  const router = useRouter();
+
+  const handlePostClick = (groupId, postId) => {
+    router.push(`/groups/${groupId}/posts/${postId}`);
+  };
+
   return (
     <>
       <Header />
@@ -140,16 +148,19 @@ export default function GroupFeeds() {
                 </div>
               </div>
               
-              {/* <CreatePost isGroupPost groupId={group.id} groupName={group.name} /> */}
-              
               {group.posts.map(post => (
-                <GroupPost 
+                <div 
                   key={post.id} 
-                  post={post}
-                  onPostUpdated={() => {
-                    // Handle post update
-                  }}
-                />
+                  onClick={() => handlePostClick(group.id, post.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <GroupPost 
+                    post={post}
+                    onPostUpdated={() => {
+                      // Handle post update
+                    }}
+                  />
+                </div>
               ))}
             </div>
           ))}
