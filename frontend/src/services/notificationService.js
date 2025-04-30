@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/authcontext";
 import { showToast } from "@/components/ui/ToastContainer";
 import { useState, useEffect, useCallback } from "react";
-import { useWebSocket } from "./websocketService";
+import { EVENT_TYPES, useWebSocket } from "./websocketService";
 import { BASE_URL } from "@/utils/constants";
 
 export const useNotificationService = () => {
@@ -175,7 +175,7 @@ export const useNotificationService = () => {
   // Subscribe to notification events
   useEffect(() => {
     // Listen for new notifications
-    const unsubscribeNotification = subscribe("notification", (payload) => {
+    const unsubscribeNotification = subscribe(EVENT_TYPES.NOTIFICATION_UPDATE, (payload) => {
       if (payload) {
         const newNotification = {
           id: payload.id,
