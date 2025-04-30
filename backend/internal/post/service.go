@@ -91,7 +91,7 @@ func (s *PostService) NotifyPostCreated(post *models.Post, userID string, userNa
 }
 
 // NotifyPostCreated sends notifications about a new post to appropriate users
-func (s *PostService) NotifyCommentCountUpdate(postId int64, userID string, statsType string, count int) error {
+func (s *PostService) NotifyOnCommentCreateOrCount(postId int64, userID string, statsType string, count int) error {
 	if s.notificationSvc == nil {
 		return nil
 	}
@@ -102,6 +102,7 @@ func (s *PostService) NotifyCommentCountUpdate(postId int64, userID string, stat
 	}
 	// For public posts, notify all users
 	if post.Privacy == models.PrivacyPublic {
+		s.notificationSvc.SendCommentNotificationToOwner(post.UserID, userID)
 		return s.notificationSvc.NotifyPostsCommentUpdate(userID, statsType, count)
 	}
 
@@ -112,7 +113,7 @@ func (s *PostService) NotifyCommentCountUpdate(postId int64, userID string, stat
 			s.log.Error("Failed to get post viewers for notification: %v", err)
 			return err
 		}
-
+		s.notificationSvc.SendCommentNotificationToOwner(post.UserID, userID)
 		return s.notificationSvc.NotifyPostsCommentUpdateToSpecifUsers(userID, statsType, count, viewers)
 	}
 
@@ -123,7 +124,7 @@ func (s *PostService) NotifyCommentCountUpdate(postId int64, userID string, stat
 			s.log.Error("Failed to get user followers for notification: %v", err)
 			return err
 		}
-
+		s.notificationSvc.SendCommentNotificationToOwner(post.UserID, userID)
 		return s.notificationSvc.NotifyPostsCommentUpdateToSpecifUsers(userID, statsType, count, followers)
 	}
 
@@ -479,7 +480,7 @@ func (s *PostService) CreateComment(postID int64, userID string, content string,
 
 	// Notify user stats updated
 	if s.notificationSvc != nil {
-		go s.NotifyCommentCountUpdate(postID, userID, "Comments", newCount)
+		go s.NotifyOnCommentCreateOrCount(postID, userID, "Comments", newCount)
 	}
 
 	return comment, nil
