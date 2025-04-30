@@ -22,6 +22,9 @@ const (
 	PrivateMessage EventType = "private_message"
 	MessagesRead   EventType = "messages_read"
 	UserTyping     EventType = "user_typing"
+
+	// header notifications
+	HeaderNotificationUpdate EventType = "notification_Update"
 )
 
 // Event represents a WebSocket event
