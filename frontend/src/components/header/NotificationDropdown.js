@@ -3,56 +3,17 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/NotificationDropdown.module.css';
 import { formatDistanceToNow } from 'date-fns';
+import { useNotificationService } from '@/services/notificationService'; // Adjust the path based on your project structure
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      type: 'message',
-      sender: 'John Doe',
-      avatar: '/avatar1.png',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-      read: false
-    },
-    {
-      id: '2',
-      type: 'reaction',
-      sender: 'Jane Smith',
-      avatar: '/avatar2.png',
-      action: 'liked',
-      contentType: 'photo',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-      read: false
-    },
-    {
-      id: '3',
-      type: 'comment',
-      sender: 'Mike Johnson',
-      avatar: '/avatar4.png',
-      contentType: 'post',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-      read: false
-    },
-    {
-      id: '4',
-      type: 'friendRequest',
-      sender: 'Sarah Wilson',
-      avatar: '/avatar5.png',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-      read: false
-    },
-    {
-      id: '5',
-      type: 'invitation',
-      sender: 'David Brown',
-      avatar: '/avatar6.png',
-      contentType: 'group "Photography Club"',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-      read: false
-    }
-  ]);
   const dropdownRef = useRef(null);
+  const {
+    notifications,
+    isLoadingNotifications,
+    fetchNotifications,
+    handleFriendRequest,
+  } = useNotificationService();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -66,17 +27,9 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Handle friend request response (accept/decline)
   const handleNotificationResponse = async (notificationId, action) => {
-    try {
-      // API call to handle friend request response
-      await fetch(`/api/notifications/${notificationId}/${action}`, {
-        method: 'POST',
-      });
-      // Remove the notification from the list
-      setNotifications(notifications.filter(notif => notif.id !== notificationId));
-    } catch (error) {
-      console.error('Error handling notification response:', error);
-    }
+    await handleFriendRequest(notificationId, action);
   };
 
   const renderNotificationContent = (notification) => {
@@ -121,23 +74,23 @@ export default function NotificationDropdown() {
               <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
             </div>
             <div className={styles.textBox}>
-            <span className={styles.text}>
-              Friend request from <strong>{notification.sender}</strong>
-            </span>
-            <div className={styles.actions}>
-              <button 
-                onClick={() => handleNotificationResponse(notification.id, 'accept')}
-                className={styles.acceptButton}
-              >
-                Accept
-              </button>
-              <button 
-                onClick={() => handleNotificationResponse(notification.id, 'decline')}
-                className={styles.declineButton}
-              >
-                Decline
-              </button>
-            </div>
+              <span className={styles.text}>
+                Friend request from <strong>{notification.sender}</strong>
+              </span>
+              <div className={styles.actions}>
+                <button
+                  onClick={() => handleNotificationResponse(notification.id, 'accept')}
+                  className={styles.acceptButton}
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => handleNotificationResponse(notification.id, 'decline')}
+                  className={styles.declineButton}
+                >
+                  Decline
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -159,7 +112,7 @@ export default function NotificationDropdown() {
 
   return (
     <div className={styles.container} ref={dropdownRef}>
-      <button 
+      <button
         className={`${styles.iconButton} ${isOpen ? styles.active : ''}`}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -168,12 +121,14 @@ export default function NotificationDropdown() {
           <span className={styles.badge}>{notifications.length}</span>
         )}
       </button>
-      
+
       {isOpen && (
         <div className={styles.dropdown}>
           <h3 className={styles.title}>Notifications</h3>
           <div className={styles.notificationList}>
-            {notifications.length > 0 ? (
+            {isLoadingNotifications ? (
+              <div className={styles.loadingState}>Loading notifications...</div>
+            ) : notifications.length > 0 ? (
               notifications.map((notification) => (
                 <div key={notification.id} className={styles.notificationItem}>
                   {renderNotificationContent(notification)}
@@ -190,4 +145,4 @@ export default function NotificationDropdown() {
       )}
     </div>
   );
-} 
+}
