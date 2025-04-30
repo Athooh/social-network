@@ -187,6 +187,9 @@ func (s *FollowService) UnfollowUser(followerID, followingID string) error {
 
 // AcceptFollowRequest accepts a pending follow request
 func (s *FollowService) AcceptFollowRequest(followerID, followingID string) error {
+	if followerID == "" || followingID == "" {
+		return errors.New("follower or following id is required")
+	}
 	// Verify the request exists and is pending
 	request, err := s.repo.GetFollowRequest(followerID, followingID)
 	if err != nil {
