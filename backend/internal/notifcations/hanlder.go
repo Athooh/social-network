@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
@@ -79,13 +80,16 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 	response := make([]NotificationResponse, 0, len(notifications))
 	for _, notification := range notifications {
 		resp := NotificationResponse{
-			ID:           notification.ID,
-			UserID:       notification.UserID,
-			Type:         notification.Type,
-			Message:      notification.Message,
-			IsRead:       notification.IsRead,
-			SenderName:   notification.SenderName,
-			SenderAvatar: notification.SenderAvatar,
+			ID:            notification.ID,
+			UserID:        notification.UserID,
+			Type:          notification.Type,
+			Message:       notification.Message,
+			IsRead:        notification.IsRead,
+			CreatedAt:     notification.CreatedAt.Format(time.RFC3339),
+			TargetGroupID: notification.TargetGroupID.Int64,
+			TargetEventID: notification.TargetEventID.Int64,
+			SenderName:    notification.SenderName,
+			SenderAvatar:  notification.SenderAvatar,
 		}
 
 		if notification.SenderID.Valid && *&notification.SenderID.String != "" {
@@ -116,13 +120,7 @@ func (h *Handler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Get notification ID from URL
-	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) < 3 {
-		h.sendError(w, http.StatusBadRequest, "Invalid URL")
-		return
-	}
-	notificationID, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
+	notificationID, err := strconv.ParseInt(r.URL.Query().Get("notificationId"), 10, 64)
 	if err != nil || notificationID <= 0 {
 		h.sendError(w, http.StatusBadRequest, "Invalid notification ID")
 		return
@@ -183,7 +181,7 @@ func (h *Handler) HandleNotifications(w http.ResponseWriter, r *http.Request) {
 		h.GetNotifications(w, r)
 	case http.MethodPut:
 		// Check if the request is for marking all as read
-		if strings.HasSuffix(r.URL.Path, "read") {
+		if strings.HasSuffix(r.URL.Path, "/read") {
 			h.MarkAllNotificationsAsRead(w, r)
 		} else {
 			h.MarkNotificationAsRead(w, r)
