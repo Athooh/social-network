@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import styles from '@/styles/NotificationDropdown.module.css';
-import { formatDistanceToNow } from 'date-fns';
-import { useNotificationService } from '@/services/notificationService'; // Adjust the path based on your project structure
+import { useState, useEffect, useRef } from "react";
+import styles from "@/styles/NotificationDropdown.module.css";
+import { formatDistanceToNow } from "date-fns";
+import { useNotificationService } from "@/services/notificationService"; // Adjust the path based on your project structure
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +12,9 @@ export default function NotificationDropdown() {
     notifications,
     isLoadingNotifications,
     fetchNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    clearAllNotifications,
     handleFriendRequest,
   } = useNotificationService();
 
@@ -23,8 +26,8 @@ export default function NotificationDropdown() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Handle friend request response (accept/decline)
@@ -32,46 +35,79 @@ export default function NotificationDropdown() {
     await handleFriendRequest(notificationId, action);
   };
 
+  const handleMarkAllAsRead = async () => {
+    await markAllNotificationsAsRead();
+    fetchNotifications();
+  };
+
+  const handleClearAll = async () => {
+    await clearAllNotifications();
+    fetchNotifications();
+  };
+
+  const handleMarkSingleAsRead = async (notificationId) => {
+    await markNotificationAsRead(notificationId);
+    fetchNotifications();
+  };
+
   const renderNotificationContent = (notification) => {
     switch (notification.type) {
-      case 'message':
+      case "message":
         return (
           <div className={styles.notification}>
             <div className={styles.avatarContainer}>
-              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
             </div>
             <span className={styles.text}>
               You have a new message from <strong>{notification.sender}</strong>
             </span>
           </div>
         );
-      case 'reaction':
+      case "reaction":
         return (
           <div className={styles.notification}>
             <div className={styles.avatarContainer}>
-              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
             </div>
             <span className={styles.text}>
-              <strong>{notification.sender}</strong> {notification.action} your {notification.contentType}
+              <strong>{notification.sender}</strong> {notification.action} your{" "}
+              {notification.contentType}
             </span>
           </div>
         );
-      case 'comment':
+      case "comment":
         return (
           <div className={styles.notification}>
             <div className={styles.avatarContainer}>
-              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
             </div>
             <span className={styles.text}>
-              <strong>{notification.sender}</strong> commented on your {notification.contentType}
+              <strong>{notification.sender}</strong> commented on your{" "}
+              {notification.contentType}
             </span>
           </div>
         );
-      case 'friendRequest':
+      case "friendRequest":
         return (
           <div className={styles.notification}>
             <div className={styles.avatarContainer}>
-              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
             </div>
             <div className={styles.textBox}>
               <span className={styles.text}>
@@ -79,13 +115,17 @@ export default function NotificationDropdown() {
               </span>
               <div className={styles.actions}>
                 <button
-                  onClick={() => handleNotificationResponse(notification.id, 'accept')}
+                  onClick={() =>
+                    handleNotificationResponse(notification.id, "accept")
+                  }
                   className={styles.acceptButton}
                 >
                   Accept
                 </button>
                 <button
-                  onClick={() => handleNotificationResponse(notification.id, 'decline')}
+                  onClick={() =>
+                    handleNotificationResponse(notification.id, "decline")
+                  }
                   className={styles.declineButton}
                 >
                   Decline
@@ -94,14 +134,19 @@ export default function NotificationDropdown() {
             </div>
           </div>
         );
-      case 'invitation':
+      case "invitation":
         return (
           <div className={styles.notification}>
             <div className={styles.avatarContainer}>
-              <img src={notification.avatar} alt={notification.sender} className={styles.avatar} />
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
             </div>
             <span className={styles.text}>
-              You have been invited to {notification.contentType} by <strong>{notification.sender}</strong>
+              You have been invited to {notification.contentType} by{" "}
+              <strong>{notification.sender}</strong>
             </span>
           </div>
         );
@@ -113,7 +158,7 @@ export default function NotificationDropdown() {
   return (
     <div className={styles.container} ref={dropdownRef}>
       <button
-        className={`${styles.iconButton} ${isOpen ? styles.active : ''}`}
+        className={`${styles.iconButton} ${isOpen ? styles.active : ""}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <i className="fas fa-bell"></i>
@@ -124,16 +169,50 @@ export default function NotificationDropdown() {
 
       {isOpen && (
         <div className={styles.dropdown}>
-          <h3 className={styles.title}>Notifications</h3>
+          <div className={styles.headerActions}>
+            <h3 className={styles.headerTitle}>Notifications</h3>
+            <div className={styles.actionButtons}>
+              <button
+                className={styles.actionButton}
+                onClick={handleMarkAllAsRead}
+              >
+                Mark all as read
+              </button>
+              <button className={styles.actionButton} onClick={handleClearAll}>
+                Clear all
+              </button>
+            </div>
+          </div>
           <div className={styles.notificationList}>
             {isLoadingNotifications ? (
-              <div className={styles.loadingState}>Loading notifications...</div>
+              <div className={styles.loadingState}>
+                Loading notifications...
+              </div>
             ) : notifications.length > 0 ? (
               notifications.map((notification) => (
-                <div key={notification.id} className={styles.notificationItem}>
-                  {renderNotificationContent(notification)}
+                <div
+                  key={notification.id}
+                  className={`${styles.notificationItem} ${
+                    !notification.read ? styles.unread : ""
+                  }`}
+                >
+                  <div className={styles.notificationHeader}>
+                    {renderNotificationContent(notification)}
+                    {!notification.read && (
+                      <button
+                        className={styles.markReadButton}
+                        onClick={() => handleMarkSingleAsRead(notification.id)}
+                        title="Mark as read"
+                      >
+                        <i className="fas fa-check"></i>
+                        <span className={styles.tooltip}>Mark as read</span>
+                      </button>
+                    )}
+                  </div>
                   <span className={styles.time}>
-                    {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(notification.timestamp), {
+                      addSuffix: true,
+                    })}
                   </span>
                 </div>
               ))
