@@ -15,6 +15,7 @@ export const EVENT_TYPES = {
   PRIVATE_MESSAGE: "private_message",
   MESSAGES_READ: "messages_read",
   USER_TYPING: "user_typing",
+  NOTIFICATION_UPDATE: "notification_Update",
   // Add more event types as needed
   // COMMENT_ADDED: 'comment_added',
   // MESSAGE_RECEIVED: 'message_received',
