@@ -113,7 +113,7 @@ func (h *Handler) AcceptFollowRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Parse request body
 	var request struct {
-		UserID string `json:"userId"` // This is the followerID (user who sent the request)
+		UserID string `json:"followerId"` // This is the followerID (user who sent the request)
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -148,7 +148,7 @@ func (h *Handler) DeclineFollowRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Parse request body
 	var request struct {
-		UserID string `json:"userId"` // This is the followerID (user who sent the request)
+		UserID string `json:"followerId"` // This is the followerID (user who sent the request)
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
