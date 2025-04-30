@@ -189,6 +189,7 @@ func Router(config RouterConfig) http.Handler {
 
 	// Norificarion group routes
 	protectedNotificationGroup := NewRouteGroup("/api/notification", authenticatedRouteMiddleware)
+	protectedNotificationGroup.HandleFunc("/delete", config.NotificationHanlder.DeleteNotification)
 	protectedNotificationGroup.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:

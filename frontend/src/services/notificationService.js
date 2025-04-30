@@ -2,12 +2,17 @@ import { useAuth } from "@/context/authcontext";
 import { showToast } from "@/components/ui/ToastContainer";
 import { useState, useEffect, useCallback } from "react";
 import { EVENT_TYPES, useWebSocket } from "./websocketService";
+import { useFriendService } from "@/services/friendService";
 import { BASE_URL } from "@/utils/constants";
 
 export const useNotificationService = () => {
   const { authenticatedFetch } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const {
+    acceptFriendRequest,
+    declineFriendRequest,
+  } = useFriendService();
   const { subscribe } = useWebSocket();
 
   // Fetch notifications
@@ -27,13 +32,13 @@ export const useNotificationService = () => {
       const data = await response.json();
     
 
-      console.log(" Data from the backend",data)
 
       if (data) {
         // Transform the data to match the component's expected format
         const formattedNotifications = data.map((notification) => ({
           id: notification.id,
           type: notification.type,
+          senderId:notification.senderId,
           sender: notification.senderName || "Unknown",
           avatar: notification.senderAvatar
             ? `${BASE_URL}/uploads/${notification.senderAvatar}`
@@ -147,11 +152,11 @@ export const useNotificationService = () => {
     }
   };
 
-  // Handle friend request response (accept/decline)
-  const handleFriendRequest = async (notificationId, action) => {
+  const DeleteNotification = async (notificationId) => {
     try {
-      const response = await authenticatedFetch(`notifications/${notificationId}/${action}`, {
-        method: "POST",
+      
+      const response = await authenticatedFetch(`notification/delete?notificationId=${notificationId}`, {
+        method: "DELETE",
       });
 
       if (!response.ok) {
@@ -159,14 +164,36 @@ export const useNotificationService = () => {
         throw new Error(
           errorData.message ||
             errorData.error ||
-            `Failed to ${action} friend request`
+            "Failed to delete notifications"
         );
+      }
+      return
+    } catch (error) {
+      console.error(`Error deleting notification:`, error);
+      showToast(error.message || `Error deleting notification`, "error");
+      return;
+    }
+  };
+  // Handle friend request response (accept/decline)
+  const handleFriendRequest = async (followerId,notificationId, action) => {
+    try {
+      
+      if (action === "accept") {
+        const response = await acceptFriendRequest(followerId)
+        if (!response){
+          return;
+        }
+      } else if (action === "decline") {
+        const response = await declineFriendRequest(followerId)
+        if (!response){
+          return;
+        }
       }
 
       setNotifications((prev) =>
         prev.filter((notification) => notification.id !== notificationId)
       );
-      showToast(`Friend request ${action}ed`, "success");
+      DeleteNotification(notificationId)
       return true;
     } catch (error) {
       console.error(`Error ${action}ing friend request:`, error);
@@ -183,6 +210,7 @@ export const useNotificationService = () => {
         const newNotification = {
           id: payload.id,
           type: payload.type,
+          senderId: payload.senderId,
           sender: payload.senderName || "Unknown",
           avatar: payload.senderAvatar
             ? `${BASE_URL}/uploads/${payload.senderAvatar}`

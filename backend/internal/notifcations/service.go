@@ -18,6 +18,7 @@ type Service interface {
 	MarkNotificationAsRead(notificationID int64) error
 	MarkAllNotificationsAsRead(userID string) error
 	ClearAllNotifications(userID string) error
+	DeleteNotification(notificationID int64) error
 }
 
 // NotificationWithUser extends Notification with user information
@@ -168,5 +169,17 @@ func (s *NotificationService) ClearAllNotifications(userID string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *NotificationService) DeleteNotification(notificationID int64) error {
+	if notificationID <= 0 {
+		return errors.New("invalid notification ID")
+	}
+
+	if err := s.repo.DeleteNotificationDb(notificationID); err != nil {
+		s.log.Error("Failed to delete notification: %v", err)
+		return err
+	}
 	return nil
 }

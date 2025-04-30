@@ -3,7 +3,6 @@ package notifications
 import (
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Athooh/social-network/internal/auth"
@@ -174,22 +173,16 @@ func (h *Handler) ClearAllNotifications(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// HandleNotifications handles notification-related requests
-func (h *Handler) HandleNotifications(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		h.GetNotifications(w, r)
-	case http.MethodPut:
-		// Check if the request is for marking all as read
-		if strings.HasSuffix(r.URL.Path, "/read") {
-			h.MarkAllNotificationsAsRead(w, r)
-		} else {
-			h.MarkNotificationAsRead(w, r)
-		}
-	case http.MethodDelete:
-		h.ClearAllNotifications(w, r)
-	default:
-		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+func (h *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
+	notificationID, err := strconv.ParseInt(r.URL.Query().Get("notificationId"), 10, 64)
+	if err != nil || notificationID <= 0 {
+		h.sendError(w, http.StatusBadRequest, "Invalid notification ID")
+		return
+	}
+
+	if err := h.service.DeleteNotification(notificationID); err != nil {
+		h.sendError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 }
 
