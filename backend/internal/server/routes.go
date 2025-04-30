@@ -188,7 +188,7 @@ func Router(config RouterConfig) http.Handler {
 
 	// Norificarion group routes
 	protectedNotificationGroup := NewRouteGroup("/api/notification", authenticatedRouteMiddleware)
-	protectedNotificationGroup.HandleFunc("/", config.NotificationHanlder.HandleNotifications)
+	protectedNotificationGroup.HandleFunc("", config.NotificationHanlder.HandleNotifications)
 	// Add WebSocket route
 	wsRoute := NewRouteGroup("/ws", wsMiddleware)
 	wsRoute.HandleFunc("", config.WSHandler.HandleConnection)
