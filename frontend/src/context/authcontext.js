@@ -96,7 +96,6 @@ export const AuthProvider = ({ children }) => {
     },
     [handleLogout]
   ); // Depend on memoized handleLogout
-
   useEffect(() => {
     const storedUser = localStorage.getItem("userData");
     const storedToken = localStorage.getItem("token");
@@ -112,13 +111,6 @@ export const AuthProvider = ({ children }) => {
       handleLogout(false);
     }
   }, [validateToken]);
-  
-  // Depend on memoized validateToken
-  useEffect(() => {
-    if (token) {
-      fetchUserProfile(token);
-    }
-  }, [token, fetchUserProfile]);
 
   const login = async (formData) => {
     try {
@@ -213,7 +205,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch(`${API_URL}/auth/me`, {
+      const res = await fetch(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
