@@ -18,7 +18,11 @@ import ProfileEvents from "@/components/profile/ProfileEvents";
 import ProfileConnections from "@/components/profile/ProfileConnections";
 import { useFriendService } from "@/services/friendService";
 
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
+
 export default function ProfilePage({ params }) {
+  const user = JSON.parse(localStorage.getItem("userData") || "{}");
   const [activeSection, setActiveSection] = useState("posts");
   const resolvedParams = use(params);
   const { contacts, isLoadingContacts } = useFriendService();
@@ -76,10 +80,10 @@ export default function ProfilePage({ params }) {
       <div className={styles.profileContainer}>
         <ProfileBanner
           bannerUrl="/banner2.jpg"
-          profileUrl="/avatar3.png"
-          fullName="John Doe"
-          followersCount={4356}
-          followingCount={200}
+          profileUrl={BASE_URL+ "/uploads/" + user.avatar}
+          fullName={user.firstName + " " + user.lastName}
+          followersCount={user.followersCount}
+          followingCount={user.followingCount}
           onNavClick={setActiveSection}
         />
         {renderContent()}
