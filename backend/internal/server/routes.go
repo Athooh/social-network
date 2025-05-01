@@ -200,6 +200,7 @@ func Router(config RouterConfig) http.Handler {
 	protectedFollowGroup.Register(mux)
 	protectedGroupGroup.Register(mux)
 	protectedNotificationGroup.Register(mux)
+	protectedUserGroup.Register(mux)
 	chatGroup.Register(mux)
 	wsRoute.Register(mux)
 
