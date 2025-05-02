@@ -137,7 +137,7 @@ const ProfileConnections = () => {
                         src={
                           contact.UserAvatar
                             ? `${BASE_URL}/uploads/${contact.UserAvatar}`
-                            : "/default-avatar.png"
+                            : "/avatar.png"
                         }
                         alt="avatar"
                         className={styles.avatar}
