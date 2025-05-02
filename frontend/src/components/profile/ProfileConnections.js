@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "@/styles/ProfileConnections.module.css";
 import ContactsList from "@/components/contacts/ContactsList";
 import { useAuth } from "@/context/authcontext";
+import { BASE_URL } from "@/utils/constants";
 
 const ProfileConnections = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -127,13 +128,21 @@ const ProfileConnections = () => {
             <div className={styles.contactsGrid}>
               {filteredContacts.length > 0 ? (
                 filteredContacts.map((contact) => (
-                  <div key={`conn-${contact.ID ?? `${contact.FollowerID}-${contact.FollowingID}`}`} className={styles.contactCard}>
+                  <div
+                    key={`conn-${contact.ID ?? `${contact.FollowerID}-${contact.FollowingID}`}`}
+                    className={styles.contactCard}
+                  >
                     <div className={styles.contactInfo}>
                       <img
-                        src={contact.UserAvatar || "/default-avatar.png"}
-                        alt=""
+                        src={
+                          contact.UserAvatar
+                            ? `${BASE_URL}/uploads/${contact.UserAvatar}`
+                            : "/default-avatar.png"
+                        }
+                        alt="avatar"
                         className={styles.avatar}
                       />
+
                       <div className={styles.details}>
                         <h3>{contact.UserName}</h3>
                         <span className={contact.IsOnline ? styles.online : ""}>
