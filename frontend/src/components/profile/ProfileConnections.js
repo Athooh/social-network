@@ -127,7 +127,7 @@ const ProfileConnections = () => {
             <div className={styles.contactsGrid}>
               {filteredContacts.length > 0 ? (
                 filteredContacts.map((contact) => (
-                  <div key={contact.FollowerID} className={styles.contactCard}>
+                  <div key={`conn-${contact.ID ?? `${contact.FollowerID}-${contact.FollowingID}`}`} className={styles.contactCard}>
                     <div className={styles.contactInfo}>
                       <img
                         src={contact.UserAvatar || "/default-avatar.png"}
