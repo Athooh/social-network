@@ -1,9 +1,8 @@
-// src/app/profile/[id]/page.js
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "@/components/header/Header";
-import styles from "@/styles/ProfilePage.module.css"; // Combined styles for the profile page
+import styles from "@/styles/ProfilePage.module.css";
 import { use } from "react";
 import ProfileBanner from "@/components/profile/ProfileBanner";
 import ProfileAboutSideBar from "@/components/profile/ProfileAboutSideBar";
@@ -17,17 +16,63 @@ import ProfileGroups from "@/components/profile/ProfileGroups";
 import ProfileEvents from "@/components/profile/ProfileEvents";
 import ProfileConnections from "@/components/profile/ProfileConnections";
 import { useFriendService } from "@/services/friendService";
+import { useAuth } from "@/context/authcontext";
 
-const API_URL = process.env.API_URL || "http://localhost:8080/api";
+// Define base URL for media assets
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
 export default function ProfilePage({ params }) {
-  const user = JSON.parse(localStorage.getItem("userData") || "{}");
+  // State for user data
+  const [userData, setUserData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState("posts");
+
+  // Get authenticatedFetch from auth context
+  const { authenticatedFetch, isAuthenticated } = useAuth();
+
   const resolvedParams = use(params);
   const { contacts, isLoadingContacts } = useFriendService();
 
-  // Example photos data
+  // Fetch user data when component mounts
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!isAuthenticated) {
+        setError("Authentication required");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await authenticatedFetch("users/me");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+
+        const data = await response.json();
+        console.log("User data:", data);
+        setUserData(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setError("Failed to load user profile. Please try again later.");
+
+        // Fallback to localStorage if API fails
+        const storedUser = JSON.parse(localStorage.getItem("userData") || "{}");
+        if (storedUser && Object.keys(storedUser).length > 0) {
+          setUserData(storedUser);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [authenticatedFetch, isAuthenticated]);
+
+  // Example photos data (should eventually come from API)
   const photos = [
     { url: "/photo1.jpg" },
     { url: "/photo2.jpg" },
@@ -38,14 +83,26 @@ export default function ProfilePage({ params }) {
   ];
 
   const renderContent = () => {
+    // If still loading data, show loading state
+    if (isLoading) {
+      return (
+        <div className={styles.loadingContainer}>Loading profile data...</div>
+      );
+    }
+
+    // If error and no fallback data, show error
+    if (error && !userData) {
+      return <div className={styles.errorContainer}>{error}</div>;
+    }
+
     switch (activeSection) {
       case "about":
-        return <ProfileAbout />;
+        return <ProfileAbout userData={userData} />;
       case "posts":
         return (
           <div className={styles.contentLayout}>
             <div className={styles.leftSidebar}>
-              <ProfileAboutSideBar />
+              <ProfileAboutSideBar userData={userData} />
             </div>
             <div className={styles.mainContent}>
               <CreatePost />
@@ -78,14 +135,20 @@ export default function ProfilePage({ params }) {
     <>
       <Header />
       <div className={styles.profileContainer}>
-        <ProfileBanner
-          bannerUrl="/banner2.jpg"
-          profileUrl={BASE_URL+ "/uploads/" + user.avatar}
-          fullName={user.firstName + " " + user.lastName}
-          followersCount={user.followersCount}
-          followingCount={user.followingCount}
-          onNavClick={setActiveSection}
-        />
+        {userData && (
+          <ProfileBanner
+            bannerUrl={userData.bannerImage || "/banner2.jpg"}
+            profileUrl={
+              userData.avatar
+                ? `${BASE_URL}/uploads/${userData.avatar}`
+                : "/default-avatar.png"
+            }
+            fullName={`${userData.firstName || ""} ${userData.lastName || ""}`}
+            followersCount={userData.followersCount || 0}
+            followingCount={userData.followingCount || 0}
+            onNavClick={setActiveSection}
+          />
+        )}
         {renderContent()}
       </div>
     </>
