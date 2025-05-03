@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
           if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: "user_away" }));
             // Small delay to ensure the message is sent before closing
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
         } catch (error) {
           console.error("Error sending offline status before logout:", error);
@@ -95,7 +95,6 @@ export const AuthProvider = ({ children }) => {
     },
     [handleLogout]
   ); // Depend on memoized handleLogout
-
   useEffect(() => {
     const storedUser = localStorage.getItem("userData");
     const storedToken = localStorage.getItem("token");
@@ -111,7 +110,6 @@ export const AuthProvider = ({ children }) => {
       handleLogout(false);
     }
   }, [validateToken]);
-  // Depend on memoized validateToken
 
   const login = async (formData) => {
     try {
@@ -206,7 +204,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch(`${API_URL}/auth/me`, {
+      const res = await fetch(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -271,6 +269,7 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     isAuthenticated: !!token,
+    fetchUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

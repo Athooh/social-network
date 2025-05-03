@@ -25,27 +25,33 @@ Welcome to the **Social Network** project! This is a Facebook-like social networ
 The Social Network application includes the following features:
 
 1. **User Authentication**:
+
    - Register and login with email, password, and optional fields like avatar, nickname, and bio.
    - Session management using cookies.
 
 2. **Profiles**:
+
    - Public and private profiles.
    - Display user information, posts, followers, and following.
 
 3. **Followers**:
+
    - Follow and unfollow other users.
    - Follow requests for private profiles.
 
 4. **Posts**:
+
    - Create posts with text, images, or GIFs.
    - Set post privacy (public, followers-only, or private).
 
 5. **Groups**:
+
    - Create and join groups.
    - Post and comment within groups.
    - Create and RSVP to group events.
 
 6. **Real-Time Chat**:
+
    - Private messaging between users.
    - Group chat for members of a group.
 
@@ -57,17 +63,20 @@ The Social Network application includes the following features:
 ## Technologies Used
 
 - **Frontend**:
+
   - Next.js (React framework)
   - Tailwind CSS (for styling)
   - Socket.IO (for real-time chat)
 
 - **Backend**:
+
   - Next.js API Routes
   - SQLite (database)
   - Bcrypt (password hashing)
   - Express-session (session management)
 
 - **DevOps**:
+
   - Docker (containerization)
   - Docker Compose (orchestration)
 
@@ -79,6 +88,7 @@ The Social Network application includes the following features:
 ---
 
 ## Project Structure
+
 ```
 social-network/
 ├── frontend/                # Frontend application
@@ -111,6 +121,7 @@ social-network/
 ├── backend/               # Backend application (to be implemented)
 └── README.md             # Project documentation
 ```
+
 ---
 
 ## Setup and Installation
@@ -127,12 +138,14 @@ social-network/
 ### Local Development
 
 1. **Clone the Repository**:
+
    ```bash
    git clone https://github.com/your-username/social-network.git
    cd social-network
    ```
 
 2. **Install Dependencies**:
+
    - For the frontend:
      ```bash
      cd frontend
@@ -145,6 +158,7 @@ social-network/
      ```
 
 3. **Set Up the Database**:
+
    - Run the SQLite migrations to create the necessary tables:
      ```bash
      cd backend
@@ -152,6 +166,7 @@ social-network/
      ```
 
 4. **Start the Development Server**:
+
    - For the frontend:
      ```bash
      cd frontend
@@ -172,6 +187,7 @@ social-network/
 ### Docker Setup
 
 1. **Build and Run the Docker Containers**:
+
    ```bash
    docker-compose up --build
    ```
@@ -184,6 +200,7 @@ social-network/
 ## Running the Application
 
 - **Development Mode**:
+
   - Use `npm run dev` in the `frontend` folder to start the Next.js development server with Turbopack.
   - Use `npm start` in the `backend` folder to start the backend server.
 
