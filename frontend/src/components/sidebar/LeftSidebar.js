@@ -5,43 +5,83 @@ import styles from "@/styles/Sidebar.module.css";
 import { usePathname } from "next/navigation";
 import { useWebSocket, EVENT_TYPES } from "@/services/websocketService";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/authcontext";
+
+// Define base URL for media assets
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
 export default function LeftSidebar() {
   const pathname = usePathname();
   const [person, setPerson] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { subscribe, isConnected } = useWebSocket();
 
-  useEffect(() => {
-    // Load user data from localStorage regardless of connection status
-    const userData = JSON.parse(localStorage.getItem("userData"));
-    
-    if (userData) {
-      setPerson(userData);
-    }
+  // Get authenticatedFetch from auth context
+  const { authenticatedFetch, isAuthenticated } = useAuth();
 
-    // Only set up WebSocket subscription if connected
-    if (!isConnected) {
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!isAuthenticated) {
+        setError("Authentication required");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await authenticatedFetch("users/me");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+
+        const userData = await response.json();
+        console.log("Sidebar user data:", userData);
+        setPerson(userData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching user data in sidebar:", err);
+        setError("Failed to load user data");
+
+        // Fallback to localStorage if API fails
+        const storedUser = JSON.parse(localStorage.getItem("userData") || "{}");
+        if (storedUser && Object.keys(storedUser).length > 0) {
+          setPerson(storedUser);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [authenticatedFetch, isAuthenticated]);
+
+  useEffect(() => {
+    // Only set up WebSocket subscription if connected and user data is available
+    if (!isConnected || !person) {
       return;
     }
 
     // Subscribe to user stats updates
     const handleUserStatsUpdate = (payload) => {
-      if (userData && payload.userId === userData.id) {
-        const updatedUserData = { ...userData };
+      if (person && payload.userId === person.id) {
+        setPerson((prevPerson) => {
+          const updatedPerson = { ...prevPerson };
 
-        // Update the specific stat that changed
-        if (payload.statsType === "Posts") {
-          updatedUserData.numPosts = payload.count;
-        } else if (payload.statsType === "Followers") {
-          updatedUserData.followersCount = payload.count;
-        } else if (payload.statsType === "Following") {
-          updatedUserData.followingCount = payload.count;
-        } else if (payload.statsType === "Groups") {
-          updatedUserData.groupsJoined = payload.count;
-        }
-        // Update localStorage and state
-        localStorage.setItem("userData", JSON.stringify(updatedUserData));
-        setPerson(updatedUserData);
+          // Update the specific stat that changed
+          if (payload.statsType === "Posts") {
+            updatedPerson.numPosts = payload.count;
+          } else if (payload.statsType === "Followers") {
+            updatedPerson.followersCount = payload.count;
+          } else if (payload.statsType === "Following") {
+            updatedPerson.followingCount = payload.count;
+          } else if (payload.statsType === "Groups") {
+            updatedPerson.groupsJoined = payload.count;
+          }
+
+          return updatedPerson;
+        });
       }
     };
 
@@ -53,7 +93,23 @@ export default function LeftSidebar() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [subscribe, isConnected]);
+  }, [subscribe, isConnected, person]);
+
+  if (isLoading) {
+    return (
+      <div className={styles.sidebar}>
+        <div className={styles.loadingIndicator}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (error && !person) {
+    return (
+      <div className={styles.sidebar}>
+        <div className={styles.errorMessage}>{error}</div>
+      </div>
+    );
+  }
 
   if (!person) return null;
 
@@ -77,14 +133,22 @@ export default function LeftSidebar() {
   return (
     <div className={styles.sidebar}>
       <div className={styles.profileSection}>
-        <img src="/avatar4.png" alt="Profile" className={styles.profilePic} />
+        <img
+          src={
+            person.avatar
+              ? `${BASE_URL}/uploads/${person.avatar}`
+              : "/avatar4.png"
+          }
+          alt="Profile"
+          className={styles.profilePic}
+        />
         <h2 className={styles.userName}>{person.firstName}</h2>
         <p className={styles.userProfession}>{person.aboutMe}</p>
 
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
             <div key={stat.label} className={styles.statItem}>
-              <span className={styles.statCount}>{stat.count}</span>
+              <span className={styles.statCount}>{stat.count || 0}</span>
               <span className={styles.statLabel}>{stat.label}</span>
             </div>
           ))}
