@@ -171,58 +171,6 @@ func (r *SQLiteRepository) CreateFollower(followerID, followingID string) error 
 	return tx.Commit()
 }
 
-// SyncFollowStats updates the follower and following counts in the user_stats table
-// based on the actual counts in the followers table
-func (r *SQLiteRepository) SyncFollowStats(userID string) error {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// Get followers count
-	var followersCount int
-	err = tx.QueryRow("SELECT COUNT(*) FROM followers WHERE following_id = ?", userID).Scan(&followersCount)
-	if err != nil {
-		return err
-	}
-
-	// Get following count
-	var followingCount int
-	err = tx.QueryRow("SELECT COUNT(*) FROM followers WHERE follower_id = ?", userID).Scan(&followingCount)
-	if err != nil {
-		return err
-	}
-
-	// Check if user stats record exists
-	var exists bool
-	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM user_stats WHERE user_id = ?)", userID).Scan(&exists)
-	if err != nil {
-		return err
-	}
-
-	now := time.Now()
-	if exists {
-		// Update existing record
-		_, err = tx.Exec(
-			"UPDATE user_stats SET followers_count = ?, following_count = ?, updated_at = ? WHERE user_id = ?",
-			followersCount, followingCount, now, userID)
-	} else {
-		// Create new record
-		_, err = tx.Exec(
-			"INSERT INTO user_stats (user_id, followers_count, following_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-			userID, followersCount, followingCount, now, now)
-	}
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
-}
 
 func (r *SQLiteRepository) DeleteFollower(followerID, followingID string) error {
 	// Start transaction
