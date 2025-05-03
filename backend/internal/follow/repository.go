@@ -3,6 +3,7 @@ package follow
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -151,6 +152,40 @@ func (r *SQLiteRepository) DeleteFollower(followerID, followingID string) error 
 	`
 
 	_, err := r.db.Exec(query, followerID, followingID)
+	return err
+}
+
+func (r *SQLiteRepository) updateUserStats(tx *sql.Tx, userID string, statsType string, increment bool) error {
+	now := time.Now()
+
+	// Check if user stats record exists
+	var exists bool
+	err := tx.QueryRow("SELECT EXISTS(SELECT 1 FROM user_stats WHERE user_id = ?)", userID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		// Update existing record
+		var updateQuery string
+		if increment {
+			updateQuery = fmt.Sprintf("UPDATE user_stats SET %s = %s + 1, updated_at = ? WHERE user_id = ?", statsType, statsType)
+		} else {
+			updateQuery = fmt.Sprintf("UPDATE user_stats SET %s = CASE WHEN %s > 0 THEN %s - 1 ELSE 0 END, updated_at = ? WHERE user_id = ?", statsType, statsType, statsType)
+		}
+		_, err = tx.Exec(updateQuery, now, userID)
+	} else {
+		// Create new record with default values
+		var value int
+		if increment {
+			value = 1
+		} else {
+			value = 0
+		}
+		insertQuery := fmt.Sprintf("INSERT INTO user_stats (user_id, %s, created_at, updated_at) VALUES (?, ?, ?, ?)", statsType)
+		_, err = tx.Exec(insertQuery, userID, value, now, now)
+	}
+
 	return err
 }
 
