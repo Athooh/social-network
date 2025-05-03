@@ -131,17 +131,44 @@ func (r *SQLiteRepository) GetPendingFollowRequests(userID string) ([]*FollowReq
 	return requests, rows.Err()
 }
 
-// CreateFollower creates a new follower relationship
 func (r *SQLiteRepository) CreateFollower(followerID, followingID string) error {
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
 	now := time.Now()
 
+	// Create follower relationship
 	query := `
 		INSERT INTO followers (follower_id, following_id, created_at)
 		VALUES (?, ?, ?)
 	`
+	_, err = tx.Exec(query, followerID, followingID, now)
+	if err != nil {
+		return err
+	}
 
-	_, err := r.db.Exec(query, followerID, followingID, now)
-	return err
+	// Update user_stats for the person being followed (increase followers_count)
+	err = r.updateUserStats(tx, followingID, "followers_count", true)
+	if err != nil {
+		return err
+	}
+
+	// Update user_stats for the follower (increase following_count)
+	err = r.updateUserStats(tx, followerID, "following_count", true)
+	if err != nil {
+		return err
+	}
+
+	// Commit transaction
+	return tx.Commit()
 }
 
 func (r *SQLiteRepository) DeleteFollower(followerID, followingID string) error {
