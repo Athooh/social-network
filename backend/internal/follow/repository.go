@@ -144,15 +144,42 @@ func (r *SQLiteRepository) CreateFollower(followerID, followingID string) error 
 	return err
 }
 
-// DeleteFollower removes a follower relationship
 func (r *SQLiteRepository) DeleteFollower(followerID, followingID string) error {
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Remove follower relationship
 	query := `
 		DELETE FROM followers
 		WHERE follower_id = ? AND following_id = ?
 	`
+	_, err = tx.Exec(query, followerID, followingID)
+	if err != nil {
+		return err
+	}
 
-	_, err := r.db.Exec(query, followerID, followingID)
-	return err
+	// Update user_stats for the person being unfollowed (decrease followers_count)
+	err = r.updateUserStats(tx, followingID, "followers_count", false)
+	if err != nil {
+		return err
+	}
+
+	// Update user_stats for the follower (decrease following_count)
+	err = r.updateUserStats(tx, followerID, "following_count", false)
+	if err != nil {
+		return err
+	}
+
+	// Commit transaction
+	return tx.Commit()
 }
 
 func (r *SQLiteRepository) updateUserStats(tx *sql.Tx, userID string, statsType string, increment bool) error {
