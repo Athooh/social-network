@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+// Add new imports for components
+import GroupAbout from '@/components/groups/GroupAbout';
+import GroupPhotos from '@/components/groups/GroupPhotos';
+import GroupMembers from '@/components/groups/GroupMembers';
+import GroupEvents from '@/components/groups/GroupEvents';
 import { useParams } from 'next/navigation';
 import Header from '@/components/header/Header';
 import LeftSidebar from '@/components/sidebar/LeftSidebar';
@@ -9,6 +14,8 @@ import styles from '@/styles/page.module.css';
 import groupStyles from '@/styles/GroupPage.module.css';
 import GroupCreatePost from '@/components/groups/GroupCreatePost';
 import GroupPost from '@/components/groups/Group-Posts';
+// Add GroupChat to imports
+import GroupChat from '@/components/groups/GroupChat';
 
 export default function GroupPostPage() {
   const params = useParams();
@@ -18,6 +25,7 @@ export default function GroupPostPage() {
   const [loading, setLoading] = useState(true);
   // Add activeSection state
   const [activeSection, setActiveSection] = useState('GroupPost');
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Add handleNavClick function
   const handleNavClick = (e, section) => {
@@ -54,6 +62,31 @@ export default function GroupPostPage() {
 
     setLoading(false);
   }, [groupId, postId]);
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'GroupPost':
+        return (
+          <>
+            <GroupCreatePost groupId={groupId} groupName={group.name} />
+            <GroupPost post={post} onPostUpdated={() => {/* Refresh post data */}} />
+          </>
+        );
+      case 'AboutGroup':
+        return <GroupAbout group={group} />;
+      case 'photos':
+        return <GroupPhotos groupId={groupId} />;
+      case 'GroupMembers':
+        return <GroupMembers groupId={groupId} />;
+      case 'GroupEvents':
+        return <GroupEvents groupId={groupId} />;
+      // Add to renderContent switch
+      case 'GroupChat':
+        return <GroupChat groupId={groupId} groupName={group.name} />;
+      default:
+        return null;
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -113,7 +146,7 @@ export default function GroupPostPage() {
                         className={activeSection === 'GroupMembers' ? styles.active : ''} 
                         onClick={(e) => handleNavClick(e, 'GroupMembers')}
                       >
-                        Groups
+                        Members
                       </a>
                       <a 
                         href="#" 
@@ -122,18 +155,22 @@ export default function GroupPostPage() {
                       >
                         Events
                       </a>
+                      <a 
+                        href="#" 
+                        className={activeSection === 'GroupChat' ? styles.active : ''} 
+                        onClick={(e) => handleNavClick(e, 'GroupChat')}
+                      >
+                        Chat
+                        {unreadMessages > 0 && (
+                          <span className={styles.unreadBadge}>{unreadMessages}</span>
+                        )}
+                      </a>
                     </nav>
                   </div>
           </div>
 
           <div className={groupStyles.content}>
-            <GroupCreatePost groupId={groupId} groupName={group.name} />
-            <GroupPost 
-              post={post}
-              onPostUpdated={() => {
-                // Refresh post data
-              }}
-            />
+            {renderContent()}
           </div>
         </main>
         <aside className={styles.rightSidebar}>
