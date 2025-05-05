@@ -16,6 +16,14 @@ export default function GroupPostPage() {
   const [group, setGroup] = useState(null);
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Add activeSection state
+  const [activeSection, setActiveSection] = useState('GroupPost');
+
+  // Add handleNavClick function
+  const handleNavClick = (e, section) => {
+    e.preventDefault();
+    setActiveSection(section);
+  };
 
   useEffect(() => {
     // TODO: Replace with actual API call to fetch group and post data
@@ -77,6 +85,45 @@ export default function GroupPostPage() {
                 <span>{group.memberCount.toLocaleString()} members</span>
               </div>
             </div>
+            <div className={groupStyles.groupNav}>
+                  <nav>
+                    <a 
+                        href="#" 
+                        className={activeSection === 'GroupPost' ? styles.active : ''} 
+                        onClick={(e) => handleNavClick(e, 'GroupPost')}
+                      >
+                        Posts
+                      </a>
+                      <a 
+                        href="#" 
+                        className={activeSection === 'AboutGroup' ? styles.active : ''} 
+                        onClick={(e) => handleNavClick(e, 'AboutGroup')}
+                      >
+                        About
+                      </a>
+                      <a 
+                        href="#" 
+                        className={activeSection === 'photos' ? styles.active : ''} 
+                        onClick={(e) => handleNavClick(e, 'photos')}
+                      >
+                        Photos
+                      </a>
+                      <a 
+                        href="#" 
+                        className={activeSection === 'GroupMembers' ? styles.active : ''} 
+                        onClick={(e) => handleNavClick(e, 'GroupMembers')}
+                      >
+                        Groups
+                      </a>
+                      <a 
+                        href="#" 
+                        className={activeSection === 'GroupEvents' ? styles.active : ''} 
+                        onClick={(e) => handleNavClick(e, 'GroupEvents')}
+                      >
+                        Events
+                      </a>
+                    </nav>
+                  </div>
           </div>
 
           <div className={groupStyles.content}>

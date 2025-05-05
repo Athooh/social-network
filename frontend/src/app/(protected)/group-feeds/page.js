@@ -137,6 +137,7 @@ export default function GroupFeeds() {
                       <span>{group.memberCount.toLocaleString()} members</span>
                     </div>
                   </div>
+                  
                 </div>
                 <div className={groupFeeds.groupActions}>
                   <button className={groupFeeds.joinButton}>
