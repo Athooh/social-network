@@ -12,6 +12,7 @@ import { EVENT_TYPES } from "@/services/websocketService";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { useWebSocket } from "@/services/websocketService";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 
 export default function Post({ post, onPostUpdated }) {
   const {
@@ -39,6 +40,7 @@ export default function Post({ post, onPostUpdated }) {
     message: "",
     onConfirm: () => {},
   });
+  const router = useRouter();
 
   // Format the post data to match component expectations
   const formattedPost = {
@@ -352,6 +354,11 @@ export default function Post({ post, onPostUpdated }) {
     };
   }, [post.id, subscribe]);
 
+  const handleUserClick = (userId) => {
+    // Navigate to profile page regardless of whether it's the current user or not
+    router.push(`/profile/${userId}`);
+  };
+
   return (
     <article className={styles.post}>
       <div className={styles.postHeader}>
@@ -360,9 +367,17 @@ export default function Post({ post, onPostUpdated }) {
             src={formattedPost.authorImage}
             alt={formattedPost.authorName}
             className={styles.authorAvatar}
+            onClick={() => handleUserClick(formattedPost.userId)}
+            style={{ cursor: 'pointer' }}
           />
           <div className={styles.authorInfo}>
-            <h3>{formattedPost.authorName}</h3>
+            <h3 
+              onClick={() => handleUserClick(formattedPost.userId)}
+              style={{ cursor: 'pointer' }}
+              className={styles.authorName}
+            >
+              {formattedPost.authorName}
+            </h3>
             <div className={styles.postMeta}>
               <span>{formattedPost.timestamp}</span>
               <span className={styles.dot}>•</span>
