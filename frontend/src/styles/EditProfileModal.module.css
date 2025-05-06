@@ -211,6 +211,55 @@
   background: #166fe5;
 }
 
+.privacyToggle {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggleLabel input[type="checkbox"] {
+  appearance: none;
+  width: 50px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 12px;
+  position: relative;
+  margin-right: 12px;
+  transition: background-color 0.3s;
+}
+
+.toggleLabel input[type="checkbox"]:checked {
+  background-color: #4CAF50;
+}
+
+.toggleLabel input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+}
+
+.toggleLabel input[type="checkbox"]:checked::before {
+  transform: translateX(26px);
+}
+
+.toggleText {
+  font-size: 0.9rem;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .modalContent {
     width: 100%;
@@ -222,4 +271,4 @@
   .imageSection {
     margin-bottom: 80px;
   }
-} 
+}
