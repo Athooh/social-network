@@ -43,7 +43,7 @@
   }
   
   .userInfo h2 {
-    margin: 0 0 10px 0;
+    margin: 0 0 5px 0;
     font-size: 24px;
   }
   
@@ -121,4 +121,27 @@
 
   .profileNav a:hover {
     color: #1877f2;
+  }
+
+  .privacyBadge {
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .private {
+    background-color: #ffefef;
+    color: #e63946;
+  }
+
+  .public {
+    background-color: #e8f5e9;
+    color: #2e7d32;
   }

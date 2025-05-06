@@ -34,6 +34,7 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
     techSkills: profileData?.techSkills ? profileData.techSkills.split(',') : [],
     softSkills: profileData?.softSkills ? profileData.softSkills.split(',') : [],
     interests: profileData?.interests ? profileData.interests.split(',') : [],
+    isPrivate: profileData?.isPrivate || false,
   });
 
   const [bannerPreview, setBannerPreview] = useState(profileData?.bannerUrl || '');
@@ -172,6 +173,30 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                   onChange={handleInputChange}
                   placeholder="Full Name"
                 />
+              </div>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <h3>Profile Privacy</h3>
+              <div className={styles.field}>
+                <div className={styles.privacyToggle}>
+                  <label className={styles.toggleLabel}>
+                    <input
+                      type="checkbox"
+                      name="isPrivate"
+                      checked={formData.isPrivate}
+                      onChange={(e) => handleInputChange({
+                        target: {
+                          name: 'isPrivate',
+                          value: e.target.checked
+                        }
+                      })}
+                    />
+                    <span className={styles.toggleText}>
+                      {formData.isPrivate ? 'Private Profile' : 'Public Profile'}
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
