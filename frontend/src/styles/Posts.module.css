@@ -1131,4 +1131,18 @@
 
 .deleteCommentBtn:hover {
   text-decoration: underline;
-} 
+}
+
+.authorName {
+  color: #1a1a1a;
+  transition: color 0.2s ease;
+}
+
+/* .authorName:hover {
+  color: #2078f4;
+  text-decoration: underline;
+} */
+
+.postAuthor img:hover {
+  opacity: 0.9;
+}
