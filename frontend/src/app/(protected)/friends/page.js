@@ -3,7 +3,7 @@
 import Header from '@/components/header/Header'
 import pageStyles from '@/styles/page.module.css'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import FriendsSidebar from '@/components/sidebar/FriendsSidebar'
+import LeftSidebar from '@/components/sidebar/LeftSidebar'
 import styles from '@/styles/Friends.module.css'
 
 const sampleFriends = [
@@ -77,7 +77,7 @@ export default function FriendsPage() {
       <Header />
       <div className={styles.container}>
       <aside>
-        <FriendsSidebar />
+        <LeftSidebar />
       </aside>
       <main className={styles.mainContent}>
       <div className={styles.friendsGrid}>
