@@ -10,6 +10,7 @@ import { BASE_URL } from '@/utils/constants';
 import { useWebSocket } from '@/services/websocketService';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function GroupPost({ post, onPostUpdated, isDetailView = false }) {
   const {
@@ -37,6 +38,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
   });
   const [comments, setComments] = useState([]);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
+  const router = useRouter();
 
   // Format the post data
   const formattedPost = {
@@ -197,17 +199,33 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
     setShowConfirmModal(true);
   };
 
+  const handleUserClick = (userId) => {
+    router.push(`/profile/${userId}`);
+  };
+
   return (
     <article className={styles.post}>
       <div className={styles.postHeader}>
         <div className={styles.postAuthor}>
-          <img src={formattedPost.authorImage} alt={formattedPost.authorName} className={styles.authorAvatar} />
+          <img
+            src={post.userData?.avatar || "/avatar4.png"}
+            alt={`${post.userData?.firstName} ${post.userData?.lastName}`}
+            className={styles.authorAvatar}
+            onClick={() => handleUserClick(post.userId)}
+            style={{ cursor: 'pointer' }}
+          />
           <div className={styles.authorInfo}>
-            <h3>{formattedPost.authorName}</h3>
+            <h3 
+              onClick={() => handleUserClick(post.userId)}
+              style={{ cursor: 'pointer' }}
+              className={styles.authorName}
+            >
+              {`${post.userData?.firstName} ${post.userData?.lastName}`}
+            </h3>
             <div className={styles.postMeta}>
-              <span>{formattedPost.timestamp}</span>
+              <span>{formatRelativeTime(post.createdAt)}</span>
               <span className={styles.dot}>•</span>
-              <span className={styles.groupName}>{formattedPost.groupName}</span>
+              <span>{post.groupName}</span>
             </div>
           </div>
         </div>
