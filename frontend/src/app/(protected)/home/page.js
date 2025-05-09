@@ -134,30 +134,35 @@ export default function Home() {
             <CreatePost />
           </section>
           <section className={styles.feedSection}>
-            {posts.map((post, index) => {
-              // Create a unique key that combines post.id with the index
-              const uniqueKey = `post-${post.id}-${index}`;
+            {Array.isArray(posts) &&
+              posts.map((post, index) => {
+                if (!post) return null;
+                // Create a unique key that combines post.id with the index
+                const uniqueKey = `post-${post.id || index}-${index}`;
 
-              if (posts.length === index + 1) {
-                return (
-                  <div ref={lastPostElementRef} key={`${uniqueKey}-container`}>
+                if ((posts?.length || 0) === index + 1) {
+                  return (
+                    <div
+                      ref={lastPostElementRef}
+                      key={`${uniqueKey}-container`}
+                    >
+                      <Post
+                        key={uniqueKey}
+                        post={post}
+                        onPostUpdated={refreshFeed}
+                      />
+                    </div>
+                  );
+                } else {
+                  return (
                     <Post
                       key={uniqueKey}
                       post={post}
                       onPostUpdated={refreshFeed}
                     />
-                  </div>
-                );
-              } else {
-                return (
-                  <Post
-                    key={uniqueKey}
-                    post={post}
-                    onPostUpdated={refreshFeed}
-                  />
-                );
-              }
-            })}
+                  );
+                }
+              })}
 
             {loading && (
               <div className={postStyles.loadingState}>
