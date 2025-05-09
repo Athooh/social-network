@@ -11,6 +11,15 @@ import { useGroupService } from "@/services/groupService";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
+let userdata = null;
+try {
+  const raw = localStorage.getItem("userData");
+  if (raw) userdata = JSON.parse(raw);
+  console.log("User data from localStorage:", userdata);
+} catch (e) {
+  console.error("Invalid userData in localStorage:", e);
+}
+
 
 export default function Groups() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,16 +95,24 @@ export default function Groups() {
                     <button className={styles.inviteBtn}>
                       <i className="fas fa-user-plus"></i> Invite
                     </button>
-                    {(group.IsMember) ?
-                      <button className={styles.leaveBtn}>
-                        Leave Group
-                      </button>
-                      :
+
+                    {group.IsMember ? (
+                      userdata.id === group.Creator.id ? (
+                        <button className={styles.leaveBtn}>
+                          Delete Group
+                        </button>
+                      ) : (
+                        <button className={styles.leaveBtn}>
+                          Leave Group
+                        </button>
+                      )
+                    ) : (
                       <button className={styles.inviteBtn}>
                         Join Group
                       </button>
-                    }
+                    )}
                   </div>
+
                 </div>
               </div>
             ))}
