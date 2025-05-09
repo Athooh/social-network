@@ -49,8 +49,8 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	// Get form values
 	name := r.FormValue("name")
 	description := r.FormValue("description")
-	isPublicStr := r.FormValue("isPublic")
-	isPublic := isPublicStr == "true"
+	isPublicStr := r.FormValue("privacy")
+	isPublic := isPublicStr == "public"
 
 	// Get file uploads
 	var banner, profilePic *multipart.FileHeader
