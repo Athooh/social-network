@@ -277,7 +277,7 @@ func CreateMigrations(db *DB) error {
 	}
 
 	// Run migrations
-	if err := runMigrations(db.DB, db.config.DBPath, db.config.MigrationsPath); err != nil {
+	if err := runMigrations(db.DB, db.config.MigrationsPath); err != nil {
 		db.DB.Close()
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
