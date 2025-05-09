@@ -65,7 +65,15 @@ export default function Groups() {
 
                   <div className={styles.memberInfo}>
                     <div className={styles.memberAvatars}>
-                      {/* If you have member avatars, render here */}
+                      {group.Members.slice(0, 3).map((member, index) => (
+                        <img
+                          key={member.Id}
+                          src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                          alt=""
+                          className={styles.memberAvatar}
+                          style={{ zIndex: 3 - index }}
+                        />
+                      ))}
                     </div>
                     <span className={styles.memberCount}>
                       {group.MemberCount.toLocaleString()} members
@@ -78,11 +86,11 @@ export default function Groups() {
                     <button className={styles.inviteBtn}>
                       <i className="fas fa-user-plus"></i> Invite
                     </button>
-                    { (group.IsMember) ?
+                    {(group.IsMember) ?
                       <button className={styles.leaveBtn}>
                         Leave Group
                       </button>
-                    :
+                      :
                       <button className={styles.joinBtn}>
                         Join Group
                       </button>
@@ -95,7 +103,7 @@ export default function Groups() {
         </main>
       </div>
 
-      <CreateGroupModal 
+      <CreateGroupModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
