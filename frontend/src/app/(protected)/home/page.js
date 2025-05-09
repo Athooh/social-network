@@ -51,6 +51,10 @@ export default function Home() {
   const loadPosts = useCallback(
     async (pageNum = 1, replace = false) => {
       if (loading) return;
+      if (!getFeedPosts) {
+        console.error("getFeedPosts function is not available");
+        return;
+      }
 
       setLoading(true);
       try {
