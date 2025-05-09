@@ -56,7 +56,7 @@ const sampleGroups = [
       {
         id: 2,
         content: "📸 Monthly Photo Challenge: Urban Wildlife\n\nThis month's theme is all about capturing the wildlife in our cities!\n\nRules:\n1. Must be taken this month\n2. No zoo photos\n3. Urban setting required\n\nPrize: Feature in our monthly showcase + photography guidebook\n\nSubmit your entries in the comments!",
-        imageUrl: "/sample-photo-1.jpg",
+        imageUrl: "/banner6.jpg",
         userData: {
           firstName: "Jane",
           lastName: "Smith",

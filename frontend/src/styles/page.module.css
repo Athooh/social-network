@@ -32,3 +32,17 @@
   height: auto;
   margin: var(--spacing-md) 0;
 }
+
+@media screen and (max-width: 480px) {
+  .container {
+    padding-top: calc(var(--header-height-mobile) + var(--spacing-xs));
+    grid-template-columns: 1fr;
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .welcomeSection {
+    margin-bottom: var(--spacing-sm);
+  }
+}

@@ -259,3 +259,31 @@
 .searchInput::placeholder {
   color: var(--text-secondary);
 }
+
+/* Mobile devices (portrait) */
+@media screen and (max-width: 480px) {
+  .header {
+    max-width: 100%;
+    padding: 10px;
+    height: var(--header-height-mobile);
+  }
+  .headerContent {
+    max-width: calc(100% - 20px); /* 10px gap on each side */
+    padding: 0 10px;
+    flex-direction: column;
+  }
+
+  .searchContainer {
+    display: none;
+  }
+
+  .nav {
+    border-top: 1px solid var(--border-color);
+    padding-block: var(--spacing-sm);
+  }
+
+  .nav a {
+    padding-inline: var(--spacing-xs);
+  }
+
+}
