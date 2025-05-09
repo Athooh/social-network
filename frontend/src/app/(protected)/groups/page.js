@@ -59,7 +59,14 @@ export default function Groups() {
           </div>
 
           <div className={styles.groupsGrid}>
-            {allGroups.map(group => (
+            {allGroups === null && (
+              <div className={styles.noGroups}>
+                <h2>No groups found</h2>
+                <p>Start by creating a new group!</p>
+              </div>
+            )}
+
+            {allGroups != null && allGroups.map(group => (
               <div key={group.ID} className={styles.groupCard}>
                 <div className={styles.groupBanner}>
                   <img src={group.BannerPath.String ? `${BASE_URL}/uploads/${group.BannerPath.String}` : "/banner5.jpg"} alt="" className={styles.bannerImg} />
