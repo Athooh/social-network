@@ -16,7 +16,7 @@ type Repository interface {
 	CreateGroup(group *models.Group) error
 	GetGroupByID(id string) (*models.Group, error)
 	GetGroupsByUserID(userID string) ([]*models.Group, error)
-	GetAllGroups(limit, offset int) ([]*models.Group, error)
+	GetAllGroups(userid string, limit, offset int) ([]*models.Group, error)
 	UpdateGroup(group *models.Group) error
 	DeleteGroup(id string) error
 	GetGroupMemberCount(groupID string) (int, error)
@@ -241,7 +241,7 @@ func (r *SQLiteRepository) GetGroupsByUserID(userID string) ([]*models.Group, er
 }
 
 // GetAllGroups retrieves all groups with pagination
-func (r *SQLiteRepository) GetAllGroups(limit, offset int) ([]*models.Group, error) {
+func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*models.Group, error) {
 	query := `
 		SELECT id, name, description, creator_id, banner_path, profile_pic_path, 
 		       is_public, created_at, updated_at
@@ -299,6 +299,13 @@ func (r *SQLiteRepository) GetAllGroups(limit, offset int) ([]*models.Group, err
 			return nil, fmt.Errorf("failed to get group members: %w", err)
 		}
 		group.Members = members
+
+		_ , err = r.GetMemberByID(group.ID, userid)
+		if err != nil {	
+			return nil, fmt.Errorf("failed to get member info: %w", err)	
+		} else {
+			group.IsMember = true
+		}
 
 		groups = append(groups, &group)
 	}
