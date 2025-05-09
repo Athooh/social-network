@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import styles from '@/styles/CreateGroupModal.module.css';
+import { useGroupService } from '@/services/groupService';
 
 const CreateGroupModal = ({ isOpen, onClose }) => {
   const [groupData, setGroupData] = useState({
@@ -11,7 +12,8 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
     banner: null,
     profilePic: null
   });
-
+  
+  const { createGroup } = useGroupService();
   const [bannerPreview, setBannerPreview] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
 
@@ -34,7 +36,13 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission here
+    const formData = new FormData();
+    formData.append('name', groupData.name);
+    formData.append('description', groupData.description);
+    formData.append('privacy', groupData.privacy);
+    if (groupData.banner) formData.append('banner', groupData.banner);
+    if (groupData.profilePic) formData.append('profilePic', groupData.profilePic);
+    createGroup(formData)
     onClose();
   };
 
