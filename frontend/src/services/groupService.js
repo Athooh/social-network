@@ -30,5 +30,27 @@ export const useGroupService = () => {
             showToast(error.message || "Error creating group", "error");
         }
     }
-    return { createGroup };
+
+    const getallgroups = async () => {
+        try {
+            const response = await authenticatedFetch("groups", {
+                method: "GET",
+            });
+            console.log("Response from getallgroups:", response);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData.message || errorData.error || "Failed to fetch groups"
+                );
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching groups:", error);
+            showToast(error.message || "Error fetching groups", "error");
+        }
+    }
+    return { createGroup, getallgroups };
 }
