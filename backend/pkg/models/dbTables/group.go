@@ -22,6 +22,7 @@ type Group struct {
 	Creator       *UserBasic     `db:"-"`
 	IsMember      bool           `db:"-"`
 	MemberStatus  string         `db:"-"`
+	Members 	[]*GroupMember   `db:"-"`
 }
 
 // GroupMember represents a member of a group
