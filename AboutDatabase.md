@@ -3,6 +3,7 @@
 This guide explains how to add new tables or update existing ones in the social network project's SQLite database system.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Database Architecture](#database-architecture)
 - [Adding a New Table](#adding-a-new-table)
@@ -14,6 +15,7 @@ This guide explains how to add new tables or update existing ones in the social 
 ## Overview
 
 The project uses a custom migration system built on top of the golang-migrate/migrate package. This system:
+
 - Automatically generates SQL migration files from Go struct definitions
 - Handles schema versioning and updates
 - Provides both forward (up) and rollback (down) migrations
@@ -22,6 +24,7 @@ The project uses a custom migration system built on top of the golang-migrate/mi
 ## Database Architecture
 
 The database layer consists of:
+
 - **Model definitions**: Go structs in `pkg/models/dbTables/` with struct tags
 - **Migration system**: Code in `pkg/db/sqlite/` that generates and runs migrations
 - **Migration files**: SQL files in `pkg/db/migrations/sqlite/`
@@ -29,7 +32,9 @@ The database layer consists of:
 ## Adding a New Table
 
 ### Step 1: Create a Model Struct
+
 Create a new Go struct in the `pkg/models/dbTables/` directory:
+
 ```go
 package models
 
@@ -47,6 +52,7 @@ type Example struct {
 ```
 
 ### Step 2: Register the Model
+
 Add your new model to the DiscoverModelStructs() function in pkg/db/sqlite/sqlite.go:
 
 ```go
@@ -68,14 +74,16 @@ func DiscoverModelStructs() []interface{} {
 ```
 
 ### Step 3: Generate and Run Migrations
-The system will automatically generate migration files when you run the application. 
+
+The system will automatically generate migration files when you run the application.
 
 ## Updating an Existing Table
 
 ### Step 1: Modify the Model Struct
+
 Update the existing struct in pkg/models/dbTables/ with your changes
 
-```go   
+```go
 // User represents a user in the system
 type User struct {
     ID          string    `db:"id,pk"`
@@ -96,7 +104,9 @@ type User struct {
 ```
 
 ### Step 2: Generate Update Migrations
+
 The system will automatically detect schema changes and generate migration files when you run:
+
 ```go
 if err := db.UpdateMigrations(); err != nil {
     log.Fatalf("Failed to update migrations: %v", err)
@@ -106,16 +116,19 @@ if err := db.UpdateMigrations(); err != nil {
 This is also called automatically by CreateMigrations().
 
 ## Running Migrations
+
 Migrations are automatically run when the application starts. The system:
+
 - Checks for "dirty" migrations (failed previous attempts)
 - Applies any pending migrations
 - Handles versioning automatically
 
-
 ## Advanced Features
 
 ### Struct Tags
+
 The system supports several struct tags to define column properties:
+
 ```sh
 db:"name,option1,option2,...": Main tag for column definition
 pk: Primary key
@@ -131,7 +144,9 @@ name=indexname: Custom index name
 ```
 
 ### Composite Primary Keys
+
 For tables with composite primary keys:
+
 ```go
 type PostViewer struct {
     PostID int64  `db:"post_id,notnull" index:""`
@@ -142,7 +157,9 @@ type PostViewer struct {
 ```
 
 ### Custom SQL Types
+
 The system automatically maps Go types to SQLite types:
+
 ```sh
 bool → BOOLEAN
 int/int64 → INTEGER
@@ -155,11 +172,13 @@ time.Time → TIMESTAMP
 ## Troubleshooting
 
 ### Dirty Migrations
+
 If a migration fails halfway through, the database will be marked as "dirty". The system will automatically attempt to fix this by forcing the version to the last known good state.
 
 ### Migration Conflicts
 
 If you get errors about migration conflicts:
+
 - Check if the migration already exists
 - Ensure your model changes are compatible with existing data
 - For major schema changes, consider creating a new table and migrating data manually

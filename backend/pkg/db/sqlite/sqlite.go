@@ -36,9 +36,13 @@ func New(config Config) (*DB, error) {
 	if err := os.MkdirAll(dbDir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
 	}
+	dsn := fmt.Sprintf(
+		"%s?_foreign_keys=on&_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000",
+		config.DBPath,
+	)
 
 	// Open the database connection
-	db, err := sql.Open("sqlite3", config.DBPath+"?_foreign_keys=on")
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -48,12 +52,16 @@ func New(config Config) (*DB, error) {
 		db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
+	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+        db.Close()
+        return nil, fmt.Errorf("pragma journal_mode: %w", err)
+    }
 
 	return &DB{db, config}, nil
 }
 
 // runMigrations runs the database migrations
-func runMigrations(db *sql.DB, dbPath, migrationsPath string) error {
+func runMigrations(db *sql.DB, migrationsPath string) error {
 	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to create migration driver: %w", err)
@@ -269,7 +277,7 @@ func CreateMigrations(db *DB) error {
 	}
 
 	// Run migrations
-	if err := runMigrations(db.DB, db.config.DBPath, db.config.MigrationsPath); err != nil {
+	if err := runMigrations(db.DB, db.config.MigrationsPath); err != nil {
 		db.DB.Close()
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}

@@ -39,7 +39,8 @@ const contacts = [
 const pageSize = 10;
 
 export default function Home() {
-  const { getFeedPosts, newPosts, getAndClearNewPosts } = usePostService();
+  const { getFeedPosts, newPosts, getAndClearNewPosts } =
+    usePostService() || {};
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -53,9 +54,10 @@ export default function Home() {
 
       setLoading(true);
       try {
-        const data = await getFeedPosts(pageNum, pageSize);
+        let data = await getFeedPosts(pageNum, pageSize);
 
-        if (!data) {
+        // Ensure data is an array
+        if (!data || !Array.isArray(data)) {
           data = [];
         }
 
@@ -66,7 +68,7 @@ export default function Home() {
         if (replace) {
           setPosts(data);
         } else {
-          setPosts((prev) => [...prev, ...data]);
+          setPosts((prev) => [...(prev || []), ...data]);
         }
 
         setPage(pageNum);
@@ -82,11 +84,11 @@ export default function Home() {
   // Initial load - adding a ref to prevent multiple calls
   const initialLoadRef = useRef(false);
   useEffect(() => {
-    if (!initialLoadRef.current) {
+    if (!initialLoadRef.current && getFeedPosts) {
       loadPosts(1, true);
       initialLoadRef.current = true;
     }
-  }, [loadPosts]);
+  }, [loadPosts, getFeedPosts]);
 
   // Replace the refreshTrigger effect with a more controlled approach
   const refreshFeed = useCallback(() => {
@@ -95,9 +97,11 @@ export default function Home() {
 
   // Handle new posts from WebSocket
   useEffect(() => {
-    if (newPosts.length > 0) {
+    if (Array.isArray(newPosts) && newPosts.length > 0 && getAndClearNewPosts) {
       const incomingPosts = getAndClearNewPosts();
-      setPosts((prev) => [...incomingPosts, ...prev]);
+      if (Array.isArray(incomingPosts) && incomingPosts.length > 0) {
+        setPosts((prev) => [...incomingPosts, ...(prev || [])]);
+      }
     }
   }, [newPosts, getAndClearNewPosts]);
 
@@ -108,7 +112,7 @@ export default function Home() {
       if (observer.current) observer.current.disconnect();
 
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
+        if (entries[0]?.isIntersecting && hasMore) {
           loadPosts(page + 1);
         }
       });
@@ -130,30 +134,35 @@ export default function Home() {
             <CreatePost />
           </section>
           <section className={styles.feedSection}>
-            {posts.map((post, index) => {
-              // Create a unique key that combines post.id with the index
-              const uniqueKey = `post-${post.id}-${index}`;
+            {Array.isArray(posts) &&
+              posts.map((post, index) => {
+                if (!post) return null;
+                // Create a unique key that combines post.id with the index
+                const uniqueKey = `post-${post.id || index}-${index}`;
 
-              if (posts.length === index + 1) {
-                return (
-                  <div ref={lastPostElementRef} key={`${uniqueKey}-container`}>
+                if ((posts?.length || 0) === index + 1) {
+                  return (
+                    <div
+                      ref={lastPostElementRef}
+                      key={`${uniqueKey}-container`}
+                    >
+                      <Post
+                        key={uniqueKey}
+                        post={post}
+                        onPostUpdated={refreshFeed}
+                      />
+                    </div>
+                  );
+                } else {
+                  return (
                     <Post
                       key={uniqueKey}
                       post={post}
                       onPostUpdated={refreshFeed}
                     />
-                  </div>
-                );
-              } else {
-                return (
-                  <Post
-                    key={uniqueKey}
-                    post={post}
-                    onPostUpdated={refreshFeed}
-                  />
-                );
-              }
-            })}
+                  );
+                }
+              })}
 
             {loading && (
               <div className={postStyles.loadingState}>
@@ -162,11 +171,14 @@ export default function Home() {
               </div>
             )}
 
-            {!loading && !hasMore && posts.length > 0 && (
-              <div className={postStyles.endOfFeed}>
-                <p>You&apos;ve reached the end of your feed!</p>
-              </div>
-            )}
+            {!loading &&
+              !hasMore &&
+              Array.isArray(posts) &&
+              (posts?.length || 0) > 0 && (
+                <div className={postStyles.endOfFeed}>
+                  <p>You&apos;ve reached the end of your feed!</p>
+                </div>
+              )}
           </section>
         </main>
         <aside>
