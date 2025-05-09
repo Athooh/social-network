@@ -288,6 +288,12 @@ func (r *SQLiteRepository) GetAllGroups(limit, offset int) ([]*models.Group, err
 		}
 		group.Creator = creator
 
+		members, err := r.GetGroupMembers(group.ID, "accepted")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get group members: %w", err)
+		}
+		group.Members = members
+
 		groups = append(groups, &group)
 	}
 
