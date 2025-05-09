@@ -39,7 +39,8 @@ const contacts = [
 const pageSize = 10;
 
 export default function Home() {
-  const { getFeedPosts, newPosts, getAndClearNewPosts } = usePostService();
+  const { getFeedPosts, newPosts, getAndClearNewPosts } =
+    usePostService() || {};
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
