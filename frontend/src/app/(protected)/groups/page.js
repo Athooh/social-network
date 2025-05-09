@@ -91,7 +91,7 @@ export default function Groups() {
                         Leave Group
                       </button>
                       :
-                      <button className={styles.joinBtn}>
+                      <button className={styles.inviteBtn}>
                         Join Group
                       </button>
                     }
