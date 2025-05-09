@@ -488,18 +488,26 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 
 	if status != "" {
 		query = `
-			SELECT id, group_id, user_id, role, status, invited_by, created_at, updated_at
-			FROM group_members
-			WHERE group_id = ? AND status = ?
-			ORDER BY created_at DESC
+			SELECT 
+				gm.id, gm.group_id, gm.user_id, gm.role, gm.status, 
+				gm.invited_by, gm.created_at, gm.updated_at,
+				u.avatar
+			FROM group_members gm
+			JOIN users u ON gm.user_id = u.id
+			WHERE gm.group_id = ? AND gm.status = ?
+			ORDER BY gm.created_at DESC
 		`
 		args = []interface{}{groupID, status}
 	} else {
 		query = `
-			SELECT id, group_id, user_id, role, status, invited_by, created_at, updated_at
-			FROM group_members
-			WHERE group_id = ?
-			ORDER BY created_at DESC
+			SELECT 
+				gm.id, gm.group_id, gm.user_id, gm.role, gm.status, 
+				gm.invited_by, gm.created_at, gm.updated_at,
+				u.avatar
+			FROM group_members gm
+			JOIN users u ON gm.user_id = u.id
+	W		HERE gm.group_id = ?
+	O		RDER BY gm.created_at DESC
 		`
 		args = []interface{}{groupID}
 	}
@@ -525,6 +533,7 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 			&invitedBy,
 			&member.CreatedAt,
 			&member.UpdatedAt,
+			&member.Avatar,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan group member row: %w", err)
