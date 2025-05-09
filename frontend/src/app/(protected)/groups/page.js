@@ -92,6 +92,22 @@ const sampleGroups = [
 
 export default function Groups() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allGroups, setAllGroups] = useState([]);
+  const { getallgroups } = useGroupService();
+
+  useEffect(() => {
+    async function fetchGroups() {
+      try {
+        const result = await getallgroups();  // Await the Promise
+        setAllGroups(result); // Or result.value or result.data depending on what it returns
+        // console.log("Fetched groups:", result);
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      }
+    }
+
+    fetchGroups();
+  }, [getallgroups]);
 
   return (
     <ProtectedRoute>
