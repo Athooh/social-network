@@ -161,6 +161,12 @@ func (r *SQLiteRepository) GetGroupByID(id string) (*models.Group, error) {
 	}
 	group.Creator = creator
 
+	members, err := r.GetGroupMembers(group.ID, "accepted")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group members: %w", err)
+	}
+	group.Members = members
+
 	return &group, nil
 }
 
