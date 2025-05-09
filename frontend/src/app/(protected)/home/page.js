@@ -84,11 +84,11 @@ export default function Home() {
   // Initial load - adding a ref to prevent multiple calls
   const initialLoadRef = useRef(false);
   useEffect(() => {
-    if (!initialLoadRef.current) {
+    if (!initialLoadRef.current && getFeedPosts) {
       loadPosts(1, true);
       initialLoadRef.current = true;
     }
-  }, [loadPosts]);
+  }, [loadPosts, getFeedPosts]);
 
   // Replace the refreshTrigger effect with a more controlled approach
   const refreshFeed = useCallback(() => {
@@ -97,9 +97,11 @@ export default function Home() {
 
   // Handle new posts from WebSocket
   useEffect(() => {
-    if (newPosts.length > 0) {
+    if (Array.isArray(newPosts) && newPosts.length > 0 && getAndClearNewPosts) {
       const incomingPosts = getAndClearNewPosts();
-      setPosts((prev) => [...incomingPosts, ...prev]);
+      if (Array.isArray(incomingPosts) && incomingPosts.length > 0) {
+        setPosts((prev) => [...incomingPosts, ...(prev || [])]);
+      }
     }
   }, [newPosts, getAndClearNewPosts]);
 
