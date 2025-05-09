@@ -92,9 +92,11 @@ export default function Groups() {
                   <hr className={styles.divider} />
 
                   <div className={styles.groupActions}>
-                    <button className={styles.inviteBtn}>
-                      <i className="fas fa-user-plus"></i> Invite
-                    </button>
+                    {group.IsMember && (
+                      <button className={styles.inviteBtn}>
+                        <i className="fas fa-user-plus"></i> Invite
+                      </button>
+                    )}
 
                     {group.IsMember ? (
                       userdata.id === group.Creator.id ? (
