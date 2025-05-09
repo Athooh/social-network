@@ -6,7 +6,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import pageStyles from "@/styles/page.module.css";
 import styles from "@/styles/Groups.module.css";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useGroupService } from "@/services/groupService";
 
 const sampleGroups = [
   {
