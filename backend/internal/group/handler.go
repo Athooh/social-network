@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 )
