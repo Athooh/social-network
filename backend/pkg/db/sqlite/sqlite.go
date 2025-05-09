@@ -52,6 +52,10 @@ func New(config Config) (*DB, error) {
 		db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
+	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+        db.Close()
+        return nil, fmt.Errorf("pragma journal_mode: %w", err)
+    }
 
 	return &DB{db, config}, nil
 }
