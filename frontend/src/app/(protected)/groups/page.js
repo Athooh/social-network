@@ -9,87 +9,8 @@ import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import { useState, useEffect } from 'react';
 import { useGroupService } from "@/services/groupService";
 
-const sampleGroups = [
-  {
-    id: 1,
-    name: "Photography Enthusiasts",
-    banner: "/banner1.jpg",
-    profilePic: "/avatar1.png",
-    isPublic: true,
-    memberCount: 5234,
-    members: [
-      { id: 1, avatar: "/avatar1.png" },
-      { id: 2, avatar: "/avatar2.png" },
-      { id: 3, avatar: "/avatar3.png" },
-    ]
-  },
-  {
-    id: 2,
-    name: "Tech Innovators",
-    banner: "/banner2.jpg",
-    profilePic: "/avatar4.png",
-    isPublic: false,
-    memberCount: 3122,
-    members: [
-      { id: 4, avatar: "/avatar4.png" },
-      { id: 5, avatar: "/avatar5.png" },
-      { id: 6, avatar: "/avatar6.png" },
-    ]
-  },
-  {
-    id: 3,
-    name: "Travelers",
-    banner: "/banner3.jpg", 
-    profilePic: "/avatar2.png",
-    isPublic: true,
-    memberCount: 8433,
-    members: [
-      { id: 7, avatar: "/avatar2.png" },
-      { id: 8, avatar: "/avatar.png" },
-      { id: 9, avatar: "/avatar5.png" },
-    ]
-  },
-  {
-    id: 4,
-    name: "Book Club",
-    banner: "/banner4.jpg",
-    profilePic: "/avatar3.png",
-    isPublic: true,
-    memberCount: 2891,
-    members: [
-      { id: 10, avatar: "/avatar1.png" },
-      { id: 11, avatar: "/avatar3.png" },
-      { id: 12, avatar: "/avatar2.png" },
-    ]
-  },
-  {
-    id: 5,
-    name: "Foodies Unite",
-    banner: "/banner5.jpg",
-    profilePic: "/avatar6.png",
-    isPublic: false,
-    memberCount: 4567,
-    members: [
-      { id: 13, avatar: "/avatar3.png" },
-      { id: 14, avatar: "/avatar4.png" },
-      { id: 15, avatar: "/avatar5.png" },
-    ]
-  },
-  {
-    id: 6,
-    name: "Fitness Fanatics",
-    banner: "/banner6.jpg",
-    profilePic: "/avatar5.png",
-    isPublic: true,
-    memberCount: 6789,
-    members: [
-      { id: 16, avatar: "/avatar6.png" },
-      { id: 17, avatar: "/avatar.png" },
-      { id: 18, avatar: "/avatar1.png" },
-    ]
-},
-  // Add 4 more sample groups...
-];
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
 export default function Groups() {
   const [isModalOpen, setIsModalOpen] = useState(false);
