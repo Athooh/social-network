@@ -61,7 +61,7 @@ func New(config Config) (*DB, error) {
 }
 
 // runMigrations runs the database migrations
-func runMigrations(db *sql.DB, dbPath, migrationsPath string) error {
+func runMigrations(db *sql.DB, migrationsPath string) error {
 	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to create migration driver: %w", err)
