@@ -235,7 +235,7 @@ func (r *SQLiteRepository) GetGroupsByUserID(userID string) ([]*models.Group, er
 }
 
 // GetAllGroups retrieves all groups with pagination
-func (r *SQLiteRepository) GetAllGroups(limit, offset int) ([]*models.Group, error) {
+func (r *SQLiteRepository) GetAllGroups(user_id string, limit, offset int) ([]*models.Group, error) {
 	query := `
 		SELECT id, name, description, creator_id, banner_path, profile_pic_path, 
 		       is_public, created_at, updated_at
