@@ -36,9 +36,13 @@ func New(config Config) (*DB, error) {
 	if err := os.MkdirAll(dbDir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
 	}
+	dsn := fmt.Sprintf(
+		"%s?_foreign_keys=on&_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000",
+		config.DBPath,
+	)
 
 	// Open the database connection
-	db, err := sql.Open("sqlite3", config.DBPath+"?_foreign_keys=on")
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
