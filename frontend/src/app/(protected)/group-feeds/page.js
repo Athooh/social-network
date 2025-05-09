@@ -56,7 +56,7 @@ const sampleGroups = [
       {
         id: 2,
         content: "📸 Monthly Photo Challenge: Urban Wildlife\n\nThis month's theme is all about capturing the wildlife in our cities!\n\nRules:\n1. Must be taken this month\n2. No zoo photos\n3. Urban setting required\n\nPrize: Feature in our monthly showcase + photography guidebook\n\nSubmit your entries in the comments!",
-        imageUrl: "/sample-photo-1.jpg",
+        imageUrl: "/banner6.jpg",
         userData: {
           firstName: "Jane",
           lastName: "Smith",
@@ -104,7 +104,7 @@ const sampleGroups = [
 export default function GroupFeeds() {
   const router = useRouter();
 
-  const handlePostClick = (groupId, postId) => {
+  const handleGroupClick = (groupId, postId) => {
     router.push(`/groups/${groupId}/posts/${postId}`);
   };
 
@@ -126,7 +126,12 @@ export default function GroupFeeds() {
                     className={groupFeeds.groupBanner}
                   />
                   <div className={groupFeeds.groupDetails}>
-                    <h2>{group.name}</h2>
+                    <h2 
+                      onClick={() => handleGroupClick(group.id, group.posts[0].id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {group.name}
+                    </h2>
                     <p>{group.description}</p>
                     <div className={groupFeeds.groupMeta}>
                       <span>
@@ -137,7 +142,6 @@ export default function GroupFeeds() {
                       <span>{group.memberCount.toLocaleString()} members</span>
                     </div>
                   </div>
-                  
                 </div>
                 <div className={groupFeeds.groupActions}>
                   <button className={groupFeeds.joinButton}>
@@ -150,11 +154,7 @@ export default function GroupFeeds() {
               </div>
               
               {group.posts.map(post => (
-                <div 
-                  key={post.id} 
-                  onClick={() => handlePostClick(group.id, post.id)}
-                  style={{ cursor: 'pointer' }}
-                >
+                <div key={post.id}>
                   <GroupPost 
                     post={post}
                     onPostUpdated={() => {

@@ -10,7 +10,7 @@ const ProfileConnections = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [activeTab, setActiveTab] = useState("following");
 
-  // Add state for data and loading
+  // Initialize arrays with empty arrays instead of null
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,9 +19,9 @@ const ProfileConnections = () => {
   // Get auth context with authenticatedFetch
   const { authenticatedFetch, isAuthenticated } = useAuth();
 
-  // Get follower/following counts
-  const followingCount = following.length;
-  const followersCount = followers.length;
+  // Get follower/following counts - safely access length
+  const followingCount = following?.length || 0;
+  const followersCount = followers?.length || 0;
 
   // Fetch data from API
   useEffect(() => {
@@ -70,12 +70,17 @@ const ProfileConnections = () => {
   const contacts = activeTab === "following" ? following : followers;
 
   // Apply pagination (when showMore is false, limit to 14 items)
-  const displayedContacts = showMore ? contacts : contacts.slice(0, 14);
+  // Make sure contacts is an array before calling slice
+  const displayedContacts = showMore
+    ? contacts
+    : contacts?.slice?.(0, 14) || [];
 
   // Filter based on search term
-  const filteredContacts = displayedContacts.filter((contact) =>
-    contact.UserName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContacts = Array.isArray(displayedContacts)
+    ? displayedContacts.filter((contact) =>
+        contact?.UserName?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <div className={styles.connectionsContainer}>
@@ -153,11 +158,11 @@ const ProfileConnections = () => {
                     <div className={styles.actions}>
                       <button
                         className={styles.menuButton}
-                        onClick={() => toggleDropdown(contact.Follower.ID)}
+                        onClick={() => toggleDropdown(contact.ID)}
                       >
                         <i className="fas fa-ellipsis-h"></i>
                       </button>
-                      {activeDropdown === contact.FollowerID && (
+                      {activeDropdown === contact.ID && (
                         <div className={styles.dropdown}>
                           <button>
                             <i className="fas fa-user-minus"></i>
@@ -183,7 +188,7 @@ const ProfileConnections = () => {
               )}
             </div>
 
-            {!showMore && contacts.length > 14 && (
+            {!showMore && (contacts?.length || 0) > 14 && (
               <button
                 className={styles.loadMoreButton}
                 onClick={() => setShowMore(true)}
