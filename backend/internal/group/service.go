@@ -174,7 +174,7 @@ func (s *GroupService) GetUserGroups(userID string) ([]*models.Group, error) {
 
 // GetAllGroups gets all public groups and private groups the user is a member of
 func (s *GroupService) GetAllGroups(userID string, limit, offset int) ([]*models.Group, error) {
-	group, err := s.repo.GetAllGroups(limit, offset)
+	group, err := s.repo.GetAllGroups(userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
