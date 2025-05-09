@@ -10,7 +10,7 @@ const ProfileConnections = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [activeTab, setActiveTab] = useState("following");
 
-  // Add state for data and loading
+  // Initialize arrays with empty arrays instead of null
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,9 +19,9 @@ const ProfileConnections = () => {
   // Get auth context with authenticatedFetch
   const { authenticatedFetch, isAuthenticated } = useAuth();
 
-  // Get follower/following counts
-  const followingCount = following.length;
-  const followersCount = followers.length;
+  // Get follower/following counts - safely access length
+  const followingCount = following?.length || 0;
+  const followersCount = followers?.length || 0;
 
   // Fetch data from API
   useEffect(() => {
