@@ -41,47 +41,39 @@ export default function Groups() {
         <main className={styles.mainContent}>
           <div className={styles.groupsHeader}>
             <h1>Groups</h1>
-            <button 
+            <button
               className={styles.createGroupBtn}
               onClick={() => setIsModalOpen(true)}
             >
               <i className="fas fa-plus"></i> Create New Group
             </button>
           </div>
-          
+
           <div className={styles.groupsGrid}>
-            {sampleGroups.map(group => (
-              <div key={group.id} className={styles.groupCard}>
+            {allGroups.map(group => (
+              <div key={group.ID} className={styles.groupCard}>
                 <div className={styles.groupBanner}>
-                  <img src={group.banner} alt="" className={styles.bannerImg} />
+                  <img src={group.BannerPath.String ? `${BASE_URL}/uploads/${group.BannerPath.String}` : "/banner5.jpg"} alt="" className={styles.bannerImg} />
                 </div>
                 <div className={styles.groupInfo}>
-                  <img src={group.profilePic} alt="" className={styles.profilePic} />
-                  <h3 className={styles.groupName}>{group.name}</h3>
+                  <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
+                  <h3 className={styles.groupName}>{group.Name}</h3>
                   <span className={styles.groupPrivacy}>
-                    <i className={`fas ${group.isPublic ? 'fa-globe' : 'fa-lock'}`}></i>
-                    {group.isPublic ? 'Public Group' : 'Private Group'}
+                    <i className={`fas ${group.IsPublic ? 'fa-globe' : 'fa-lock'}`}></i>
+                    {group.IsPublic ? 'Public Group' : 'Private Group'}
                   </span>
-                  
+
                   <div className={styles.memberInfo}>
                     <div className={styles.memberAvatars}>
-                      {group.members.map((member, index) => (
-                        <img 
-                          key={member.id} 
-                          src={member.avatar} 
-                          alt="" 
-                          className={styles.memberAvatar}
-                          style={{ zIndex: 3 - index }}
-                        />
-                      ))}
+                      {/* If you have member avatars, render here */}
                     </div>
                     <span className={styles.memberCount}>
-                      {group.memberCount.toLocaleString()} members
+                      {group.MemberCount.toLocaleString()} members
                     </span>
                   </div>
-                  
+
                   <hr className={styles.divider} />
-                  
+
                   <div className={styles.groupActions}>
                     <button className={styles.inviteBtn}>
                       <i className="fas fa-user-plus"></i> Invite
