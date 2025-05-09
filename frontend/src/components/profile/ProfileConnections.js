@@ -158,11 +158,11 @@ const ProfileConnections = () => {
                     <div className={styles.actions}>
                       <button
                         className={styles.menuButton}
-                        onClick={() => toggleDropdown(contact.Follower.ID)}
+                        onClick={() => toggleDropdown(contact.ID)}
                       >
                         <i className="fas fa-ellipsis-h"></i>
                       </button>
-                      {activeDropdown === contact.FollowerID && (
+                      {activeDropdown === contact.ID && (
                         <div className={styles.dropdown}>
                           <button>
                             <i className="fas fa-user-minus"></i>
@@ -188,7 +188,7 @@ const ProfileConnections = () => {
               )}
             </div>
 
-            {!showMore && contacts.length > 14 && (
+            {!showMore && (contacts?.length || 0) > 14 && (
               <button
                 className={styles.loadMoreButton}
                 onClick={() => setShowMore(true)}
