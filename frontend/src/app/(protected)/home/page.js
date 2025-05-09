@@ -54,9 +54,10 @@ export default function Home() {
 
       setLoading(true);
       try {
-        const data = await getFeedPosts(pageNum, pageSize);
+        let data = await getFeedPosts(pageNum, pageSize);
 
-        if (!data) {
+        // Ensure data is an array
+        if (!data || !Array.isArray(data)) {
           data = [];
         }
 
@@ -67,7 +68,7 @@ export default function Home() {
         if (replace) {
           setPosts(data);
         } else {
-          setPosts((prev) => [...prev, ...data]);
+          setPosts((prev) => [...(prev || []), ...data]);
         }
 
         setPage(pageNum);
