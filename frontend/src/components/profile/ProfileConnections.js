@@ -70,12 +70,17 @@ const ProfileConnections = () => {
   const contacts = activeTab === "following" ? following : followers;
 
   // Apply pagination (when showMore is false, limit to 14 items)
-  const displayedContacts = showMore ? contacts : contacts.slice(0, 14);
+  // Make sure contacts is an array before calling slice
+  const displayedContacts = showMore
+    ? contacts
+    : contacts?.slice?.(0, 14) || [];
 
   // Filter based on search term
-  const filteredContacts = displayedContacts.filter((contact) =>
-    contact.UserName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContacts = Array.isArray(displayedContacts)
+    ? displayedContacts.filter((contact) =>
+        contact?.UserName?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <div className={styles.connectionsContainer}>
