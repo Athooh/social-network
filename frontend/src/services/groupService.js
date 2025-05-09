@@ -36,7 +36,6 @@ export const useGroupService = () => {
             const response = await authenticatedFetch("groups", {
                 method: "GET",
             });
-            console.log("Response from getallgroups:", response);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
