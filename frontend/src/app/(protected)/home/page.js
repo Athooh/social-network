@@ -171,11 +171,14 @@ export default function Home() {
               </div>
             )}
 
-            {!loading && !hasMore && posts.length > 0 && (
-              <div className={postStyles.endOfFeed}>
-                <p>You&apos;ve reached the end of your feed!</p>
-              </div>
-            )}
+            {!loading &&
+              !hasMore &&
+              Array.isArray(posts) &&
+              (posts?.length || 0) > 0 && (
+                <div className={postStyles.endOfFeed}>
+                  <p>You&apos;ve reached the end of your feed!</p>
+                </div>
+              )}
           </section>
         </main>
         <aside>
