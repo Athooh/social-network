@@ -35,6 +35,7 @@ type GroupMember struct {
 	InvitedBy string    `db:"invited_by"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
+	Avatar    string    `db:"avatar"`
 	
 	// Non-DB fields
 	User      *UserBasic `db:"-"`
