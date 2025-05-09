@@ -78,9 +78,15 @@ export default function Groups() {
                     <button className={styles.inviteBtn}>
                       <i className="fas fa-user-plus"></i> Invite
                     </button>
-                    <button className={styles.joinBtn}>
-                      Join Group
-                    </button>
+                    { (group.IsMember) ?
+                      <button className={styles.leaveBtn}>
+                        Leave Group
+                      </button>
+                    :
+                      <button className={styles.joinBtn}>
+                        Join Group
+                      </button>
+                    }
                   </div>
                 </div>
               </div>
