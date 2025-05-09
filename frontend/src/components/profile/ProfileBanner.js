@@ -10,7 +10,12 @@ const ProfileBanner = ({
   followersCount,
   followingCount,
   onNavClick,
-  activeSection = 'posts'
+  activeSection = 'posts',
+  isPrivate = false,
+  isOwnProfile = true,
+  isFollowing = false,
+  onFollow,
+  onUnfollow
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -44,6 +49,17 @@ const ProfileBanner = ({
             
             <div className={styles.userInfo}>
               <h2>{fullName}</h2>
+              <div className={styles.privacyBadge}>
+                {isPrivate ? (
+                  <span className={`${styles.badge} ${styles.private}`}>
+                    🔒 Private Profile
+                  </span>
+                ) : (
+                  <span className={`${styles.badge} ${styles.public}`}>
+                    🌐 Public Profile
+                  </span>
+                )}
+              </div>
               <div className={styles.followInfo}>
                 <div className={styles.followers}>
                   <div className={styles.avatarGroup}>
@@ -71,21 +87,46 @@ const ProfileBanner = ({
           </div>
 
           <div className={styles.rightSection}>
-            <button 
-              className={styles.editButton}
-              onClick={() => setIsEditModalOpen(true)}
-            >
-              Edit Profile
-            </button>
-            <div className={styles.moreActions}>
-              <button className={styles.ellipsisButton}>⋮</button>
-            </div>
+            {isOwnProfile ? (
+              <>
+                <button 
+                  className={styles.editButton}
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  Edit Profile
+                </button>
+                <div className={styles.moreActions}>
+                  <button className={styles.ellipsisButton}>⋮</button>
+                </div>
+              </>
+            ) : (
+              <div className={styles.actionButtons}>
+                {isFollowing ? (
+                  <button 
+                    className={`${styles.followButton} ${styles.following}`}
+                    onClick={onUnfollow}
+                  >
+                    Following
+                  </button>
+                ) : (
+                  <button 
+                    className={styles.followButton}
+                    onClick={onFollow}
+                  >
+                    Follow
+                  </button>
+                )}
+                <button className={styles.messageButton}>
+                  Message
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         <div className={styles.profileNav}>
           <nav>
-           <a 
+            <a 
               href="#" 
               className={activeSection === 'posts' ? styles.active : ''} 
               onClick={(e) => handleNavClick(e, 'posts')}
@@ -131,18 +172,20 @@ const ProfileBanner = ({
         </div>
       </div>
 
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        profileData={{
-          bannerUrl,
-          profileUrl,
-          fullName,
-          // Add other profile data here
-        }}
-      />
+      {isOwnProfile && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          profileData={{
+            bannerUrl,
+            profileUrl,
+            fullName,
+            isPrivate,
+          }}
+        />
+      )}
     </>
   );
 };
 
-export default ProfileBanner; 
+export default ProfileBanner;
