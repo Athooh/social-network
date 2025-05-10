@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 )
@@ -33,9 +34,9 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -48,8 +49,8 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	// Get form values
 	name := r.FormValue("name")
 	description := r.FormValue("description")
-	isPublicStr := r.FormValue("isPublic")
-	isPublic := isPublicStr == "true"
+	isPublicStr := r.FormValue("privacy")
+	isPublic := isPublicStr == "public"
 
 	// Get file uploads
 	var banner, profilePic *multipart.FileHeader
@@ -81,9 +82,9 @@ func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -142,9 +143,9 @@ func (h *Handler) GetAllGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 

@@ -22,6 +22,7 @@ type Group struct {
 	Creator       *UserBasic     `db:"-"`
 	IsMember      bool           `db:"-"`
 	MemberStatus  string         `db:"-"`
+	Members 	[]*GroupMember   `db:"-"`
 }
 
 // GroupMember represents a member of a group
@@ -34,6 +35,7 @@ type GroupMember struct {
 	InvitedBy string    `db:"invited_by"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
+	Avatar    string    `db:"avatar"`
 	
 	// Non-DB fields
 	User      *UserBasic `db:"-"`

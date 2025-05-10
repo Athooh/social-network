@@ -16,7 +16,7 @@ type Repository interface {
 	CreateGroup(group *models.Group) error
 	GetGroupByID(id string) (*models.Group, error)
 	GetGroupsByUserID(userID string) ([]*models.Group, error)
-	GetAllGroups(limit, offset int) ([]*models.Group, error)
+	GetAllGroups(userid string, limit, offset int) ([]*models.Group, error)
 	UpdateGroup(group *models.Group) error
 	DeleteGroup(id string) error
 	GetGroupMemberCount(groupID string) (int, error)
@@ -161,6 +161,12 @@ func (r *SQLiteRepository) GetGroupByID(id string) (*models.Group, error) {
 	}
 	group.Creator = creator
 
+	members, err := r.GetGroupMembers(group.ID, "accepted")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group members: %w", err)
+	}
+	group.Members = members
+
 	return &group, nil
 }
 
@@ -235,7 +241,7 @@ func (r *SQLiteRepository) GetGroupsByUserID(userID string) ([]*models.Group, er
 }
 
 // GetAllGroups retrieves all groups with pagination
-func (r *SQLiteRepository) GetAllGroups(limit, offset int) ([]*models.Group, error) {
+func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*models.Group, error) {
 	query := `
 		SELECT id, name, description, creator_id, banner_path, profile_pic_path, 
 		       is_public, created_at, updated_at
@@ -287,6 +293,20 @@ func (r *SQLiteRepository) GetAllGroups(limit, offset int) ([]*models.Group, err
 			return nil, fmt.Errorf("failed to get creator info: %w", err)
 		}
 		group.Creator = creator
+
+		members, err := r.GetGroupMembers(group.ID, "accepted")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get group members: %w", err)
+		}
+		group.Members = members
+
+		member , err := r.GetMemberByID(group.ID, userid)
+		if err != nil {	
+			return nil, fmt.Errorf("failed to get member info: %w", err)	
+		} 
+		if member != nil {
+			group.IsMember = true
+		}
 
 		groups = append(groups, &group)
 	}
@@ -476,18 +496,26 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 
 	if status != "" {
 		query = `
-			SELECT id, group_id, user_id, role, status, invited_by, created_at, updated_at
-			FROM group_members
-			WHERE group_id = ? AND status = ?
-			ORDER BY created_at DESC
+			SELECT 
+				gm.id, gm.group_id, gm.user_id, gm.role, gm.status, 
+				gm.invited_by, gm.created_at, gm.updated_at,
+				u.avatar
+			FROM group_members gm
+			JOIN users u ON gm.user_id = u.id
+			WHERE gm.group_id = ? AND gm.status = ?
+			ORDER BY gm.created_at DESC
 		`
 		args = []interface{}{groupID, status}
 	} else {
 		query = `
-			SELECT id, group_id, user_id, role, status, invited_by, created_at, updated_at
-			FROM group_members
-			WHERE group_id = ?
-			ORDER BY created_at DESC
+			SELECT 
+				gm.id, gm.group_id, gm.user_id, gm.role, gm.status, 
+				gm.invited_by, gm.created_at, gm.updated_at,
+				u.avatar
+			FROM group_members gm
+			JOIN users u ON gm.user_id = u.id
+	W		HERE gm.group_id = ?
+	O		RDER BY gm.created_at DESC
 		`
 		args = []interface{}{groupID}
 	}
@@ -513,6 +541,7 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 			&invitedBy,
 			&member.CreatedAt,
 			&member.UpdatedAt,
+			&member.Avatar,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan group member row: %w", err)

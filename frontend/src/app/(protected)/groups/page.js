@@ -6,92 +6,39 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import pageStyles from "@/styles/page.module.css";
 import styles from "@/styles/Groups.module.css";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useGroupService } from "@/services/groupService";
 
-const sampleGroups = [
-  {
-    id: 1,
-    name: "Photography Enthusiasts",
-    banner: "/banner1.jpg",
-    profilePic: "/avatar1.png",
-    isPublic: true,
-    memberCount: 5234,
-    members: [
-      { id: 1, avatar: "/avatar1.png" },
-      { id: 2, avatar: "/avatar2.png" },
-      { id: 3, avatar: "/avatar3.png" },
-    ]
-  },
-  {
-    id: 2,
-    name: "Tech Innovators",
-    banner: "/banner2.jpg",
-    profilePic: "/avatar4.png",
-    isPublic: false,
-    memberCount: 3122,
-    members: [
-      { id: 4, avatar: "/avatar4.png" },
-      { id: 5, avatar: "/avatar5.png" },
-      { id: 6, avatar: "/avatar6.png" },
-    ]
-  },
-  {
-    id: 3,
-    name: "Travelers",
-    banner: "/banner3.jpg", 
-    profilePic: "/avatar2.png",
-    isPublic: true,
-    memberCount: 8433,
-    members: [
-      { id: 7, avatar: "/avatar2.png" },
-      { id: 8, avatar: "/avatar.png" },
-      { id: 9, avatar: "/avatar5.png" },
-    ]
-  },
-  {
-    id: 4,
-    name: "Book Club",
-    banner: "/banner4.jpg",
-    profilePic: "/avatar3.png",
-    isPublic: true,
-    memberCount: 2891,
-    members: [
-      { id: 10, avatar: "/avatar1.png" },
-      { id: 11, avatar: "/avatar3.png" },
-      { id: 12, avatar: "/avatar2.png" },
-    ]
-  },
-  {
-    id: 5,
-    name: "Foodies Unite",
-    banner: "/banner5.jpg",
-    profilePic: "/avatar6.png",
-    isPublic: false,
-    memberCount: 4567,
-    members: [
-      { id: 13, avatar: "/avatar3.png" },
-      { id: 14, avatar: "/avatar4.png" },
-      { id: 15, avatar: "/avatar5.png" },
-    ]
-  },
-  {
-    id: 6,
-    name: "Fitness Fanatics",
-    banner: "/banner6.jpg",
-    profilePic: "/avatar5.png",
-    isPublic: true,
-    memberCount: 6789,
-    members: [
-      { id: 16, avatar: "/avatar6.png" },
-      { id: 17, avatar: "/avatar.png" },
-      { id: 18, avatar: "/avatar1.png" },
-    ]
-},
-  // Add 4 more sample groups...
-];
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
+let userdata = null;
+try {
+  const raw = localStorage.getItem("userData");
+  if (raw) userdata = JSON.parse(raw);
+  console.log("User data from localStorage:", userdata);
+} catch (e) {
+  console.error("Invalid userData in localStorage:", e);
+}
+
 
 export default function Groups() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allGroups, setAllGroups] = useState([]);
+  const { getallgroups } = useGroupService();
+
+  useEffect(() => {
+    async function fetchGroups() {
+      try {
+        const result = await getallgroups();  // Await the Promise
+        setAllGroups(result); // Or result.value or result.data depending on what it returns
+        // console.log("Fetched groups:", result);
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      }
+    }
+
+    fetchGroups();
+  }, []);
 
   return (
     <ProtectedRoute>
@@ -103,55 +50,78 @@ export default function Groups() {
         <main className={styles.mainContent}>
           <div className={styles.groupsHeader}>
             <h1>Groups</h1>
-            <button 
+            <button
               className={styles.createGroupBtn}
               onClick={() => setIsModalOpen(true)}
             >
               <i className="fas fa-plus"></i> Create New Group
             </button>
           </div>
-          
+
           <div className={styles.groupsGrid}>
-            {sampleGroups.map(group => (
-              <div key={group.id} className={styles.groupCard}>
+            {allGroups === null && (
+              <div className={styles.noGroups}>
+                <h2>No groups found</h2>
+                <p>Start by creating a new group!</p>
+              </div>
+            )}
+
+            {allGroups != null && allGroups.map(group => (
+              <div key={group.ID} className={styles.groupCard}>
                 <div className={styles.groupBanner}>
-                  <img src={group.banner} alt="" className={styles.bannerImg} />
+                  <img src={group.BannerPath.String ? `${BASE_URL}/uploads/${group.BannerPath.String}` : "/banner5.jpg"} alt="" className={styles.bannerImg} />
                 </div>
                 <div className={styles.groupInfo}>
-                  <img src={group.profilePic} alt="" className={styles.profilePic} />
-                  <h3 className={styles.groupName}>{group.name}</h3>
+                  <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
+                  <h3 className={styles.groupName}>{group.Name}</h3>
                   <span className={styles.groupPrivacy}>
-                    <i className={`fas ${group.isPublic ? 'fa-globe' : 'fa-lock'}`}></i>
-                    {group.isPublic ? 'Public Group' : 'Private Group'}
+                    <i className={`fas ${group.IsPublic ? 'fa-globe' : 'fa-lock'}`}></i>
+                    {group.IsPublic ? 'Public Group' : 'Private Group'}
                   </span>
-                  
+
                   <div className={styles.memberInfo}>
                     <div className={styles.memberAvatars}>
-                      {group.members.map((member, index) => (
-                        <img 
-                          key={member.id} 
-                          src={member.avatar} 
-                          alt="" 
+                      {group.Members.slice(0, 3).map((member, index) => (
+                        <img
+                          key={member.Id}
+                          src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                          alt=""
                           className={styles.memberAvatar}
                           style={{ zIndex: 3 - index }}
                         />
                       ))}
                     </div>
                     <span className={styles.memberCount}>
-                      {group.memberCount.toLocaleString()} members
+                      {group.MemberCount.toLocaleString()} members
                     </span>
                   </div>
-                  
+
                   <hr className={styles.divider} />
-                  
+
                   <div className={styles.groupActions}>
-                    <button className={styles.inviteBtn}>
-                      <i className="fas fa-user-plus"></i> Invite
-                    </button>
-                    <button className={styles.joinBtn}>
-                      Join Group
-                    </button>
+                    {group.IsMember && (
+                      <button className={styles.inviteBtn}>
+                        <i className="fas fa-user-plus"></i> Invite
+                      </button>
+                    )}
+
+                    {group.IsMember ? (
+                      userdata.id === group.Creator.id ? (
+                        <button className={styles.leaveBtn}>
+                          Delete Group
+                        </button>
+                      ) : (
+                        <button className={styles.leaveBtn}>
+                          Leave Group
+                        </button>
+                      )
+                    ) : (
+                      <button className={styles.inviteBtn}>
+                        Join Group
+                      </button>
+                    )}
                   </div>
+
                 </div>
               </div>
             ))}
@@ -159,7 +129,7 @@ export default function Groups() {
         </main>
       </div>
 
-      <CreateGroupModal 
+      <CreateGroupModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />

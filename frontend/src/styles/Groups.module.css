@@ -188,11 +188,16 @@
   background-color: #e4e6eb;
 }
 
-.joinBtn {
+.joinBtn , .leaveBtn {
   background-color: #1877f2;
   border: none;
   color: white;
   flex: 1;
+}
+
+.leaveBtn {
+  background-color: var(--fb-red);
+  color: white;
 }
 
 .joinBtn:hover {
