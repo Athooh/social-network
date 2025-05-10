@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePostService } from "@/services/postService"; // Adjust the import path
+import { useState, useEffect } from "react";
+import { usePostService } from "@/services/postService";
 import styles from "@/styles/Posts.module.css";
 import { showToast } from "@/components/ui/ToastContainer";
 import EmojiPicker from "@/components/ui/EmojiPicker";
