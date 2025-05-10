@@ -54,7 +54,7 @@ export default function CreatePost() {
 
     // Add selected viewers if privacy is private
     if (privacy === "private" && selectedViewers.length > 0) {
-      selectedViewers.forEach((viewerId, index) => {
+      selectedViewers.forEach((viewerId) => {
         formData.append(`viewers`, viewerId);
       });
     }
@@ -92,6 +92,7 @@ export default function CreatePost() {
       console.error("Error submitting post:", error);
     }
   };
+
   const handleFileSelect = (e, fileType) => {
     const files = Array.from(e.target.files);
 
