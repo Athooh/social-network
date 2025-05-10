@@ -185,22 +185,8 @@ func (r *SQLiteRepository) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-// Update  a user in the database
-func (r *SQLiteRepository) Update(user *User) error {
-	user.UpdatedAt = time.Now()
-
-	query := `
-		UPDATE users
-		SET email = ?, password = ?, first_name = ?, last_name = ?, date_of_birth = ?,
-		    avatar = ?, nickname = ?, about_me = ?, is_public = ?, updated_at = ?
-		WHERE id = ?
-	`
-
-	_, err := r.db.Exec(
-		query,
-		user.Email, user.Password, user.FirstName, user.LastName, user.DateOfBirth,
-		user.Avatar, user.Nickname, user.AboutMe, user.IsPublic, user.UpdatedAt, user.ID,
-	)
+func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[string]interface{}) error {
+	tx, err := r.db.Begin()
 	if err != nil {
 		return err
 	}
