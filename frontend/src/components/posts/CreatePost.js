@@ -324,7 +324,7 @@ export default function CreatePost() {
                   className={styles.profilePic}
                 />
                 <div>
-                  <h3>John Doe</h3>
+                  <h3>{getUserDisplayName()}</h3>
                   <div className={styles.privacySelector}>
                     <button
                       className={styles.privacyButton}
