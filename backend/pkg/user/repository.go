@@ -3,6 +3,8 @@ package user
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,8 +20,16 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 	return &SQLiteRepository{db: db}
 }
 
-// Create adds a new user to the database
+// Create adds a new user to the database and creates a basic profile
 func (r *SQLiteRepository) Create(user *User) error {
+	// Start a transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Generate ID if not provided
 	if user.ID == "" {
 		user.ID = uuid.New().String()
 	}
@@ -29,13 +39,12 @@ func (r *SQLiteRepository) Create(user *User) error {
 	user.UpdatedAt = now
 
 	query := `
-		INSERT INTO users (
-			id, email, password, first_name, last_name, date_of_birth, 
-			avatar, nickname, about_me, is_public, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`
-
-	_, err := r.db.Exec(
+        INSERT INTO users (
+            id, email, password, first_name, last_name, date_of_birth,
+            avatar, nickname, about_me, is_public, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+	_, err = tx.Exec(
 		query,
 		user.ID, user.Email, user.Password, user.FirstName, user.LastName, user.DateOfBirth,
 		user.Avatar, user.Nickname, user.AboutMe, user.IsPublic, user.CreatedAt, user.UpdatedAt,
