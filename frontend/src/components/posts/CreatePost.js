@@ -26,6 +26,19 @@ export default function CreatePost() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
   const [followersError, setFollowersError] = useState(null);
+  const [userData, setUserData] = useState(null);
+
+  // Load user data from localStorage when component mounts
+  useEffect(() => {
+    try {
+      const storedUserData = localStorage.getItem("userData");
+      if (storedUserData) {
+        setUserData(JSON.parse(storedUserData));
+      }
+    } catch (error) {
+      console.error("Error loading user data from localStorage:", error);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
