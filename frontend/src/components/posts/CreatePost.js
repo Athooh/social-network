@@ -260,7 +260,7 @@ export default function CreatePost() {
           >
             <input
               type="text"
-              placeholder="What's on your mind, John?"
+              placeholder={`What's on your mind, ${userData?.firstName || "there"}?`}
               readOnly
             />
           </div>
