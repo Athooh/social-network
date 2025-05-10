@@ -316,8 +316,8 @@ export default function CreatePost() {
 
             <div className={styles.modalContent}>
               <div className={styles.userInfo}>
-                <Image
-                  src="/avatar4.png"
+                <img
+                  src={getUserAvatar()}
                   alt="Profile"
                   width={40}
                   height={40}
