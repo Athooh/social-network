@@ -53,7 +53,25 @@ func (r *SQLiteRepository) Create(user *User) error {
 		return err
 	}
 
-	return nil
+	// Create basic profile with the username (nickname)
+	profileQuery := `
+        INSERT INTO user_profiles (
+            id, user_id, username, full_name, email, is_private, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `
+
+	fullName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+
+	_, err = tx.Exec(
+		profileQuery,
+		uuid.New().String(), user.ID, user.Nickname, fullName,
+		user.Email, !user.IsPublic, now, now,
+	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // SyncFollowStats updates the follower and following counts in the user_stats table
