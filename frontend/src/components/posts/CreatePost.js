@@ -342,7 +342,7 @@ export default function CreatePost() {
                 <textarea
                   value={postText}
                   onChange={(e) => setPostText(e.target.value)}
-                  placeholder="What's on your mind, John?"
+                  placeholder={`What's on your mind, ${userData?.firstName || "there"}?`}
                   autoFocus
                 />
 
