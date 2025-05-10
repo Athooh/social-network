@@ -248,7 +248,7 @@ export default function CreatePost() {
       <div className={styles.createPostCard}>
         <div className={styles.createPostHeader}>
           <img
-            src={UserAvatar}
+            src={getUserAvatar()}
             alt="Profile"
             width={40}
             height={40}
