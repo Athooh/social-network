@@ -164,11 +164,25 @@ export default function CreatePost() {
     setShowEmojiPicker(false);
   };
 
-  const UserAvatar = `${BASE_URL}uploads/${
-    JSON.parse(localStorage.getItem("userData"))?.avatar
-      ? JSON.parse(localStorage.getItem("userData")).avatar
-      : "/avatar.png"
-  }`;
+  // Get user avatar with fallback
+  const getUserAvatar = () => {
+    if (userData?.avatar) {
+      return `${BASE_URL}uploads/${userData.avatar}`;
+    }
+    return "/avatar.png"; // Default avatar path
+  };
+
+  // Get user's full name or nickname
+  const getUserDisplayName = () => {
+    if (userData) {
+      if (userData.nickname) return userData.nickname;
+      return (
+        `${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+        "User"
+      );
+    }
+    return "User";
+  };
 
   const fetchFollowers = async () => {
     setIsLoadingFollowers(true);
