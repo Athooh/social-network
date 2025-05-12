@@ -116,9 +116,9 @@ func (h *Handler) GetUserGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -191,9 +191,9 @@ func (h *Handler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -245,9 +245,9 @@ func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -278,9 +278,9 @@ func (h *Handler) InviteToGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -315,9 +315,9 @@ func (h *Handler) JoinGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -351,9 +351,9 @@ func (h *Handler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -387,9 +387,9 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -423,9 +423,9 @@ func (h *Handler) RejectInvitation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -459,9 +459,9 @@ func (h *Handler) AcceptJoinRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -496,9 +496,9 @@ func (h *Handler) RejectJoinRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -533,9 +533,9 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -571,9 +571,9 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -606,9 +606,9 @@ func (h *Handler) GetGroupMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -642,9 +642,9 @@ func (h *Handler) CreateGroupPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -747,9 +747,9 @@ func (h *Handler) DeleteGroupPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -786,9 +786,9 @@ func (h *Handler) SendChatMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -829,9 +829,9 @@ func (h *Handler) GetGroupChatMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
