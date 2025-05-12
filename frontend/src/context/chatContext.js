@@ -75,7 +75,7 @@ export const ChatProvider = ({ children }) => {
 
   // Update contacts when a new message is received
   useEffect(() => {
-    if (!currentUser?.id || !isInitialized || contacts.length === 0) return;
+    if (!currentUser?.id || !isInitialized || !contacts) return;
 
     // This will update the contacts list when messages change
     // to reflect the latest message for each contact
