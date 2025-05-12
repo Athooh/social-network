@@ -367,6 +367,11 @@ func (r *SQLiteRepository) DeleteGroup(id string) error {
 		return fmt.Errorf("failed to delete group: %w", err)
 	}
 
+	
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
 	// Update group counts for all members
 	for _, member := range members {
 		_, err = r.UpdateUserGroupCount(member.UserID, false)
@@ -374,11 +379,6 @@ func (r *SQLiteRepository) DeleteGroup(id string) error {
 			tx.Rollback()
 			return fmt.Errorf("failed to update user group count: %w", err)
 		}
-	}
-
-	// Commit the transaction
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
