@@ -75,7 +75,7 @@ func Router(config RouterConfig) http.Handler {
 	loggingMiddleware := config.Logger.HTTPMiddleware
 	publicRouteMiddleware := middlewareChain(loggingMiddleware, middleware.CorsMiddleware)
 	authenticatedRouteMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware, config.AuthMiddleware, loggingMiddleware)
-	wsMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware)
+	wsMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware, config.AuthMiddleware)
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
