@@ -34,40 +34,20 @@ func NewSessionManager(store SessionStore, cookieName, cookieDomain string, cook
 
 // CreateSession creates a new session for the user
 func (sm *SessionManager) CreateSession(w http.ResponseWriter, userID string) error {
-	// Check for existing sessions for the user
-	existingSessions, err := sm.db.GetUserSessions(userID)
-	if err == nil && len(existingSessions) > 0 {
-		// Look for a valid session
-		now := time.Now()
-		for _, session := range existingSessions {
-			if session.ExpiresAt.After(now) {
-				// Found a valid session, use it
-				cookie := &http.Cookie{
-					Name:     sm.cookieName,
-					Value:    session.ID,
-					Path:     "/",
-					Domain:   sm.cookieDomain,
-					Expires:  session.ExpiresAt,
-					MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
-					Secure:   sm.cookieSecure,
-					HttpOnly: true,
-					SameSite: http.SameSiteStrictMode,
-				}
-				http.SetCookie(w, cookie)
-				return nil
-			}
-		}
-		// No valid sessions found, clean up expired ones
-		sm.db.DeleteUserSessions(userID)
+	// Always delete any existing sessions for the user
+	err := sm.db.DeleteUserSessions(userID)
+	if err != nil {
+		return err
 	}
 
-	// Create new session
+	// Create a new session
 	expiresAt := time.Now().Add(sm.sessionMaxAge)
 	sessionID, err := sm.db.CreateSession(userID, expiresAt)
 	if err != nil {
 		return err
 	}
 
+	// Set session cookie
 	cookie := &http.Cookie{
 		Name:     sm.cookieName,
 		Value:    sessionID,

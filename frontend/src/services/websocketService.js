@@ -56,131 +56,120 @@ export const useWebSocket = () => {
     }
 
     // Only connect if authenticated and not already connected
-    if (isAuthenticated && token && !loading && !globalSocket) {
-      // Check if another tab already has an active connection
-      const connectWebSocket = () => {
-        // Fix the double slash issue by ensuring BASE_URL doesn't end with a slash
-        const baseUrl = BASE_URL.endsWith("/")
-          ? BASE_URL.slice(0, -1)
-          : BASE_URL;
-        const wsUrl = `${baseUrl}/ws?token=${token}&tabId=${tabId}`;
-        globalSocket = new WebSocket(wsUrl);
+    // Only connect if authenticated and not already connected
+if (isAuthenticated && token && !loading && !globalSocket) {
+  const connectWebSocket = () => {
+    const baseUrl = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+    const wsUrl = `${baseUrl}/ws?token=${token}&tabId=${tabId}`;
+    globalSocket = new WebSocket(wsUrl);
 
-        globalSocket.onopen = () => {
-          console.log("WebSocket connected");
-          setIsConnected(true);
-          window.__websocketConnected = true;
-          showToast("WebSocket connection established", "success");
-          reconnectAttempts = 0;
+    globalSocket.onopen = () => {
+      console.log("WebSocket connected");
+      setIsConnected(true);
+      window.__websocketConnected = true;
+      showToast("WebSocket connection established", "success");
+      reconnectAttempts = 0;
 
-          // Store connection info in sessionStorage (only for this tab)
-          sessionStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-              tabId,
-              connectedAt: Date.now(),
-            })
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          tabId,
+          connectedAt: Date.now(),
+        })
+      );
+
+      if (pingInterval) clearInterval(pingInterval);
+      pingInterval = setInterval(() => {
+        if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
+          globalSocket.send(JSON.stringify({ type: "ping" }));
+        }
+      }, 30000);
+    };
+
+    globalSocket.onclose = (event) => {
+      console.log("WebSocket disconnected", event.code);
+      setIsConnected(false);
+      window.__websocketConnected = false;
+      globalSocket = null;
+
+      console.log("Event <code>:", event.code);
+
+      // Prevent reconnect if unauthorized
+      if (event.code === 1006) {
+        console.warn("WebSocket closed due to unauthorized access. No reconnect.");
+        showToast("Session expired or unauthorized. Please log in again.", "error");
+        return;
+      }
+
+      // Reconnect unless normal closure (1000) or exceeded attempts
+      if (event.code !== 1000) {
+        reconnectAttempts++;
+
+        if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+          const delay = BASE_RECONNECT_DELAY * Math.pow(1.5, reconnectAttempts - 1);
+          console.log(
+            `Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${delay / 1000} seconds`
           );
 
-          // Start ping interval
-          if (pingInterval) clearInterval(pingInterval);
-          pingInterval = setInterval(() => {
-            if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
-              globalSocket.send(JSON.stringify({ type: "ping" }));
-            }
-          }, 30000); // 30 seconds
-        };
+          reconnectTimeout = setTimeout(() => {
+            connectWebSocket();
+          }, delay);
+        } else {
+          console.log("Maximum reconnection attempts reached");
+          showToast("Connection lost. Please reload the page to reconnect.", "error");
+        }
+      }
+    };
 
-        globalSocket.onclose = (event) => {
-          console.log("WebSocket disconnected", event.code);
-          setIsConnected(false);
-          window.__websocketConnected = false;
-          showToast("WebSocket connection closed", "error");
-          globalSocket = null;
+    globalSocket.onerror = (err) => {
+      console.error("WebSocket error:", err);
 
-          // Reconnect after delay unless it was a normal closure
-          if (event.code !== 1000) {
-            reconnectAttempts++;
+      // Optionally close the socket to trigger onclose
+      if (globalSocket && globalSocket.readyState !== WebSocket.CLOSED) {
+        globalSocket.close();
+      }
+    };
 
-            if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
-              // Exponential backoff: increase delay with each attempt
-              const delay =
-                BASE_RECONNECT_DELAY * Math.pow(1.5, reconnectAttempts - 1);
-              console.log(
-                `Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${
-                  delay / 1000
-                } seconds`
-              );
+    globalSocket.onmessage = (event) => {
+      try {
+        const messages = event.data.split(/\n|\r\n/);
 
-              reconnectTimeout = setTimeout(() => {
-                connectWebSocket();
-              }, delay);
-            } else {
-              console.log("Maximum reconnection attempts reached");
-              showToast(
-                "Connection lost. Please reload the page to reconnect.",
-                "error"
-              );
-            }
-          }
-        };
+        for (const message of messages) {
+          if (!message.trim()) continue;
 
-        globalSocket.onmessage = (event) => {
           try {
-            // Split the message by newlines in case multiple JSON objects were sent
-            const messages = event.data.split(/\n|\r\n/);
+            const data = JSON.parse(message);
 
-            for (const message of messages) {
-              if (!message.trim()) continue; // Skip empty lines
-
-              try {
-                // Try to parse each individual JSON message
-                const data = JSON.parse(message);
-
-                // Handle ping messages from server
-                if (data.type === "ping" || data.type === "pong") {
-                  if (
-                    globalSocket &&
-                    globalSocket.readyState === WebSocket.OPEN
-                  ) {
-                    globalSocket.send(JSON.stringify({ type: "pong" }));
-                  }
-                  continue; // Skip further processing for ping messages
-                }
-
-                setLastMessage(data);
-
-                // Handle event routing
-                const eventType = data.type;
-                const payload = data.payload;
-
-                if (globalListeners[eventType]) {
-                  globalListeners[eventType].forEach((callback) => {
-                    callback(payload);
-                  });
-                }
-              } catch (innerError) {
-                console.error(
-                  "Error parsing individual WebSocket message:",
-                  innerError,
-                  "Raw message part:",
-                  message
-                );
+            if (data.type === "ping" || data.type === "pong") {
+              if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
+                globalSocket.send(JSON.stringify({ type: "pong" }));
               }
+              continue;
             }
-          } catch (error) {
-            console.error(
-              "Error processing WebSocket message:",
-              error,
-              "Raw message:",
-              event.data
-            );
-          }
-        };
-      };
 
-      connectWebSocket();
-    }
+            setLastMessage(data);
+
+            const eventType = data.type;
+            const payload = data.payload;
+
+            if (globalListeners[eventType]) {
+              globalListeners[eventType].forEach((callback) => {
+                callback(payload);
+              });
+            }
+          } catch (innerError) {
+            console.error("Error parsing WebSocket message:", innerError, "Raw:", message);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing WebSocket message:", error, "Raw:", event.data);
+      }
+    };
+  };
+
+  connectWebSocket();
+}
+
 
     // Function to send status message with debouncing
     const sendStatusMessage = (statusType) => {
