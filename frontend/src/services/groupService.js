@@ -75,5 +75,77 @@ export const useGroupService = () => {
             return [];
         }
     }
-    return { createGroup, getallgroups };
-}
+
+    const deleteGroup = async (groupId) => {
+        try {
+            const response = await authenticatedFetch(`groups?id=${groupId}`, {
+                method: "DELETE",
+            });
+            console.log("Response from deleteGroup:", response);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to delete group");
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error deleting group:", error);
+            showToast(error.message || "Error deleting group", "error");
+            return false;
+        }
+    };
+
+    const leaveGroup = async (groupId) => {
+        try {
+            const response = await authenticatedFetch("groups/leave", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to leave group");
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error leaving group:", error);
+            showToast(error.message || "Error leaving group", "error");
+            return false;
+        }
+    };
+
+    const joinGroup = async (groupId) => {
+        try {
+            const response = await authenticatedFetch("groups/join", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to join group");
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error joining group:", error);
+            showToast(error.message || "Error joining group", "error");
+            return false;
+        }
+    };
+
+    return { 
+        createGroup, 
+        getallgroups, 
+        deleteGroup, 
+        leaveGroup, 
+        joinGroup 
+    };
+};
