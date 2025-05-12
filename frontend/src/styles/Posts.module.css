@@ -1146,3 +1146,27 @@
 .postAuthor img:hover {
   opacity: 0.9;
 }
+
+@media  screen and (max-width: 480px) {
+  .createPostCard {
+    margin: var(--spacing-sm) auto;
+  }
+}
+
+@media  screen and (max-width: 400px) {
+  .postHeader {
+    padding: var(--spacing-md) var(--spacing-sm);
+    width: 100%;
+    margin: var(--spacing-sm) auto;
+  }
+
+  .createPostCard {
+    padding: var(--spacing-sm);
+    width: 100%;
+    margin: var(--spacing-sm) auto;
+  }
+
+  .leftSidebar, .rightSidebar {
+    display: none;
+  }
+}
