@@ -130,10 +130,10 @@ export default function Home() {
     <ProtectedRoute>
       <Header />
       <div className={styles.container}>
-        <aside>
+        <aside className="styles.leftSidebar">
           <LeftSidebar />
         </aside>
-        <main>
+        <main className={styles.mainContent}>
           <section className={styles.createPostSection}>
             <CreatePost />
           </section>
@@ -185,7 +185,7 @@ export default function Home() {
               )}
           </section>
         </main>
-        <aside>
+        <aside className={styles.rightSidebar}>
           <RightSidebar />
         </aside>
       </div>
