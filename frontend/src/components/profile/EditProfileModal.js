@@ -16,25 +16,49 @@ import { API_URL } from "@/utils/constants";
 
 const EditProfileModal = ({ isOpen, onClose, profileData }) => {
   // Predefined lists of skills and interests
-  const predefinedTechSkills = ['JavaScript', 'React', 'Node.js', 'Python', 'Java', 'SQL', 'AWS'];
-  const predefinedSoftSkills = ['Communication', 'Teamwork', 'Leadership', 'Problem Solving', 'Time Management'];
-  const predefinedInterests = ['AI', 'Web Development', 'Mobile Development', 'Data Science', 'Cybersecurity'];
+  const predefinedTechSkills = [
+    "JavaScript",
+    "React",
+    "Node.js",
+    "Python",
+    "Java",
+    "SQL",
+    "AWS",
+  ];
+  const predefinedSoftSkills = [
+    "Communication",
+    "Teamwork",
+    "Leadership",
+    "Problem Solving",
+    "Time Management",
+  ];
+  const predefinedInterests = [
+    "AI",
+    "Web Development",
+    "Mobile Development",
+    "Data Science",
+    "Cybersecurity",
+  ];
 
   const [formData, setFormData] = useState({
-    bannerImage: profileData?.bannerUrl || '',
-    profileImage: profileData?.profileUrl || '',
-    username: profileData?.username || '',
-    fullName: profileData?.fullName || '',
-    bio: profileData?.bio || '',
-    work: profileData?.work || '',
-    education: profileData?.education || '',
-    email: profileData?.email || '',
-    phone: profileData?.phone || '',
-    website: profileData?.website || '',
-    location: profileData?.location || '',
-    techSkills: profileData?.techSkills ? profileData.techSkills.split(',') : [],
-    softSkills: profileData?.softSkills ? profileData.softSkills.split(',') : [],
-    interests: profileData?.interests ? profileData.interests.split(',') : [],
+    bannerImage: profileData?.bannerUrl || "",
+    profileImage: profileData?.profileUrl || "",
+    username: profileData?.username || "",
+    fullName: profileData?.fullName || "",
+    bio: profileData?.bio || "",
+    work: profileData?.work || "",
+    education: profileData?.education || "",
+    email: profileData?.email || "",
+    phone: profileData?.phone || "",
+    website: profileData?.website || "",
+    location: profileData?.location || "",
+    techSkills: profileData?.techSkills
+      ? profileData.techSkills.split(",")
+      : [],
+    softSkills: profileData?.softSkills
+      ? profileData.softSkills.split(",")
+      : [],
+    interests: profileData?.interests ? profileData.interests.split(",") : [],
     isPrivate: profileData?.isPrivate || false,
   });
 
