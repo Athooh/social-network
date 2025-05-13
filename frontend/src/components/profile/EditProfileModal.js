@@ -114,13 +114,53 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataToSubmit = {
-      ...formData,
-      techSkills: formData.techSkills.join(','),
-      softSkills: formData.softSkills.join(','),
-      interests: formData.interests.join(','),
-    };
-    onClose();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("username", formData.username);
+      formDataToSend.append("fullName", formData.fullName);
+      formDataToSend.append("bio", formData.bio);
+      formDataToSend.append("work", formData.work);
+      formDataToSend.append("education", formData.education);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("website", formData.website);
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("isPrivate", formData.isPrivate);
+
+      formDataToSend.append("techSkills", formData.techSkills.join(","));
+      formDataToSend.append("softSkills", formData.softSkills.join(","));
+      formDataToSend.append("interests", formData.interests.join(","));
+
+      if (formData.bannerImage instanceof File) {
+        formDataToSend.append("bannerImage", formData.bannerImage);
+      }
+
+      if (formData.profileImage instanceof File) {
+        formDataToSend.append("profileImage", formData.profileImage);
+      }
+
+      const response = await fetch(`${API_URL}/users/profile`, {
+        method: "PUT",
+        credentials: "include",
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "failed to update profile");
+      }
+      const updatedProfile = await response.json();
+      console.log(updatedProfile);
+      onClose();
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      setError(err.message || "An error occurred while updating your profile");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
