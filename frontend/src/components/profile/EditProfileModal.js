@@ -387,19 +387,30 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                   Technical Skills
                 </label>
                 <select
-                  onChange={(e) => handleSkillSelect('techSkills', e.target.value)}
+                  onChange={(e) =>
+                    handleSkillSelect("techSkills", e.target.value)
+                  }
                   defaultValue=""
                 >
-                  <option value="" disabled>Select a technical skill</option>
+                  <option value="" disabled>
+                    Select a technical skill
+                  </option>
                   {predefinedTechSkills.map((skill, index) => (
-                    <option key={index} value={skill}>{skill}</option>
+                    <option key={index} value={skill}>
+                      {skill}
+                    </option>
                   ))}
                 </select>
                 <div className={styles.tags}>
                   {formData.techSkills.map((skill, index) => (
                     <span key={index} className={styles.tag}>
                       {skill}
-                      <button type="button" onClick={() => handleRemoveSkill('techSkills', skill)}>×</button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill("techSkills", skill)}
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
                 </div>
