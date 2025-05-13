@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faCamera, 
-  faTimes, 
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCamera,
+  faTimes,
   faUser,
   faBriefcase,
   faGraduationCap,
   faEnvelope,
   faPhone,
   faLink,
-  faLocationDot
-} from '@fortawesome/free-solid-svg-icons';
-import styles from '@/styles/EditProfileModal.module.css';
+  faLocationDot,
+} from "@fortawesome/free-solid-svg-icons";
+import styles from "@/styles/EditProfileModal.module.css";
+import { API_URL } from "@/utils/constants";
 
 const EditProfileModal = ({ isOpen, onClose, profileData }) => {
   // Predefined lists of skills and interests
