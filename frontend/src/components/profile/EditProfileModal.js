@@ -487,14 +487,23 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                   ))}
                 </div>
               </div>
-            </div>  
+            </div>
           </div>
           <div className={styles.formActions}>
-            <button type="button" onClick={onClose} className={styles.cancelButton}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelButton}
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className={styles.saveButton}>
-              Save Changes
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}{" "}
             </button>
           </div>
         </form>
