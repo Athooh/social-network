@@ -423,19 +423,30 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                   Soft Skills
                 </label>
                 <select
-                  onChange={(e) => handleSkillSelect('softSkills', e.target.value)}
+                  onChange={(e) =>
+                    handleSkillSelect("softSkills", e.target.value)
+                  }
                   defaultValue=""
                 >
-                  <option value="" disabled>Select a soft skill</option>
+                  <option value="" disabled>
+                    Select a soft skill
+                  </option>
                   {predefinedSoftSkills.map((skill, index) => (
-                    <option key={index} value={skill}>{skill}</option>
+                    <option key={index} value={skill}>
+                      {skill}
+                    </option>
                   ))}
                 </select>
                 <div className={styles.tags}>
                   {formData.softSkills.map((skill, index) => (
                     <span key={index} className={styles.tag}>
                       {skill}
-                      <button type="button" onClick={() => handleRemoveSkill('softSkills', skill)}>×</button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill("softSkills", skill)}
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
                 </div>
@@ -448,19 +459,30 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                   Interests
                 </label>
                 <select
-                  onChange={(e) => handleSkillSelect('interests', e.target.value)}
+                  onChange={(e) =>
+                    handleSkillSelect("interests", e.target.value)
+                  }
                   defaultValue=""
                 >
-                  <option value="" disabled>Select an interest</option>
+                  <option value="" disabled>
+                    Select an interest
+                  </option>
                   {predefinedInterests.map((interest, index) => (
-                    <option key={index} value={interest}>{interest}</option>
+                    <option key={index} value={interest}>
+                      {interest}
+                    </option>
                   ))}
                 </select>
                 <div className={styles.tags}>
                   {formData.interests.map((interest, index) => (
                     <span key={index} className={styles.tag}>
                       {interest}
-                      <button type="button" onClick={() => handleRemoveSkill('interests', interest)}>×</button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill("interests", interest)}
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
                 </div>
