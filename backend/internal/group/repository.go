@@ -690,6 +690,11 @@ func (r *SQLiteRepository) RemoveMember(groupID, userID string) error {
 		return fmt.Errorf("failed to remove member: %w", err)
 	}
 
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	
 	// Update user's group count if status was accepted
 	if member.Status == "accepted" {
 		_, err = r.UpdateUserGroupCount(userID, false)
@@ -698,12 +703,6 @@ func (r *SQLiteRepository) RemoveMember(groupID, userID string) error {
 			return fmt.Errorf("failed to update user group count: %w", err)
 		}
 	}
-
-	// Commit the transaction
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
 	return nil
 }
 
