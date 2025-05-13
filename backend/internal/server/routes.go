@@ -75,7 +75,7 @@ func Router(config RouterConfig) http.Handler {
 
 	// Define middleware chains
 	loggingMiddleware := config.Logger.HTTPMiddleware
-	publicRouteMiddleware := middlewareChain(loggingMiddleware, middleware.CorsMiddleware)
+	publicRouteMiddleware := middlewareChain(middleware.CorsMiddleware, loggingMiddleware)
 	authenticatedRouteMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware, config.AuthMiddleware, loggingMiddleware)
 	wsMiddleware := middlewareChain(middleware.CorsMiddleware, config.JWTMiddleware)
 
