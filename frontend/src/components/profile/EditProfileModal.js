@@ -179,10 +179,10 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
           {/* Banner Image */}
           <div className={styles.imageSection}>
             <div className={styles.bannerUpload}>
-              <img 
-                src={bannerPreview || '/banner3.jpg'} 
-                alt="Banner" 
-                className={styles.bannerPreview} 
+              <img
+                src={bannerPreview || "/banner3.jpg"}
+                alt="Banner"
+                className={styles.bannerPreview}
               />
               <label className={styles.imageUploadLabel}>
                 <FontAwesomeIcon icon={faCamera} />
@@ -190,7 +190,7 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleImageChange(e, 'banner')}
+                  onChange={(e) => handleImageChange(e, "banner")}
                   hidden
                 />
               </label>
@@ -198,17 +198,17 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
 
             {/* Profile Image */}
             <div className={styles.profileImageUpload}>
-              <img 
-                src={profilePreview || '/avatar.png'} 
-                alt="Profile" 
-                className={styles.profilePreview} 
+              <img
+                src={profilePreview || "/avatar.png"}
+                alt="Profile"
+                className={styles.profilePreview}
               />
               <label className={styles.profileImageLabel}>
                 <FontAwesomeIcon icon={faCamera} />
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleImageChange(e, 'profile')}
+                  onChange={(e) => handleImageChange(e, "profile")}
                   hidden
                 />
               </label>
@@ -256,15 +256,19 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
                       type="checkbox"
                       name="isPrivate"
                       checked={formData.isPrivate}
-                      onChange={(e) => handleInputChange({
-                        target: {
-                          name: 'isPrivate',
-                          value: e.target.checked
-                        }
-                      })}
+                      onChange={(e) =>
+                        handleInputChange({
+                          target: {
+                            name: "isPrivate",
+                            value: e.target.checked,
+                          },
+                        })
+                      }
                     />
                     <span className={styles.toggleText}>
-                      {formData.isPrivate ? 'Private Profile' : 'Public Profile'}
+                      {formData.isPrivate
+                        ? "Private Profile"
+                        : "Public Profile"}
                     </span>
                   </label>
                 </div>
