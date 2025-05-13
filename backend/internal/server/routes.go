@@ -10,6 +10,7 @@ import (
 	"github.com/Athooh/social-network/internal/group"
 	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/internal/post"
+	"github.com/Athooh/social-network/internal/profile"
 	websocketHandler "github.com/Athooh/social-network/internal/websocket"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
@@ -59,6 +60,7 @@ type RouterConfig struct {
 	GroupHandler        *group.Handler
 	EventHandler        *event.Handler
 	ChatHandler         *chat.Handler
+	ProfileHandler      *profile.Handler
 	NotificationHanlder *notifications.Handler
 	AuthMiddleware      func(http.Handler) http.Handler
 	JWTMiddleware       func(http.Handler) http.Handler
@@ -98,6 +100,7 @@ func Router(config RouterConfig) http.Handler {
 
 	protectedUserGroup := NewRouteGroup("/api/users", authenticatedRouteMiddleware)
 	protectedUserGroup.HandleFunc("/me", config.AuthHandler.Me)
+	protectedUserGroup.HandleFunc("/profile", config.ProfileHandler.UpdateProfile)
 
 	// Add follow routes
 	protectedFollowGroup := NewRouteGroup("/api/follow", authenticatedRouteMiddleware)
