@@ -62,8 +62,14 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
     isPrivate: profileData?.isPrivate || false,
   });
 
-  const [bannerPreview, setBannerPreview] = useState(profileData?.bannerUrl || '');
-  const [profilePreview, setProfilePreview] = useState(profileData?.profileUrl || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(
+    profileData?.bannerUrl || ""
+  );
+  const [profilePreview, setProfilePreview] = useState(
+    profileData?.profileUrl || ""
+  );
 
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];
