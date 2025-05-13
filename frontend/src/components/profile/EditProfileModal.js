@@ -76,12 +76,12 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (type === 'banner') {
+        if (type === "banner") {
           setBannerPreview(reader.result);
-          setFormData(prev => ({ ...prev, bannerImage: file }));
+          setFormData((prev) => ({ ...prev, bannerImage: file }));
         } else {
           setProfilePreview(reader.result);
-          setFormData(prev => ({ ...prev, profileImage: file }));
+          setFormData((prev) => ({ ...prev, profileImage: file }));
         }
       };
       reader.readAsDataURL(file);
@@ -90,7 +90,7 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -98,7 +98,7 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
 
   const handleSkillSelect = (type, value) => {
     if (!formData[type].includes(value)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [type]: [...prev[type], value],
       }));
@@ -106,9 +106,9 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
   };
 
   const handleRemoveSkill = (type, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [type]: prev[type].filter(item => item !== value),
+      [type]: prev[type].filter((item) => item !== value),
     }));
   };
 
