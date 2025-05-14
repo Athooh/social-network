@@ -14,7 +14,12 @@ import {
 import styles from "@/styles/EditProfileModal.module.css";
 import { API_URL } from "@/utils/constants";
 
-const EditProfileModal = ({ isOpen, onClose, profileData }) => {
+const EditProfileModal = ({
+  isOpen,
+  onClose,
+  profileData,
+  onProfileUpdate,
+}) => {
   // Predefined lists of skills and interests
   const predefinedTechSkills = [
     "JavaScript",
