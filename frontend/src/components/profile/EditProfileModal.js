@@ -248,7 +248,7 @@ const EditProfileModal = ({
           <div className={styles.imageSection}>
             <div className={styles.bannerUpload}>
               <img
-                src={bannerPreview || "/banner3.jpg"}
+                src={bannerPreview || "/banner-placeholder.jpg"}
                 alt="Banner"
                 className={styles.bannerPreview}
               />
@@ -257,7 +257,7 @@ const EditProfileModal = ({
                 <span>Change Banner</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
                   onChange={(e) => handleImageChange(e, "banner")}
                   hidden
                 />
@@ -267,7 +267,7 @@ const EditProfileModal = ({
             {/* Profile Image */}
             <div className={styles.profileImageUpload}>
               <img
-                src={profilePreview || "/avatar.png"}
+                src={profilePreview || "/avatar-placeholder.png"}
                 alt="Profile"
                 className={styles.profilePreview}
               />
@@ -275,7 +275,7 @@ const EditProfileModal = ({
                 <FontAwesomeIcon icon={faCamera} />
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
                   onChange={(e) => handleImageChange(e, "profile")}
                   hidden
                 />
