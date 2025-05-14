@@ -16,6 +16,18 @@ import GroupCreatePost from '@/components/groups/GroupCreatePost';
 import GroupPost from '@/components/groups/Group-Posts';
 // Add GroupChat to imports
 import GroupChat from '@/components/groups/GroupChat';
+import { useGroupService } from "@/services/groupService"; 
+
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
+let userdata = null;
+try {
+  const raw = localStorage.getItem("userData");
+  if (raw) userdata = JSON.parse(raw);
+  console.log("User data from localStorage:", userdata);
+} catch (e) {
+  console.error("Invalid userData in localStorage:", e);
+}
 
 export default function GroupPostPage() {
   const params = useParams();
