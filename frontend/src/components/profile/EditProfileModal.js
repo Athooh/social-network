@@ -102,19 +102,38 @@ const EditProfileModal = ({
 
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (type === "banner") {
-          setBannerPreview(reader.result);
-          setFormData((prev) => ({ ...prev, bannerImage: file }));
-        } else {
-          setProfilePreview(reader.result);
-          setFormData((prev) => ({ ...prev, profileImage: file }));
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file type
+    const validImageTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!validImageTypes.includes(file.type)) {
+      setError(`Please select a valid image file (JPEG, PNG, GIF, WEBP)`);
+      return;
     }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setError(`Image size should not exceed 5MB`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (type === "banner") {
+        setBannerPreview(reader.result);
+        setFormData((prev) => ({ ...prev, bannerImage: file }));
+      } else {
+        setProfilePreview(reader.result);
+        setFormData((prev) => ({ ...prev, profileImage: file }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleInputChange = (e) => {
