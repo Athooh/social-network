@@ -50,7 +50,7 @@ export const useGroupService = () => {
             // Then fetch posts for each group
             const groupsWithPosts = await Promise.all(
                 groups.map(async (group) => {
-                    const postsResponse = await authenticatedFetch(`groups/posts?=groupId${group.ID}`, {
+                    const postsResponse = await authenticatedFetch(`groups/posts?groupId=${group.ID}`, {
                         method: "GET",
                     });
 
