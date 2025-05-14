@@ -45,8 +45,8 @@ export default function GroupFeeds() {
     fetchGroups();
   }, []);
 
-  const handleGroupClick = (groupId, postId) => {
-    router.push(`/groups/${groupId}/posts/${postId}`);
+  const handleGroupClick = (groupId) => {
+    router.push(`/groups/${groupId}`);
   };
 
   return (
@@ -68,7 +68,7 @@ export default function GroupFeeds() {
                   />
                   <div className={groupFeeds.groupDetails}>
                     <h2
-                      onClick={() => handleGroupClick(group.ID, group.posts[0].ID)}
+                      onClick={() => handleGroupClick(group.ID)}
                       style={{ cursor: 'pointer' }}
                     >
                       {group.Name}

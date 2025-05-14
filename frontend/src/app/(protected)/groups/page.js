@@ -77,7 +77,7 @@ export default function Groups() {
     };
 
     const handleGroupClick = (groupId) => {
-        router.push(`/group/${groupId}`);
+        router.push(`/groups/${groupId}`);
     };
 
     return (
