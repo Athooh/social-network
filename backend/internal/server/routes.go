@@ -100,7 +100,13 @@ func Router(config RouterConfig) http.Handler {
 
 	protectedUserGroup := NewRouteGroup("/api/users", authenticatedRouteMiddleware)
 	protectedUserGroup.HandleFunc("/me", config.AuthHandler.Me)
-	protectedUserGroup.HandleFunc("/profile", config.ProfileHandler.UpdateProfile)
+
+	protectedUserGroup.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			config.ProfileHandler.UpdateProfile(w, r)
+		}
+	})
+	// protectedUserGroup.HandleFunc("/profile", config.ProfileHandler.UpdateProfile)
 
 	// Add follow routes
 	protectedFollowGroup := NewRouteGroup("/api/follow", authenticatedRouteMiddleware)
