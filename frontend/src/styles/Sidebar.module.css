@@ -297,6 +297,12 @@
   margin-top: 20px; /* Adjust this value as needed */
 }
 
+@media screen and (max-width: 820px) {
+  .sidebar, .rightSidebar {
+    display: none;
+  }
+}
+
 @media screen and (max-width: 480px) {
   .sidebar, .rightSidebar {
    display: none;
