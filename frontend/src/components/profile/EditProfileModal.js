@@ -137,14 +137,16 @@ const EditProfileModal = ({
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleSkillSelect = (type, value) => {
+    if (!value) return;
+
     if (!formData[type].includes(value)) {
       setFormData((prev) => ({
         ...prev,
