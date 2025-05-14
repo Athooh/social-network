@@ -45,6 +45,12 @@ const EditProfileModal = ({
     "Cybersecurity",
   ];
 
+  // Helper function to safely split comma-separated strings
+  const safeSplit = (str) => {
+    if (!str) return [];
+    return str.split(",").filter((item) => item.trim() !== "");
+  };
+
   const [formData, setFormData] = useState({
     bannerImage: profileData?.bannerUrl || "",
     profileImage: profileData?.profileUrl || "",
