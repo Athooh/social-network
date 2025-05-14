@@ -12,7 +12,8 @@ import {
   faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "@/styles/EditProfileModal.module.css";
-import { API_URL } from "@/utils/constants";
+
+import { useAuth } from "@/context/authcontext";
 
 const EditProfileModal = ({
   isOpen,
@@ -20,6 +21,8 @@ const EditProfileModal = ({
   profileData,
   onProfileUpdate,
 }) => {
+  // Get auth context with authenticatedFetch
+  const { authenticatedFetch, isAuthenticated } = useAuth();
   // Predefined lists of skills and interests
   const predefinedTechSkills = [
     "JavaScript",
@@ -195,11 +198,9 @@ const EditProfileModal = ({
       if (formData.profileImage instanceof File) {
         formDataToSend.append("profileImage", formData.profileImage);
       }
-      console.log(formDataToSend)
-
-      const response = await fetch(`${API_URL}/users/profile`, {
+      // Use authenticatedFetch instead of direct fetch
+      const response = await authenticatedFetch("users/profile", {
         method: "PUT",
-        credentials: "include",
         body: formDataToSend,
       });
 
