@@ -1,6 +1,104 @@
 package profile
 
+import (
+	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+	"time"
+)
 
-type Service struct {
-	
+// Repository interface for profile data persistence
+type Repository interface {
+	UpdateUserProfile(userID string, profileData map[string]interface{}) error
+}
+
+// Service interface defines the operations for profile management
+type Service interface {
+	UpdateProfile(userID string, profileData map[string]interface{}) error
+	SaveProfileImage(userID string, fileHeader *multipart.FileHeader) (string, error)
+	SaveBannerImage(userID string, fileHeader *multipart.FileHeader) (string, error)
+}
+
+// ProfileService implements the Service interface
+type ProfileService struct {
+	repo      Repository
+	uploadDir string
+}
+
+// NewService creates a new profile service
+func NewService(repo Repository, uploadDir string) Service {
+	// Ensure upload directory exists
+	os.MkdirAll(uploadDir, os.ModePerm)
+
+	return &ProfileService{
+		repo:      repo,
+		uploadDir: uploadDir,
+	}
+}
+
+// UpdateProfile updates a user's profile
+func (s *ProfileService) UpdateProfile(userID string, profileData map[string]interface{}) error {
+	if userID == "" {
+		return errors.New("user ID is required")
+	}
+
+	return s.repo.UpdateUserProfile(userID, profileData)
+}
+
+// SaveProfileImage saves a profile image and returns the path
+func (s *ProfileService) SaveProfileImage(userID string, fileHeader *multipart.FileHeader) (string, error) {
+	if fileHeader == nil {
+		return "", nil // No file provided, not an error
+	}
+
+	return s.saveImage(userID, fileHeader, "profile")
+}
+
+// SaveBannerImage saves a banner image and returns the path
+func (s *ProfileService) SaveBannerImage(userID string, fileHeader *multipart.FileHeader) (string, error) {
+	if fileHeader == nil {
+		return "", nil // No file provided, not an error
+	}
+
+	return s.saveImage(userID, fileHeader, "banner")
+}
+
+// saveImage is a helper function to save images
+func (s *ProfileService) saveImage(userID string, fileHeader *multipart.FileHeader, imageType string) (string, error) {
+	// Open the uploaded file
+	file, err := fileHeader.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	// Create a unique filename
+	fileExt := filepath.Ext(fileHeader.Filename)
+	fileName := fmt.Sprintf("%s_%s_%d%s", userID, imageType, time.Now().Unix(), fileExt)
+
+	// Create user directory if it doesn't exist
+	userDir := filepath.Join(s.uploadDir, userID)
+	if err := os.MkdirAll(userDir, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	// Create the destination file
+	filePath := filepath.Join(userDir, fileName)
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer dst.Close()
+
+	// Copy the uploaded file to the destination file
+	if _, err := io.Copy(dst, file); err != nil {
+		return "", err
+	}
+
+	// Return the relative path to be stored in the database
+	// This assumes the uploadDir is accessible via a URL path
+	return filepath.Join(userID, fileName), nil
 }
