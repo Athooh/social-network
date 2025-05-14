@@ -52,35 +52,53 @@ const EditProfileModal = ({
   };
 
   const [formData, setFormData] = useState({
-    bannerImage: profileData?.bannerUrl || "",
-    profileImage: profileData?.profileUrl || "",
-    username: profileData?.username || "",
-    fullName: profileData?.fullName || "",
-    bio: profileData?.bio || "",
-    work: profileData?.work || "",
-    education: profileData?.education || "",
-    email: profileData?.email || "",
-    phone: profileData?.phone || "",
-    website: profileData?.website || "",
-    location: profileData?.location || "",
-    techSkills: profileData?.techSkills
-      ? profileData.techSkills.split(",")
-      : [],
-    softSkills: profileData?.softSkills
-      ? profileData.softSkills.split(",")
-      : [],
-    interests: profileData?.interests ? profileData.interests.split(",") : [],
-    isPrivate: profileData?.isPrivate || false,
+    bannerImage: null,
+    profileImage: null,
+    username: "",
+    fullName: "",
+    bio: "",
+    work: "",
+    education: "",
+    email: "",
+    phone: "",
+    website: "",
+    location: "",
+    techSkills: [],
+    softSkills: [],
+    interests: [],
+    isPrivate: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState(
-    profileData?.bannerUrl || ""
-  );
-  const [profilePreview, setProfilePreview] = useState(
-    profileData?.profileUrl || ""
-  );
+  const [bannerPreview, setBannerPreview] = useState("");
+  const [profilePreview, setProfilePreview] = useState("");
+
+  // Initialize form data when profileData changes
+  useEffect(() => {
+    if (profileData) {
+      setFormData({
+        bannerImage: null, // File objects will be set on change
+        profileImage: null,
+        username: profileData.username || "",
+        fullName: profileData.fullName || "",
+        bio: profileData.bio || "",
+        work: profileData.work || "",
+        education: profileData.education || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+        website: profileData.website || "",
+        location: profileData.location || "",
+        techSkills: safeSplit(profileData.techSkills),
+        softSkills: safeSplit(profileData.softSkills),
+        interests: safeSplit(profileData.interests),
+        isPrivate: profileData.isPrivate || false,
+      });
+
+      setBannerPreview(profileData.bannerUrl || "");
+      setProfilePreview(profileData.profileUrl || "");
+    }
+  }, [profileData]);
 
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];
