@@ -141,8 +141,50 @@ export const useGroupService = () => {
         }
     };
 
+    const getgroup = async (groupId) => {
+        try {
+            // First fetch all groups
+            const response = await authenticatedFetch(`groups?q=${groupId}`, {
+                method: "GET",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData.message || errorData.error || "Failed to fetch groups"
+                );
+            }
+
+            const group = await response.json();
+
+            const postsResponse = await authenticatedFetch(`groups/posts?groupId=${groupId}`, {
+                method: "GET",
+            });
+        
+            if (postsResponse.ok) {
+                const posts = await postsResponse.json();
+                groupsWithPosts = [{
+                    ...group,
+                    posts: posts || [],
+                }];
+            } else {
+                groupsWithPosts = [{
+                    ...group,
+                    posts: [],
+                }];
+            }
+
+            return groupsWithPosts;
+        } catch (error) {
+            console.error("Error fetching groups:", error);
+            showToast(error.message || "Error fetching groups", "error");
+            return [];
+        }
+    }
+
     return { 
-        createGroup, 
+        createGroup,
+        getgroup, 
         getallgroups, 
         deleteGroup, 
         leaveGroup, 
