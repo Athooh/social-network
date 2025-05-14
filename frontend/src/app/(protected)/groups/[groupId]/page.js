@@ -31,7 +31,7 @@ try {
 
 export default function GroupPostPage() {
   const params = useParams();
-  const { groupId, postId } = params;
+  const { groupId } = params;
   const [group, setGroup] = useState(null);
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function GroupPostPage() {
     });
 
     setPost({
-      id: postId,
+      id: 1,
       content: "Sample post content",
       userData: {
         firstName: "John",
@@ -73,7 +73,7 @@ export default function GroupPostPage() {
     });
 
     setLoading(false);
-  }, [groupId, postId]);
+  }, [groupId]);
 
   const renderContent = () => {
     switch (activeSection) {
