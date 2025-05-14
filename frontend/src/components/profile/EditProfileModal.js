@@ -231,10 +231,17 @@ const EditProfileModal = ({
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
           <h2>Edit Profile</h2>
-          <button onClick={onClose} className={styles.closeButton}>
+          <button
+            type="button"
+            onClick={onClose}
+            className={styles.closeButton}
+            aria-label="Close modal"
+          >
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
+
+        {error && <div className={styles.errorMessage}>{error}</div>}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Banner Image */}
