@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePostService } from "@/services/postService"; // Adjust the import path
+import { useState, useEffect } from "react";
+import { usePostService } from "@/services/postService";
 import styles from "@/styles/Posts.module.css";
 import { showToast } from "@/components/ui/ToastContainer";
 import EmojiPicker from "@/components/ui/EmojiPicker";
@@ -26,6 +26,19 @@ export default function CreatePost() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
   const [followersError, setFollowersError] = useState(null);
+  const [userData, setUserData] = useState(null);
+
+  // Load user data from localStorage when component mounts
+  useEffect(() => {
+    try {
+      const storedUserData = localStorage.getItem("userData");
+      if (storedUserData) {
+        setUserData(JSON.parse(storedUserData));
+      }
+    } catch (error) {
+      console.error("Error loading user data from localStorage:", error);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +54,7 @@ export default function CreatePost() {
 
     // Add selected viewers if privacy is private
     if (privacy === "private" && selectedViewers.length > 0) {
-      selectedViewers.forEach((viewerId, index) => {
+      selectedViewers.forEach((viewerId) => {
         formData.append(`viewers`, viewerId);
       });
     }
@@ -79,6 +92,7 @@ export default function CreatePost() {
       console.error("Error submitting post:", error);
     }
   };
+
   const handleFileSelect = (e, fileType) => {
     const files = Array.from(e.target.files);
 
@@ -150,11 +164,25 @@ export default function CreatePost() {
     setShowEmojiPicker(false);
   };
 
-  const UserAvatar = `${BASE_URL}uploads/${
-    JSON.parse(localStorage.getItem("userData"))?.avatar
-      ? JSON.parse(localStorage.getItem("userData")).avatar
-      : "/avatar.png"
-  }`;
+  // Get user avatar with fallback
+  const getUserAvatar = () => {
+    if (userData?.avatar) {
+      return `${BASE_URL}uploads/${userData.avatar}`;
+    }
+    return "/avatar.png"; // Default avatar path
+  };
+
+  // Get user's full name or nickname
+  const getUserDisplayName = () => {
+    if (userData) {
+      if (userData.nickname) return userData.nickname;
+      return (
+        `${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+        "User"
+      );
+    }
+    return "User";
+  };
 
   const fetchFollowers = async () => {
     setIsLoadingFollowers(true);
@@ -220,7 +248,7 @@ export default function CreatePost() {
       <div className={styles.createPostCard}>
         <div className={styles.createPostHeader}>
           <img
-            src={UserAvatar}
+            src={getUserAvatar()}
             alt="Profile"
             width={40}
             height={40}
@@ -232,7 +260,7 @@ export default function CreatePost() {
           >
             <input
               type="text"
-              placeholder="What's on your mind, John?"
+              placeholder={`What's on your mind, ${userData?.firstName || "there"}?`}
               readOnly
             />
           </div>
@@ -288,15 +316,15 @@ export default function CreatePost() {
 
             <div className={styles.modalContent}>
               <div className={styles.userInfo}>
-                <Image
-                  src="/avatar4.png"
+                <img
+                  src={getUserAvatar()}
                   alt="Profile"
                   width={40}
                   height={40}
                   className={styles.profilePic}
                 />
                 <div>
-                  <h3>John Doe</h3>
+                  <h3>{getUserDisplayName()}</h3>
                   <div className={styles.privacySelector}>
                     <button
                       className={styles.privacyButton}
@@ -314,7 +342,7 @@ export default function CreatePost() {
                 <textarea
                   value={postText}
                   onChange={(e) => setPostText(e.target.value)}
-                  placeholder="What's on your mind, John?"
+                  placeholder={`What's on your mind, ${userData?.firstName || "there"}?`}
                   autoFocus
                 />
 

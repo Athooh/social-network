@@ -153,6 +153,7 @@ func DiscoverModelStructs() []interface{} {
 		models.PrivateMessage{},
 		models.ChatContact{},
 		models.Notification{},
+		models.UserProfile{},
 		// Add new models here
 	}
 }
