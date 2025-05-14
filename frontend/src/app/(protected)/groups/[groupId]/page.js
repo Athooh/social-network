@@ -16,6 +16,7 @@ import GroupCreatePost from '@/components/groups/GroupCreatePost';
 import GroupPost from '@/components/groups/Group-Posts';
 // Add GroupChat to imports
 import GroupChat from '@/components/groups/GroupChat';
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useGroupService } from "@/services/groupService";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
@@ -65,7 +66,7 @@ export default function GroupPostPage() {
       case 'GroupPost':
         return (
           <>
-            <GroupCreatePost groupId={groupId} groupName={group.name} />
+            <GroupCreatePost groupId={groupId} groupName={group.Name} />
             {/* <GroupPost post={post} onPostUpdated={() => { }} /> */}
           </>
         );
@@ -86,7 +87,7 @@ export default function GroupPostPage() {
   };
 
   if (loading || !group) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner size="large" fullPage={true} />;
   }
 
   return (
