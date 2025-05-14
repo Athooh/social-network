@@ -486,19 +486,27 @@ const EditProfileModal = ({
                   <option value="" disabled>
                     Select a technical skill
                   </option>
-                  {predefinedTechSkills.map((skill, index) => (
-                    <option key={index} value={skill}>
-                      {skill}
-                    </option>
-                  ))}
+                  {predefinedTechSkills
+                    .filter((skill) => !formData.techSkills.includes(skill))
+                    .map((skill, index) => (
+                      <option key={index} value={skill}>
+                        {skill}
+                      </option>
+                    ))}
                 </select>
                 <div className={styles.tags}>
+                  {formData.techSkills.length === 0 && (
+                    <span className={styles.noTagsMessage}>
+                      No technical skills selected
+                    </span>
+                  )}
                   {formData.techSkills.map((skill, index) => (
                     <span key={index} className={styles.tag}>
                       {skill}
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill("techSkills", skill)}
+                        aria-label={`Remove ${skill}`}
                       >
                         ×
                       </button>
@@ -509,32 +517,41 @@ const EditProfileModal = ({
 
               {/* Soft Skills */}
               <div className={styles.field}>
-                <label>
+                <label htmlFor="softSkillsSelect">
                   <FontAwesomeIcon icon={faBriefcase} />
                   Soft Skills
                 </label>
                 <select
+                  id="softSkillsSelect"
                   onChange={(e) =>
                     handleSkillSelect("softSkills", e.target.value)
                   }
-                  defaultValue=""
+                  value=""
                 >
                   <option value="" disabled>
                     Select a soft skill
                   </option>
-                  {predefinedSoftSkills.map((skill, index) => (
-                    <option key={index} value={skill}>
-                      {skill}
-                    </option>
-                  ))}
+                  {predefinedSoftSkills
+                    .filter((skill) => !formData.softSkills.includes(skill))
+                    .map((skill, index) => (
+                      <option key={index} value={skill}>
+                        {skill}
+                      </option>
+                    ))}
                 </select>
                 <div className={styles.tags}>
+                  {formData.softSkills.length === 0 && (
+                    <span className={styles.noTagsMessage}>
+                      No soft skills selected
+                    </span>
+                  )}
                   {formData.softSkills.map((skill, index) => (
                     <span key={index} className={styles.tag}>
                       {skill}
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill("softSkills", skill)}
+                        aria-label={`Remove ${skill}`}
                       >
                         ×
                       </button>
@@ -545,32 +562,43 @@ const EditProfileModal = ({
 
               {/* Interests */}
               <div className={styles.field}>
-                <label>
+                <label htmlFor="interestsSelect">
                   <FontAwesomeIcon icon={faBriefcase} />
                   Interests
                 </label>
                 <select
+                  id="interestsSelect"
                   onChange={(e) =>
                     handleSkillSelect("interests", e.target.value)
                   }
-                  defaultValue=""
+                  value=""
                 >
                   <option value="" disabled>
                     Select an interest
                   </option>
-                  {predefinedInterests.map((interest, index) => (
-                    <option key={index} value={interest}>
-                      {interest}
-                    </option>
-                  ))}
+                  {predefinedInterests
+                    .filter(
+                      (interest) => !formData.interests.includes(interest)
+                    )
+                    .map((interest, index) => (
+                      <option key={index} value={interest}>
+                        {interest}
+                      </option>
+                    ))}
                 </select>
                 <div className={styles.tags}>
+                  {formData.interests.length === 0 && (
+                    <span className={styles.noTagsMessage}>
+                      No interests selected
+                    </span>
+                  )}
                   {formData.interests.map((interest, index) => (
                     <span key={index} className={styles.tag}>
                       {interest}
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill("interests", interest)}
+                        aria-label={`Remove ${interest}`}
                       >
                         ×
                       </button>
@@ -594,7 +622,7 @@ const EditProfileModal = ({
               className={styles.saveButton}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : "Save Changes"}{" "}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
