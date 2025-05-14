@@ -288,29 +288,34 @@ const EditProfileModal = ({
             <div className={styles.fieldGroup}>
               <h3>Basic Information</h3>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="username">
                   <FontAwesomeIcon icon={faUser} />
                   Username
                 </label>
                 <input
                   type="text"
+                  id="username"
                   name="username"
                   value={formData.username}
                   onChange={handleInputChange}
                   placeholder="Username"
+                  maxLength={50}
+                  required
                 />
               </div>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="fullName">
                   <FontAwesomeIcon icon={faUser} />
                   Full Name
                 </label>
                 <input
                   type="text"
+                  id="fullName"
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
                   placeholder="Full Name"
+                  maxLength={100}
                 />
               </div>
             </div>
@@ -319,19 +324,16 @@ const EditProfileModal = ({
               <h3>Profile Privacy</h3>
               <div className={styles.field}>
                 <div className={styles.privacyToggle}>
-                  <label className={styles.toggleLabel}>
+                  <label
+                    className={styles.toggleLabel}
+                    htmlFor="profilePrivacy"
+                  >
                     <input
                       type="checkbox"
+                      id="profilePrivacy"
                       name="isPrivate"
                       checked={formData.isPrivate}
-                      onChange={(e) =>
-                        handleInputChange({
-                          target: {
-                            name: "isPrivate",
-                            value: e.target.checked,
-                          },
-                        })
-                      }
+                      onChange={handleInputChange}
                     />
                     <span className={styles.toggleText}>
                       {formData.isPrivate
@@ -347,13 +349,19 @@ const EditProfileModal = ({
             <div className={styles.fieldGroup}>
               <h3>About</h3>
               <div className={styles.field}>
+                <label htmlFor="bio">Bio</label>
                 <textarea
+                  id="bio"
                   name="bio"
                   value={formData.bio}
                   onChange={handleInputChange}
                   placeholder="Write something about yourself..."
                   rows="4"
+                  maxLength={500}
                 />
+                <small className={styles.charCount}>
+                  {formData.bio.length}/500
+                </small>
               </div>
             </div>
 
@@ -361,29 +369,33 @@ const EditProfileModal = ({
             <div className={styles.fieldGroup}>
               <h3>Work & Education</h3>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="work">
                   <FontAwesomeIcon icon={faBriefcase} />
                   Work
                 </label>
                 <input
                   type="text"
+                  id="work"
                   name="work"
                   value={formData.work}
                   onChange={handleInputChange}
                   placeholder="Current work"
+                  maxLength={100}
                 />
               </div>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="education">
                   <FontAwesomeIcon icon={faGraduationCap} />
                   Education
                 </label>
                 <input
                   type="text"
+                  id="education"
                   name="education"
                   value={formData.education}
                   onChange={handleInputChange}
                   placeholder="Education"
+                  maxLength={100}
                 />
               </div>
             </div>
@@ -392,73 +404,84 @@ const EditProfileModal = ({
             <div className={styles.fieldGroup}>
               <h3>Contact Information</h3>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="email">
                   <FontAwesomeIcon icon={faEnvelope} />
                   Email
                 </label>
                 <input
                   type="email"
+                  id="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Email"
+                  maxLength={100}
                 />
               </div>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="phone">
                   <FontAwesomeIcon icon={faPhone} />
                   Phone
                 </label>
                 <input
                   type="tel"
+                  id="phone"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="Phone number"
+                  maxLength={20}
                 />
               </div>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="website">
                   <FontAwesomeIcon icon={faLink} />
                   Website
                 </label>
                 <input
                   type="url"
+                  id="website"
                   name="website"
                   value={formData.website}
                   onChange={handleInputChange}
                   placeholder="Website"
+                  pattern="https?://.+"
+                  title="Include http:// or https:// in your URL"
+                  maxLength={200}
                 />
               </div>
               <div className={styles.field}>
-                <label>
+                <label htmlFor="location">
                   <FontAwesomeIcon icon={faLocationDot} />
                   Location
                 </label>
                 <input
                   type="text"
+                  id="location"
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
                   placeholder="Location"
+                  maxLength={100}
                 />
               </div>
             </div>
-          
+
             {/* Skills & Expertise */}
             <div className={styles.fieldGroup}>
               <h3>Skills & Expertise</h3>
               {/* Technical Skills */}
               <div className={styles.field}>
-                <label>
+                <label htmlFor="techSkillsSelect">
                   <FontAwesomeIcon icon={faBriefcase} />
                   Technical Skills
                 </label>
                 <select
+                  id="techSkillsSelect"
                   onChange={(e) =>
                     handleSkillSelect("techSkills", e.target.value)
                   }
-                  defaultValue=""
+                  value=""
                 >
                   <option value="" disabled>
                     Select a technical skill
