@@ -7,7 +7,6 @@ type Repository interface {
 	Create(user *User) error
 	GetByID(id string) (*User, error)
 	GetByEmail(email string) (*User, error)
-	UpdateUserProfile(userID string, profileData map[string]interface{}) error
 	Delete(id string) error
 }
 
