@@ -144,7 +144,7 @@ export const useGroupService = () => {
     const getgroup = async (groupId) => {
         try {
             // First fetch all groups
-            const response = await authenticatedFetch(`groups?q=${groupId}`, {
+            const response = await authenticatedFetch(`groups?id=${groupId}`, {
                 method: "GET",
             });
 
@@ -157,24 +157,8 @@ export const useGroupService = () => {
 
             const group = await response.json();
 
-            const postsResponse = await authenticatedFetch(`groups/posts?groupId=${groupId}`, {
-                method: "GET",
-            });
-        
-            if (postsResponse.ok) {
-                const posts = await postsResponse.json();
-                groupsWithPosts = [{
-                    ...group,
-                    posts: posts || [],
-                }];
-            } else {
-                groupsWithPosts = [{
-                    ...group,
-                    posts: [],
-                }];
-            }
-
-            return groupsWithPosts;
+            console.log(group)
+            return group;
         } catch (error) {
             console.error("Error fetching groups:", error);
             showToast(error.message || "Error fetching groups", "error");

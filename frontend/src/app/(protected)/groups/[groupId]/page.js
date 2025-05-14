@@ -16,7 +16,7 @@ import GroupCreatePost from '@/components/groups/GroupCreatePost';
 import GroupPost from '@/components/groups/Group-Posts';
 // Add GroupChat to imports
 import GroupChat from '@/components/groups/GroupChat';
-import { useGroupService } from "@/services/groupService"; 
+import { useGroupService } from "@/services/groupService";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
@@ -24,7 +24,6 @@ let userdata = null;
 try {
   const raw = localStorage.getItem("userData");
   if (raw) userdata = JSON.parse(raw);
-  console.log("User data from localStorage:", userdata);
 } catch (e) {
   console.error("Invalid userData in localStorage:", e);
 }
@@ -32,8 +31,9 @@ try {
 export default function GroupPostPage() {
   const params = useParams();
   const { groupId } = params;
+  const { getgroup } = useGroupService();
   const [group, setGroup] = useState(null);
-  const [post, setPost] = useState(null);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   // Add activeSection state
   const [activeSection, setActiveSection] = useState('GroupPost');
@@ -45,35 +45,20 @@ export default function GroupPostPage() {
     setActiveSection(section);
   };
 
+  const fetchGroups = async () => {
+    try {
+      const result = await getgroup(groupId);
+      console.log("Fetched group data:", result);
+      setGroup(result);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
+  };
+
   useEffect(() => {
-    // TODO: Replace with actual API call to fetch group and post data
-    // This is temporary mock data
-    setGroup({
-      id: groupId,
-      name: "Tech Innovators Hub",
-      description: "A community for tech enthusiasts and innovators",
-      privacy: "public",
-      memberCount: 1234,
-      banner: "/banner1.jpg"
-    });
-
-    setPost({
-      id: 1,
-      content: "Sample post content",
-      userData: {
-        firstName: "John",
-        lastName: "Doe",
-        avatar: "/avatar1.png"
-      },
-      createdAt: new Date().toISOString(),
-      likesCount: 0,
-      comments: [],
-      isGroupPost: true,
-      groupName: "Tech Innovators Hub"
-    });
-
-    setLoading(false);
-  }, [groupId]);
+    fetchGroups();
+  }, []);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -81,7 +66,7 @@ export default function GroupPostPage() {
         return (
           <>
             <GroupCreatePost groupId={groupId} groupName={group.name} />
-            <GroupPost post={post} onPostUpdated={() => {/* Refresh post data */}} />
+            {/* <GroupPost post={post} onPostUpdated={() => { }} /> */}
           </>
         );
       case 'AboutGroup':
@@ -100,7 +85,7 @@ export default function GroupPostPage() {
     }
   };
 
-  if (loading) {
+  if (loading || !group) {
     return <div>Loading...</div>;
   }
 
@@ -113,72 +98,74 @@ export default function GroupPostPage() {
         </aside>
         <main className={styles.mainContent}>
           <div className={groupStyles.groupHeader}>
-            <img 
-              src={group.banner} 
-              alt={group.name} 
+            <img
+              src={group.BannerPath?.String ?
+                `${BASE_URL}/uploads/${group.BannerPath.String}` :
+                "/banner5.jpg"}
+              alt={group.Name}
               className={groupStyles.groupBanner}
             />
             <div className={groupStyles.groupInfo}>
-              <h1>{group.name}</h1>
-              <p>{group.description}</p>
+              <h1>{group.Name}</h1>
+              <p>{group.Description}</p>
               <div className={groupStyles.groupMeta}>
                 <span>
-                  <i className={`fas ${group.privacy === 'private' ? 'fa-lock' : 'fa-globe'}`}></i>
-                  {group.privacy === 'private' ? 'Private Group' : 'Public Group'}
+                  <i className={`fas ${group.IsPublic === 'private' ? 'fa-lock' : 'fa-globe'}`}></i>
+                  {group.IsPublic === 'private' ? 'Private Group' : 'Public Group'}
                 </span>
                 <span>•</span>
-                <span>{group.memberCount.toLocaleString()} members</span>
+                {/* <span>{group.MemberCount.toLocaleString()} members</span> */}
               </div>
             </div>
             <div className={groupStyles.groupNav}>
-                  <nav>
-                    <a 
-                        href="#" 
-                        className={activeSection === 'GroupPost' ? styles.active : ''} 
-                        onClick={(e) => handleNavClick(e, 'GroupPost')}
-                      >
-                        Posts
-                      </a>
-                      <a 
-                        href="#" 
-                        className={activeSection === 'AboutGroup' ? styles.active : ''} 
-                        onClick={(e) => handleNavClick(e, 'AboutGroup')}
-                      >
-                        About
-                      </a>
-                      <a 
-                        href="#" 
-                        className={activeSection === 'photos' ? styles.active : ''} 
-                        onClick={(e) => handleNavClick(e, 'photos')}
-                      >
-                        Photos
-                      </a>
-                      <a 
-                        href="#" 
-                        className={activeSection === 'GroupMembers' ? styles.active : ''} 
-                        onClick={(e) => handleNavClick(e, 'GroupMembers')}
-                      >
-                        Members
-                      </a>
-                      <a 
-                        href="#" 
-                        className={activeSection === 'GroupEvents' ? styles.active : ''} 
-                        onClick={(e) => handleNavClick(e, 'GroupEvents')}
-                      >
-                        Events
-                      </a>
-                      <a 
-                        href="#" 
-                        className={activeSection === 'GroupChat' ? styles.active : ''} 
-                        onClick={(e) => handleNavClick(e, 'GroupChat')}
-                      >
-                        Chat
-                        {unreadMessages > 0 && (
-                          <span className={styles.unreadBadge}>{unreadMessages}</span>
-                        )}
-                      </a>
-                    </nav>
-                  </div>
+              <nav>
+                <a
+                  href="#"
+                  className={activeSection === 'GroupPost' ? styles.active : ''}
+                  onClick={(e) => handleNavClick(e, 'GroupPost')}
+                >
+                  Posts
+                </a>
+                <a
+                  href="#"
+                  className={activeSection === 'AboutGroup' ? styles.active : ''}
+                  onClick={(e) => handleNavClick(e, 'AboutGroup')}
+                >
+                  About
+                </a>
+                <a
+                  href="#"
+                  className={activeSection === 'photos' ? styles.active : ''}
+                  onClick={(e) => handleNavClick(e, 'photos')}
+                >
+                  Photos
+                </a>
+                <a
+                  href="#"
+                  className={activeSection === 'GroupMembers' ? styles.active : ''}
+                  onClick={(e) => handleNavClick(e, 'GroupMembers')}
+                >
+                  Members
+                </a>
+                <a
+                  href="#"
+                  className={activeSection === 'GroupEvents' ? styles.active : ''}
+                  onClick={(e) => handleNavClick(e, 'GroupEvents')}
+                >
+                  Events
+                </a>
+                <a
+                  href="#"
+                  className={activeSection === 'GroupChat' ? styles.active : ''}
+                  onClick={(e) => handleNavClick(e, 'GroupChat')}
+                >
+                  Chat
+                  {unreadMessages > 0 && (
+                    <span className={styles.unreadBadge}>{unreadMessages}</span>
+                  )}
+                </a>
+              </nav>
+            </div>
           </div>
 
           <div className={groupStyles.content}>
