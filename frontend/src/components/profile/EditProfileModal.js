@@ -119,20 +119,20 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("username", formData.username);
-      formDataToSend.append("fullName", formData.fullName);
-      formDataToSend.append("bio", formData.bio);
-      formDataToSend.append("work", formData.work);
-      formDataToSend.append("education", formData.education);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("phone", formData.phone);
-      formDataToSend.append("website", formData.website);
-      formDataToSend.append("location", formData.location);
-      formDataToSend.append("isPrivate", formData.isPrivate);
+      formDataToSend.append("username", FormData.username);
+      formDataToSend.append("fullName", FormData.fullName);
+      formDataToSend.append("bio", FormData.bio);
+      formDataToSend.append("work", FormData.work);
+      formDataToSend.append("education", FormData.education);
+      formDataToSend.append("email", FormData.email);
+      formDataToSend.append("phone", FormData.phone);
+      formDataToSend.append("website", FormData.website);
+      formDataToSend.append("location", FormData.location);
+      formDataToSend.append("isPrivate", FormData.isPrivate);
 
-      formDataToSend.append("techSkills", formData.techSkills.join(","));
-      formDataToSend.append("softSkills", formData.softSkills.join(","));
-      formDataToSend.append("interests", formData.interests.join(","));
+      formDataToSend.append("techSkills", FormData.techSkills.join(","));
+      formDataToSend.append("softSkills", FormData.softSkills.join(","));
+      formDataToSend.append("interests", FormData.interests.join(","));
 
       if (formData.bannerImage instanceof File) {
         formDataToSend.append("bannerImage", formData.bannerImage);
@@ -141,6 +141,7 @@ const EditProfileModal = ({ isOpen, onClose, profileData }) => {
       if (formData.profileImage instanceof File) {
         formDataToSend.append("profileImage", formData.profileImage);
       }
+      console.log(formDataToSend)
 
       const response = await fetch(`${API_URL}/users/profile`, {
         method: "PUT",
