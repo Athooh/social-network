@@ -13,6 +13,41 @@ import (
 // Repository interface for profile data persistence
 type Repository interface {
 	UpdateUserProfile(userID string, profileData map[string]interface{}) error
+	GetUserProfileByID(userID string) (*UserProfileData, error)
+}
+
+// UserProfileData represents the combined user and profile data
+type UserProfileData struct {
+	// User data
+	ID        string    `json:"id"`
+	Email     string    `json:"email,omitempty"` // Authentication email (omitted from JSON)
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Nickname  string    `json:"nickname"`
+	AboutMe   string    `json:"aboutMe"`
+	Avatar    string    `json:"avatar"`
+	IsPublic  bool      `json:"isPublic"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+
+	// Profile data
+	Username         string    `json:"username"`
+	FullName         string    `json:"fullName"`
+	Bio              string    `json:"bio"`
+	Work             string    `json:"work"`
+	Education        string    `json:"education"`
+	ContactEmail     string    `json:"contactEmail"` // Contact email
+	Phone            string    `json:"phone"`
+	Website          string    `json:"website"`
+	Location         string    `json:"location"`
+	TechSkills       string    `json:"techSkills"`
+	SoftSkills       string    `json:"softSkills"`
+	Interests        string    `json:"interests"`
+	BannerImage      string    `json:"bannerImage"`
+	ProfileImage     string    `json:"profileImage"`
+	IsPrivate        bool      `json:"isPrivate"`
+	ProfileCreatedAt time.Time `json:"profileCreatedAt"`
+	ProfileUpdatedAt time.Time `json:"profileUpdatedAt"`
 }
 
 // Service interface defines the operations for profile management
@@ -20,6 +55,7 @@ type Service interface {
 	UpdateProfile(userID string, profileData map[string]interface{}) error
 	SaveProfileImage(userID string, fileHeader *multipart.FileHeader) (string, error)
 	SaveBannerImage(userID string, fileHeader *multipart.FileHeader) (string, error)
+	GetProfileByUserID(userID string) (*UserProfileData, error)
 }
 
 // ProfileService implements the Service interface
@@ -32,7 +68,6 @@ type ProfileService struct {
 func NewService(repo Repository, uploadDir string) Service {
 	// Ensure upload directory exists
 	os.MkdirAll(uploadDir, os.ModePerm)
-
 	return &ProfileService{
 		repo:      repo,
 		uploadDir: uploadDir,
@@ -44,7 +79,6 @@ func (s *ProfileService) UpdateProfile(userID string, profileData map[string]int
 	if userID == "" {
 		return errors.New("user ID is required")
 	}
-
 	return s.repo.UpdateUserProfile(userID, profileData)
 }
 
@@ -53,7 +87,6 @@ func (s *ProfileService) SaveProfileImage(userID string, fileHeader *multipart.F
 	if fileHeader == nil {
 		return "", nil // No file provided, not an error
 	}
-
 	return s.saveImage(userID, fileHeader, "profile")
 }
 
@@ -62,8 +95,15 @@ func (s *ProfileService) SaveBannerImage(userID string, fileHeader *multipart.Fi
 	if fileHeader == nil {
 		return "", nil // No file provided, not an error
 	}
-
 	return s.saveImage(userID, fileHeader, "banner")
+}
+
+// GetProfileByUserID retrieves a user's complete profile data
+func (s *ProfileService) GetProfileByUserID(userID string) (*UserProfileData, error) {
+	if userID == "" {
+		return nil, errors.New("user ID is required")
+	}
+	return s.repo.GetUserProfileByID(userID)
 }
 
 // saveImage is a helper function to save images
