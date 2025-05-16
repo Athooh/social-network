@@ -80,12 +80,14 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var profileImageHeader *multipart.FileHeader
+	var profileImagePath string
 	if file, header, err := r.FormFile("profileImage"); err == nil {
 		defer file.Close()
 		profileImageHeader = header
 	}
 
 	var bannerImageHeader *multipart.FileHeader
+	var bannerImagePath string
 	if file, header, err := r.FormFile("bannerImage"); err == nil {
 		defer file.Close()
 		bannerImageHeader = header
@@ -110,7 +112,7 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	// Handle profile image if provided
 	if profileImageHeader != nil {
-		profileImagePath, err := h.service.SaveProfileImage(userID, profileImageHeader)
+		profileImagePath, err = h.service.SaveProfileImage(userID, profileImageHeader)
 		if err != nil {
 			h.log.Error("Failed to save profile image: " + err.Error())
 			httputil.SendError(w, http.StatusInternalServerError, "Failed to save profile image", false)
@@ -124,7 +126,7 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	// Handle banner image if provided
 	if bannerImageHeader != nil {
-		bannerImagePath, err := h.service.SaveBannerImage(userID, bannerImageHeader)
+		bannerImagePath, err = h.service.SaveBannerImage(userID, bannerImageHeader)
 		if err != nil {
 			h.log.Error("Failed to save banner image: " + err.Error())
 			httputil.SendError(w, http.StatusInternalServerError, "Failed to save banner image", false)
@@ -143,9 +145,22 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return success response
+	// Fetch the complete updated profile data
+	updatedProfile, err := h.service.GetProfileByUserID(userID)
+	if err != nil {
+		h.log.Error("Failed to get updated profile: " + err.Error())
+		// Even if this fails, we still return success since the update worked
+		httputil.SendJSON(w, http.StatusOK, map[string]interface{}{
+			"success": true,
+			"message": "Profile updated successfully",
+		})
+		return
+	}
+
+	// Return success response with updated profile data
 	httputil.SendJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
 		"message": "Profile updated successfully",
+		"profile": updatedProfile,
 	})
 }
