@@ -37,7 +37,6 @@ export default function LeftSidebar() {
         }
 
         const userData = await response.json();
-        console.log("Sidebar user data:", userData);
         setPerson(userData);
         setError(null);
       } catch (err) {
