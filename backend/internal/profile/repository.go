@@ -124,13 +124,33 @@ func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[stri
 }
 
 // SQLiteRepository implementation of GetUserProfileByID
+// SQLiteRepository implementation of GetUserProfileByID
 func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, error) {
 	// We need to query both the users and user_profiles tables and combine the results
 	query := `
 	SELECT 
-		u.id, u.email, u.first_name, u.last_name, u.nickname, u.about_me, u.avatar, u.is_public, u.created_at, u.updated_at,
-		p.username, p.full_name, p.bio, p.work, p.education, p.email as contact_email, p.phone, p.website, p.location, 
-		p.tech_skills, p.soft_skills, p.interests, p.banner_image, p.profile_image, p.is_private, p.created_at as profile_created_at, p.updated_at as profile_updated_at
+		u.id, u.email, u.first_name, u.last_name, 
+		COALESCE(u.nickname, '') as nickname, 
+		COALESCE(u.about_me, '') as about_me, 
+		COALESCE(u.avatar, '') as avatar, 
+		u.is_public, u.created_at, u.updated_at,
+		COALESCE(p.username, '') as username, 
+		COALESCE(p.full_name, '') as full_name, 
+		COALESCE(p.bio, '') as bio, 
+		COALESCE(p.work, '') as work, 
+		COALESCE(p.education, '') as education, 
+		COALESCE(p.email, '') as contact_email, 
+		COALESCE(p.phone, '') as phone, 
+		COALESCE(p.website, '') as website, 
+		COALESCE(p.location, '') as location, 
+		COALESCE(p.tech_skills, '') as tech_skills, 
+		COALESCE(p.soft_skills, '') as soft_skills, 
+		COALESCE(p.interests, '') as interests, 
+		COALESCE(p.banner_image, '') as banner_image, 
+		COALESCE(p.profile_image, '') as profile_image, 
+		COALESCE(p.is_private, 0) as is_private, 
+		COALESCE(p.created_at, u.created_at) as profile_created_at, 
+		COALESCE(p.updated_at, u.updated_at) as profile_updated_at
 	FROM users u
 	LEFT JOIN user_profiles p ON u.id = p.user_id
 	WHERE u.id = ?`
@@ -157,7 +177,7 @@ func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, 
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user profile not found")
 		}
-		return nil, err
+		return nil, fmt.Errorf("error scanning user profile: %w", err)
 	}
 
 	// Parse the timestamps
