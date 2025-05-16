@@ -38,7 +38,7 @@ func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[stri
 			userValues = append(userValues, nickname)
 		}
 
-		if aboutMe, ok := profileData["bio"].(string); ok {
+		if aboutMe, ok := profileData["bio"].(string); ok && aboutMe != "" {
 			userFields = append(userFields, "about_me = ?")
 			userValues = append(userValues, aboutMe)
 		}
@@ -99,8 +99,8 @@ func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[stri
 				continue
 			}
 
-			// Handle strings, including empty strings (which are valid updates)
-			if strVal, ok := value.(string); ok {
+			// Only update string fields when they're non-empty
+			if strVal, ok := value.(string); ok && strVal != "" {
 				profileFields = append(profileFields, dbField+" = ?")
 				profileValues = append(profileValues, strVal)
 			}
