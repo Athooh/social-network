@@ -2,6 +2,7 @@ package profile
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -120,4 +121,65 @@ func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[stri
 	}
 
 	return tx.Commit()
+}
+
+// SQLiteRepository implementation of GetUserProfileByID
+func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, error) {
+	// We need to query both the users and user_profiles tables and combine the results
+	query := `
+	SELECT 
+		u.id, u.email, u.first_name, u.last_name, u.nickname, u.about_me, u.avatar, u.is_public, u.created_at, u.updated_at,
+		p.username, p.full_name, p.bio, p.work, p.education, p.email as contact_email, p.phone, p.website, p.location, 
+		p.tech_skills, p.soft_skills, p.interests, p.banner_image, p.profile_image, p.is_private, p.created_at as profile_created_at, p.updated_at as profile_updated_at
+	FROM users u
+	LEFT JOIN user_profiles p ON u.id = p.user_id
+	WHERE u.id = ?`
+
+	row := r.db.QueryRow(query, userID)
+
+	var profileData UserProfileData
+	var createdAt, updatedAt, profileCreatedAt, profileUpdatedAt string // SQLite returns dates as strings
+
+	err := row.Scan(
+		// User fields
+		&profileData.ID, &profileData.Email, &profileData.FirstName, &profileData.LastName,
+		&profileData.Nickname, &profileData.AboutMe, &profileData.Avatar, &profileData.IsPublic,
+		&createdAt, &updatedAt,
+
+		// Profile fields
+		&profileData.Username, &profileData.FullName, &profileData.Bio, &profileData.Work,
+		&profileData.Education, &profileData.ContactEmail, &profileData.Phone, &profileData.Website,
+		&profileData.Location, &profileData.TechSkills, &profileData.SoftSkills, &profileData.Interests,
+		&profileData.BannerImage, &profileData.ProfileImage, &profileData.IsPrivate,
+		&profileCreatedAt, &profileUpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user profile not found")
+		}
+		return nil, err
+	}
+
+	// Parse the timestamps
+	parsedCreatedAt, err := time.Parse(time.RFC3339, createdAt)
+	if err == nil {
+		profileData.CreatedAt = parsedCreatedAt
+	}
+
+	parsedUpdatedAt, err := time.Parse(time.RFC3339, updatedAt)
+	if err == nil {
+		profileData.UpdatedAt = parsedUpdatedAt
+	}
+
+	parsedProfileCreatedAt, err := time.Parse(time.RFC3339, profileCreatedAt)
+	if err == nil {
+		profileData.ProfileCreatedAt = parsedProfileCreatedAt
+	}
+
+	parsedProfileUpdatedAt, err := time.Parse(time.RFC3339, profileUpdatedAt)
+	if err == nil {
+		profileData.ProfileUpdatedAt = parsedProfileUpdatedAt
+	}
+
+	return &profileData, nil
 }
