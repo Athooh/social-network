@@ -137,16 +137,11 @@ export default function ProfilePage({ params }) {
       <div className={styles.profileContainer}>
         {userData && (
           <ProfileBanner
-            bannerUrl={userData.bannerImage || "/banner2.jpg"}
-            profileUrl={
-              userData.avatar
-                ? `${BASE_URL}/uploads/${userData.avatar}`
-                : "/default-avatar.png"
-            }
-            fullName={`${userData.firstName || ""} ${userData.lastName || ""}`}
-            followersCount={userData.followersCount || 0}
-            followingCount={userData.followingCount || 0}
+            userData={userData}
             onNavClick={setActiveSection}
+            activeSection="posts"
+            isOwnProfile={true}
+            BASE_URL={BASE_URL}
           />
         )}
         {renderContent()}
