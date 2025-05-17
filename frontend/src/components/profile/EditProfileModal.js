@@ -309,7 +309,6 @@ const EditProfileModal = ({
                   onChange={handleInputChange}
                   placeholder="Username"
                   maxLength={50}
-                  required
                 />
               </div>
               <div className={styles.field}>
