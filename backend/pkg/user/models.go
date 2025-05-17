@@ -37,4 +37,21 @@ type User struct {
 	GroupsJoined   int
 	FollowersCount int
 	FollowingCount int
+	
+	// Profile fields
+	Username     string
+	FullName     string
+	Bio          string
+	Work         string
+	Education    string
+	ContactEmail string
+	Phone        string
+	Website      string
+	Location     string
+	TechSkills   string
+	SoftSkills   string
+	Interests    string
+	BannerImage  string
+	ProfileImage string
+	IsPrivate    bool
 }
