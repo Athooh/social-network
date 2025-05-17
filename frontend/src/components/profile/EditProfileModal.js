@@ -210,6 +210,14 @@ const EditProfileModal = ({
       }
 
       const updatedProfile = await response.json();
+      if (updatedProfile?.profile) {
+        localStorage.setItem(
+          "userData",
+          JSON.stringify(updatedProfile.profile)
+        );
+      } else {
+        console.error("Profile data missing in response:", updatedProfile);
+      }
 
       // Call the callback with updated profile data
       if (onProfileUpdate) {
