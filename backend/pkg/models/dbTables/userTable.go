@@ -43,7 +43,7 @@ type UserProfile struct {
 	UserID       string    `db:"user_id,notnull" index:"unique"`
 	BannerImage  string    `db:"banner_image"`
 	ProfileImage string    `db:"profile_image"`
-	Username     string    `db:"username,notnull,unique" index:"unique"`
+	Username     string    `db:"username"`
 	FullName     string    `db:"full_name"`
 	Bio          string    `db:"bio"`
 	Work         string    `db:"work"`
