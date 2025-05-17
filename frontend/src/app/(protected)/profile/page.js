@@ -106,7 +106,7 @@ export default function ProfilePage({ params }) {
             </div>
             <div className={styles.mainContent}>
               <CreatePost />
-              <PostList />
+              <PostList userData={userData} />
             </div>
             <div className={styles.rightSidebar}>
               <ProfilePhotosGrid photos={photos} totalPhotos={20} />
