@@ -117,6 +117,31 @@ export const usePostService = () => {
     }
   };
 
+  const getUserPosts = async (id) => {
+    try {
+      const response = await authenticatedFetch(
+        `posts/user/${id}`,
+        {
+          method: "GET",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to fetch posts"
+        );
+      }
+      const data = await response.json();
+      console.log(data)
+      return data;
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      showToast(error.message || "Error fetching posts", "error");
+      throw error;
+    }
+  };
+
   const likePost = async (postId) => {
     try {
       const response = await authenticatedFetch(`posts/like/${postId}`, {
@@ -337,6 +362,7 @@ export const usePostService = () => {
   return {
     createPost,
     getFeedPosts,
+    getUserPosts,
     likePost,
     addComment,
     getPostComments,
