@@ -252,6 +252,14 @@ func (s *PostService) GetUserPosts(userID, viewerID string) ([]*models.Post, err
 		}
 
 		if canView {
+			userData, err := s.repo.GetUserDataByID(post.UserID)
+			if err != nil {
+				s.log.Warn("Failed to get user data for post %d: %v", post.ID, err)
+				continue
+			}
+			if userData != nil {
+				post.UserData = userData
+			}
 			viewablePosts = append(viewablePosts, post)
 		}
 	}
