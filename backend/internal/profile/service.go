@@ -87,7 +87,7 @@ func (s *ProfileService) SaveProfileImage(userID string, fileHeader *multipart.F
 	if fileHeader == nil {
 		return "", nil // No file provided, not an error
 	}
-	return s.saveImage(userID, fileHeader, "profile")
+	return s.saveImage(userID, fileHeader, "avatars")
 }
 
 // SaveBannerImage saves a banner image and returns the path
@@ -95,7 +95,7 @@ func (s *ProfileService) SaveBannerImage(userID string, fileHeader *multipart.Fi
 	if fileHeader == nil {
 		return "", nil // No file provided, not an error
 	}
-	return s.saveImage(userID, fileHeader, "banner")
+	return s.saveImage(userID, fileHeader, "banners")
 }
 
 // GetProfileByUserID retrieves a user's complete profile data
@@ -120,7 +120,7 @@ func (s *ProfileService) saveImage(userID string, fileHeader *multipart.FileHead
 	fileName := fmt.Sprintf("%s_%s_%d%s", userID, imageType, time.Now().Unix(), fileExt)
 
 	// Create user directory if it doesn't exist
-	userDir := filepath.Join(s.uploadDir, userID)
+	userDir := filepath.Join(s.uploadDir, imageType)
 	if err := os.MkdirAll(userDir, os.ModePerm); err != nil {
 		return "", err
 	}
@@ -140,5 +140,5 @@ func (s *ProfileService) saveImage(userID string, fileHeader *multipart.FileHead
 
 	// Return the relative path to be stored in the database
 	// This assumes the uploadDir is accessible via a URL path
-	return filepath.Join(userID, fileName), nil
+	return filepath.Join(imageType, fileName), nil
 }
