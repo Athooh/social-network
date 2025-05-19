@@ -61,7 +61,7 @@ export const usePostService = () => {
 
   const createPost = async (formData) => {
     try {
-      const response = await authenticatedFetch("groups/posts", {
+      const response = await authenticatedFetch("posts", {
         method: "POST",
         body: formData,
       });
