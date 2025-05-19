@@ -32,7 +32,7 @@ try {
 export default function GroupPostPage() {
   const params = useParams();
   const { groupId } = params;
-  const { getgroup } = useGroupService();
+  const { getgroup, getgroupposts } = useGroupService();
   const [group, setGroup] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +49,10 @@ export default function GroupPostPage() {
   const fetchGroups = async () => {
     try {
       const result = await getgroup(groupId);
+      const postresults = await getgroupposts(groupId);
       console.log("Fetched group data:", result);
       setGroup(result);
+      setPosts(postresults);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching groups:", error);
@@ -68,12 +70,22 @@ export default function GroupPostPage() {
           <>
             <GroupCreatePost groupId={groupId} groupName={group.Name} />
             {/* <GroupPost post={post} onPostUpdated={() => { }} /> */}
+            {posts !== null && posts.map(post => (
+              <div key={post.ID}>
+                <GroupPost
+                  post={post}
+                  onPostUpdated={() => {
+                    // Handle post update
+                  }}
+                />
+              </div>
+            ))}
           </>
         );
       case 'AboutGroup':
         return <GroupAbout group={group} />;
       case 'photos':
-        return <GroupPhotos groupId={groupId} />;
+        return <GroupPhotos posts={posts} />;
       case 'GroupMembers':
         return <GroupMembers groupId={groupId} />;
       case 'GroupEvents':

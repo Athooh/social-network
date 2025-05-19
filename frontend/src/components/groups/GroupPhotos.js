@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import styles from '@/styles/GroupPhotos.module.css';  // Update import to use correct CSS module
+import { BASE_URL } from '@/utils/constants';
 
-const GroupPhotos = () => {
-  // Add more dummy photos to test grid layout
-  const [photos] = useState([
-    { id: 1, url: '/banner1.jpg', createdAt: '2024-05-01' },
-    { id: 2, url: '/banner2.jpg', createdAt: '2024-05-01' },
-    { id: 3, url: '/banner3.jpg', createdAt: '2024-05-01' },
-    { id: 4, url: '/banner4.jpg', createdAt: '2024-05-01' },
-    { id: 5, url: '/banner5.jpg', createdAt: '2024-05-01' },
-    { id: 6, url: '/banner6.jpg', createdAt: '2024-05-01' },
-    { id: 7, url: '/banner7.jpg', createdAt: '2024-05-01' },
-    // Add more photos as needed
-  ]);
+const GroupPhotos = ({ posts }) => {
+  console.log("GroupPhotos posts:", posts);
+  const photos = posts
+  .filter(post => post.ImagePath?.Valid)
+  .map(post => ({
+    id: post.ID,
+    url: `${BASE_URL}/uploads/${post.ImagePath.String}`,
+  }));
+
+
+  console.log("Photos:", photos);
 
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
