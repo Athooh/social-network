@@ -37,29 +37,33 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
     onConfirm: () => {},
   });
   const [comments, setComments] = useState([]);
-  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
+  const [likesCount, setLikesCount] = useState(post.LikesCount || 0);
   const router = useRouter();
 
+  console.log(post)
   // Format the post data
   const formattedPost = {
-    id: post.id,
-    authorName: post.userData
-      ? `${post.userData.firstName} ${post.userData.lastName}`
+    id: post.ID,
+    authorName: post.User
+      ? `${post.User.firstName} ${post.User.lastName}`
       : "Unknown User",
-    authorImage: post.userData?.avatar
-      ? post.userData.avatar.startsWith("http")
-        ? post.userData.avatar
-        : `${BASE_URL}${post.userData.avatar}`
-      : "/avatar4.png",
-    content: post.content,
-    timestamp: formatRelativeTime(post.createdAt),
-    likes: post.likesCount || 0,
-    commentCount: post.comments?.length || 0,
-    image: post.imageUrl ? `${BASE_URL}${post.imageUrl}` : null,
-    video: post.videoUrl ? `${BASE_URL}${post.videoUrl}` : null,
-    userId: post.userId,
-    groupName: post.groupName,
+    authorImage: post.User?.avatar
+      ? `${BASE_URL}/uploads/${post.User.avatar}`
+      : "/avatar5.jpg",
+    content: post.Content,
+    timestamp: formatRelativeTime(post.CreatedAt),
+    likes: post.LikesCount || 0,
+    commentCount: post.CommentsCount || 0,
+    image: post.ImagePath?.Valid
+      ? `${BASE_URL}/uploads/${post.ImagePath.String}`
+      : null,
+    video: post.VideoPath?.Valid
+      ? `${BASE_URL}/${post.VideoPath.String}`
+      : null,
+    userId: post.UserID,
+    groupName: post.Group?.name || null, // fallback if Group is null
   };
+  
 
   useEffect(() => {
     if (showComments || isDetailView) {
@@ -208,22 +212,22 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
       <div className={styles.postHeader}>
         <div className={styles.postAuthor}>
           <img
-            src={post.userData?.avatar || "/avatar4.png"}
-            alt={`${post.userData?.firstName} ${post.userData?.lastName}`}
+            src= {formattedPost.authorImage}
+            alt={formattedPost.authorName}
             className={styles.authorAvatar}
-            onClick={() => handleUserClick(post.userId)}
+            onClick={() => handleUserClick(formattedPost.userId)}
             style={{ cursor: 'pointer' }}
           />
           <div className={styles.authorInfo}>
             <h3 
-              onClick={() => handleUserClick(post.userId)}
+              onClick={() => handleUserClick(formattedPost.userId)}
               style={{ cursor: 'pointer' }}
               className={styles.authorName}
             >
-              {`${post.userData?.firstName} ${post.userData?.lastName}`}
+              {formattedPost.authorName}
             </h3>
             <div className={styles.postMeta}>
-              <span>{formatRelativeTime(post.createdAt)}</span>
+              <span>{formattedPost.timestamp}</span>
               <span className={styles.dot}>•</span>
               <span>{post.groupName}</span>
             </div>
@@ -269,7 +273,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
             <i className="fas fa-thumbs-up" style={{ color: "#2078f4" }}></i>
             <i className="fas fa-heart" style={{ color: "#f33e58" }}></i>
           </span>
-          <span>{likesCount} likes</span>
+          <span>{formattedPost.LikesCount} likes</span>
         </div>
         <div className={styles.engagement}>
           <span>{formattedPost.commentCount} comments</span>
