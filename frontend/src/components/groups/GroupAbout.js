@@ -1,5 +1,15 @@
 import { useState } from 'react';
 import styles from '@/styles/GroupAbout.module.css';
+import { formatRelativeTime } from '@/utils/dateUtils';
+
+let userdata = null;
+try {
+  const raw = localStorage.getItem("userData");
+  if (raw) userdata = JSON.parse(raw);
+  console.log("User data from localStorage:", userdata);
+} catch (e) {
+  console.error("Invalid userData in localStorage:", e);
+}
 
 const GroupAbout = ({ group }) => {
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
