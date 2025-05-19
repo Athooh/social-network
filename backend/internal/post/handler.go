@@ -340,13 +340,16 @@ func (h *Handler) GetUserPhotos(w http.ResponseWriter, r *http.Request) {
 
 	var response []PostResponse
 	for _, post := range posts {
+		if post.ImagePath.String == "" {
+			continue
+		}
 		postResp := PostResponse{
-			ID:         post.ID,
-			UserID:     post.UserID,
-			Privacy:    post.Privacy,
-			CreatedAt:  post.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
-			UserData:   post.UserData,
+			ID:        post.ID,
+			UserID:    post.UserID,
+			Privacy:   post.Privacy,
+			CreatedAt: post.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
+			UserData:  post.UserData,
 		}
 		if post.ImagePath.String != "" {
 			postResp.ImageURL = "/uploads/" + post.ImagePath.String
