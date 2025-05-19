@@ -68,7 +68,7 @@ export default function GroupPostPage() {
       case 'GroupPost':
         return (
           <>
-            <GroupCreatePost groupId={groupId} groupName={group.Name} />
+            <GroupCreatePost groupId={groupId} groupName={group.Name} oncreatePost={fetchGroups}/>
             {/* <GroupPost post={post} onPostUpdated={() => { }} /> */}
             {posts !== null && posts.map(post => (
               <div key={post.ID}>

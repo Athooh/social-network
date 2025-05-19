@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { BASE_URL } from '@/utils/constants';
 import EmojiPicker from '@/components/ui/EmojiPicker';
 
-export default function GroupCreatePost({ groupId, groupName }) {
+export default function GroupCreatePost({ groupId, groupName, oncreatePost }) {
   const { createPost } = useGroupService();
   const [postText, setPostText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +49,7 @@ export default function GroupCreatePost({ groupId, groupName }) {
       setSelectedFiles([]);
       setPreviewUrls([]);
       setIsModalOpen(false);
+      oncreatePost();
       showToast('Post created successfully!', 'success');
     } catch (error) {
       console.error('Error submitting post:', error);
