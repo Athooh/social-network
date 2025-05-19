@@ -17,13 +17,16 @@ import ProfileEvents from "@/components/profile/ProfileEvents";
 import ProfileConnections from "@/components/profile/ProfileConnections";
 import { useFriendService } from "@/services/friendService";
 import { useAuth } from "@/context/authcontext";
+import { usePostService } from "@/services/postService";
 
 // Define base URL for media assets
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
 export default function ProfilePage({ params }) {
-  // State for user data
+  const { getUserPhotos } = usePostService();
+
+  const [photos, setPhotos] = useState([]);
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
