@@ -87,7 +87,7 @@ export default function GroupPostPage() {
       case 'photos':
         return <GroupPhotos posts={posts} />;
       case 'GroupMembers':
-        return <GroupMembers groupId={groupId} />;
+        return <GroupMembers group={group} />;
       case 'GroupEvents':
         return <GroupEvents groupId={groupId} />;
       // Add to renderContent switch
