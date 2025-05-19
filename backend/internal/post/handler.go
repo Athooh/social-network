@@ -273,6 +273,10 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 		if post.VideoPath.String != "" {
 			postResp.VideoURL = "/uploads/" + post.VideoPath.String
 		}
+		if post.UserData.Avatar != "" {
+			postResp.UserData.Avatar = "/uploads/" + postResp.UserData.Avatar
+		}
+
 
 		response = append(response, postResp)
 	}
