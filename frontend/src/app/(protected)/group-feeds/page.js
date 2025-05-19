@@ -106,7 +106,7 @@ export default function GroupFeeds() {
                 </div>
               </div>
 
-              {group.posts.map(post => (
+              {group.posts.slice(0, 2).map(post => (
                 <div key={post.ID}>
                   <GroupPost
                     post={post}
