@@ -70,6 +70,16 @@ export default function GroupPostPage() {
           <>
             <GroupCreatePost groupId={groupId} groupName={group.Name} />
             {/* <GroupPost post={post} onPostUpdated={() => { }} /> */}
+            {posts.map(post => (
+              <div key={post.ID}>
+                <GroupPost
+                  post={post}
+                  onPostUpdated={() => {
+                    // Handle post update
+                  }}
+                />
+              </div>
+            ))}
           </>
         );
       case 'AboutGroup':
