@@ -83,9 +83,9 @@ const GroupMembers = ({ group }) => {
                 )}
               </div>
             </div>
-            <div className={styles.actions}>
+            {/* <div className={styles.actions}>
               <button className={styles.followButton}>Follow</button>
-            </div>
+            </div> */}
           </div>
         ))}
       </div>
