@@ -32,7 +32,7 @@ try {
 export default function GroupPostPage() {
   const params = useParams();
   const { groupId } = params;
-  const { getgroup } = useGroupService();
+  const { getgroup, getgroupposts } = useGroupService();
   const [group, setGroup] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
