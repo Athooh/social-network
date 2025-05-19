@@ -166,12 +166,36 @@ export const useGroupService = () => {
         }
     }
 
+    const getgroupposts = async (groupId) => {
+        try {
+            const response = await authenticatedFetch(`groups/posts?groupId=${groupId}`, {
+                method: "GET",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData.message || errorData.error || "Failed to fetch group posts"
+                );
+            }
+
+            const posts = await response.json();
+
+            return posts;
+        } catch (error) {
+            console.error("Error fetching group posts:", error);
+            showToast(error.message || "Error fetching group posts", "error");
+            return [];
+        }
+    }
+
     return { 
         createGroup,
         getgroup, 
         getallgroups, 
         deleteGroup, 
-        leaveGroup, 
+        leaveGroup,
+        getgroupposts,
         joinGroup 
     };
 };
