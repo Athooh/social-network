@@ -85,7 +85,7 @@ export default function GroupPostPage() {
       case 'AboutGroup':
         return <GroupAbout group={group} />;
       case 'photos':
-        return <GroupPhotos groupId={groupId} />;
+        return <GroupPhotos posts={posts} />;
       case 'GroupMembers':
         return <GroupMembers groupId={groupId} />;
       case 'GroupEvents':
