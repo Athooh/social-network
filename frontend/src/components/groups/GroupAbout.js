@@ -18,26 +18,41 @@ const GroupAbout = ({ group }) => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const { leaveGroup, deleteGroup, joinGroup } = useGroupService();
 
-  const handleLeaveGroup = () => {
-    success = await leaveGroup(group.ID);
-    if (success) {
-      showToast("Left group successfully", "success");
+  const handleLeaveGroup = async () => {
+    try {
+      success = await leaveGroup(group.ID);
+      if (success) {
+        showToast("Left group successfully", "success");
+      }
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      showToast("Failed to leave group", "error");
     }
     setShowConfirmLeave(false);
   };
 
-  const handleDeleteGroup = () => {
-    success = await deleteGroup(group.ID);
-    if (success) {
-      showToast("Group deleted successfully", "success");
+  const handleDeleteGroup = async () => {
+    try {
+      success = await deleteGroup(group.ID);
+      if (success) {
+        showToast("Group deleted successfully", "success");
+      }
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      showToast("Failed to leave group", "error");
     }
     setShowConfirmDelete(false);
   };
 
   const handlejoiningroup = async () => {
-    success = await joinGroup(group.ID);
-    if (success) {
-      showToast("Joined group successfully", "success");
+    try {
+      success = await joinGroup(group.ID);
+      if (success) {
+        showToast("Joined group successfully", "success");
+      }
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      showToast("Failed to leave group", "error");
     }
   };
 
