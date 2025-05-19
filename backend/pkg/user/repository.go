@@ -133,23 +133,43 @@ func (r *SQLiteRepository) GetByID(id string) (*User, error) {
 		return nil, err
 	}
 	query := `
-        SELECT u.id, u.email, u.password, u.first_name, u.last_name, u.date_of_birth, 
-               u.avatar, u.nickname, u.about_me, u.is_public, u.created_at, u.updated_at,
-               COALESCE(us.posts_count, 0) AS posts_count,
-               COALESCE(us.groups_joined, 0) AS groups_joined,
-               COALESCE(us.followers_count, 0) AS followers_count,
-               COALESCE(us.following_count, 0) AS following_count
-        FROM users u
-        LEFT JOIN user_stats us ON u.id = us.user_id
-        WHERE u.id = ?
-    `
+		SELECT 
+			u.id, u.email, u.password, u.first_name, u.last_name, u.date_of_birth,
+			u.avatar, u.nickname, u.about_me, u.is_public, u.created_at, u.updated_at,
+			COALESCE(us.posts_count, 0) AS posts_count,
+			COALESCE(us.groups_joined, 0) AS groups_joined,
+			COALESCE(us.followers_count, 0) AS followers_count,
+			COALESCE(us.following_count, 0) AS following_count,
+			
+			-- Profile fields
+			p.username, p.full_name, p.bio, p.work, p.education, 
+			p.email AS contact_email, p.phone, p.website, p.location,
+			p.tech_skills, p.soft_skills, p.interests,
+			p.banner_image, p.profile_image, p.is_private
+		FROM users u
+		LEFT JOIN user_stats us ON u.id = us.user_id
+		LEFT JOIN user_profiles p ON u.id = p.user_id
+		WHERE u.id = ?
+	`
 
 	var user User
+	var username, fullName, bio, work, education, contactEmail, phone sql.NullString
+	var website, location, techSkills, softSkills, interests sql.NullString
+	var bannerImage, profileImage sql.NullString
+	var isPrivate sql.NullBool
+
 	err = r.db.QueryRow(query, id).Scan(
 		&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.DateOfBirth,
 		&user.Avatar, &user.Nickname, &user.AboutMe, &user.IsPublic, &user.CreatedAt, &user.UpdatedAt,
 		&user.PostsCount, &user.GroupsJoined, &user.FollowersCount, &user.FollowingCount,
+		
+		// Profile fields with null handling
+		&username, &fullName, &bio, &work, &education, 
+		&contactEmail, &phone, &website, &location,
+		&techSkills, &softSkills, &interests,
+		&bannerImage, &profileImage, &isPrivate,
 	)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("user not found")
@@ -157,7 +177,35 @@ func (r *SQLiteRepository) GetByID(id string) (*User, error) {
 		return nil, err
 	}
 
+	// Add profile fields to user struct
+	user.Username = nullStringToString(username)
+	user.FullName = nullStringToString(fullName)
+	user.Bio = nullStringToString(bio)
+	user.Work = nullStringToString(work)
+	user.Education = nullStringToString(education)
+	user.ContactEmail = nullStringToString(contactEmail)
+	user.Phone = nullStringToString(phone)
+	user.Website = nullStringToString(website)
+	user.Location = nullStringToString(location)
+	user.TechSkills = nullStringToString(techSkills)
+	user.SoftSkills = nullStringToString(softSkills)
+	user.Interests = nullStringToString(interests)
+	user.BannerImage = nullStringToString(bannerImage)
+	user.ProfileImage = nullStringToString(profileImage)
+	
+	if isPrivate.Valid {
+		user.IsPrivate = isPrivate.Bool
+	}
+
 	return &user, nil
+}
+
+// Helper function to handle sql.NullString values
+func nullStringToString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
 }
 
 // GetByEmail retrieves a user by email

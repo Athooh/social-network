@@ -37,15 +37,17 @@ type CreatePostRequest struct {
 
 // PostResponse represents the response for a post
 type PostResponse struct {
-	ID        int64                `json:"id"`
-	UserID    string               `json:"userId"`
-	Content   string               `json:"content"`
-	ImageURL  string               `json:"imageUrl,omitempty"`
-	VideoURL  string               `json:"videoUrl,omitempty"`
-	Privacy   string               `json:"privacy"`
-	CreatedAt string               `json:"createdAt"`
-	UpdatedAt string               `json:"updatedAt"`
-	UserData  *models.PostUserData `json:"userData"`
+	ID         int64                `json:"id"`
+	UserID     string               `json:"userId"`
+	Content    string               `json:"content"`
+	ImageURL   string               `json:"imageUrl,omitempty"`
+	VideoURL   string               `json:"videoUrl,omitempty"`
+	Privacy    string               `json:"privacy"`
+	LikesCount int                  `json:"likesCount"`
+	Comments   []CommentResponse    `json:"comments"`
+	CreatedAt  string               `json:"createdAt"`
+	UpdatedAt  string               `json:"updatedAt"`
+	UserData   *models.PostUserData `json:"userData"`
 }
 
 // CommentResponse represents the response for a comment
@@ -256,14 +258,22 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	// Prepare response
 	var response []PostResponse
 	for _, post := range posts {
+		// Get comments for each post
+		comments, err := h.service.GetPostComments(post.ID, userID)
+		if err != nil {
+			h.log.Error("Failed to get comments for post %d: %v", post.ID, err)
+			continue
+		}
 		postResp := PostResponse{
-			ID:        post.ID,
-			UserID:    post.UserID,
-			Content:   post.Content,
-			Privacy:   post.Privacy,
-			CreatedAt: post.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
-			UserData:  post.UserData,
+			ID:         post.ID,
+			UserID:     post.UserID,
+			Content:    post.Content,
+			Privacy:    post.Privacy,
+			LikesCount: int(post.LikesCount),
+			CreatedAt:  post.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
+			Comments:   make([]CommentResponse, 0, len(comments)),
+			UserData:   post.UserData,
 		}
 
 		if post.ImagePath.String != "" {
@@ -272,6 +282,25 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 
 		if post.VideoPath.String != "" {
 			postResp.VideoURL = "/uploads/" + post.VideoPath.String
+		}
+		if post.UserData.Avatar != "" {
+			postResp.UserData.Avatar = "/uploads/" + postResp.UserData.Avatar
+		}
+		// Add comments to response
+		for _, comment := range comments {
+			commentResp := CommentResponse{
+				ID:        comment.ID,
+				PostID:    comment.PostID,
+				UserID:    comment.UserID,
+				Content:   comment.Content,
+				CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+				UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
+				UserData:  comment.UserData,
+			}
+			if comment.ImagePath.String != "" {
+				commentResp.ImageURL = "/uploads/" + comment.ImagePath.String
+			}
+			postResp.Comments = append(postResp.Comments, commentResp)
 		}
 
 		response = append(response, postResp)

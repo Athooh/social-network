@@ -108,13 +108,13 @@ func (s *Service) GetCurrentUser(r *http.Request) (*models.UserResponse, error) 
 		return nil, err
 	}
 
-	// Get user data
+	// Get user data with profile
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return user data without sensitive information
+	// Return user data with profile information
 	return &models.UserResponse{
 		ID:             user.ID,
 		Email:          user.Email,
@@ -130,6 +130,23 @@ func (s *Service) GetCurrentUser(r *http.Request) (*models.UserResponse, error) 
 		FollowersCount: user.FollowersCount,
 		FollowingCount: user.FollowingCount,
 		GroupsJoined:   user.GroupsJoined,
+		
+		// Include profile fields
+		Username:     user.Username,
+		FullName:     user.FullName,
+		Bio:          user.Bio,
+		Work:         user.Work,
+		Education:    user.Education,
+		ContactEmail: user.ContactEmail,
+		Phone:        user.Phone,
+		Website:      user.Website,
+		Location:     user.Location,
+		TechSkills:   user.TechSkills,
+		SoftSkills:   user.SoftSkills,
+		Interests:    user.Interests,
+		BannerImage:  user.BannerImage,
+		ProfileImage: user.ProfileImage,
+		IsPrivate:    user.IsPrivate,
 	}, nil
 }
 

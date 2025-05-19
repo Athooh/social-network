@@ -38,7 +38,23 @@ type UserResponse struct {
 	GroupsJoined   int       `json:"groupsJoined"`
 	FollowersCount int       `json:"followersCount"`
 	FollowingCount int       `json:"followingCount"`
-	// UserStats   models.UserStats `json:"userStats"`
+
+	// Profile information
+	Username     string `json:"username,omitempty"`
+	FullName     string `json:"fullName,omitempty"`
+	Bio          string `json:"bio,omitempty"`
+	Work         string `json:"work,omitempty"`
+	Education    string `json:"education,omitempty"`
+	ContactEmail string `json:"contactEmail,omitempty"`
+	Phone        string `json:"phone,omitempty"`
+	Website      string `json:"website,omitempty"`
+	Location     string `json:"location,omitempty"`
+	TechSkills   string `json:"techSkills,omitempty"`
+	SoftSkills   string `json:"softSkills,omitempty"`
+	Interests    string `json:"interests,omitempty"`
+	BannerImage  string `json:"bannerImage,omitempty"`
+	ProfileImage string `json:"profileImage,omitempty"`
+	IsPrivate    bool   `json:"isPrivate,omitempty"`
 }
 
 // TokenResponse represents the JWT token response
