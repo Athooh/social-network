@@ -43,6 +43,7 @@ type PostResponse struct {
 	ImageURL  string               `json:"imageUrl,omitempty"`
 	VideoURL  string               `json:"videoUrl,omitempty"`
 	Privacy   string               `json:"privacy"`
+	LikesCount int                  `json:"likesCount"`
 	CreatedAt string               `json:"createdAt"`
 	UpdatedAt string               `json:"updatedAt"`
 	UserData  *models.PostUserData `json:"userData"`
@@ -261,6 +262,7 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 			UserID:    post.UserID,
 			Content:   post.Content,
 			Privacy:   post.Privacy,
+			LikesCount: int(post.LikesCount),
 			CreatedAt: post.CreatedAt.Format(time.RFC3339),
 			UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
 			UserData:  post.UserData,
