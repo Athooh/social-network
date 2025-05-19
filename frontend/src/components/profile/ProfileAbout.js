@@ -23,7 +23,6 @@ import ProfilePhotosGrid from "./ProfilePhotosGrid";
 import ContactsList from "../contacts/ContactsList";
 
 const ProfileAbout = ({ userData }) => {
-  console.log(userData);
   const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
   const [showActionsPopup, setShowActionsPopup] = useState(false);
 
