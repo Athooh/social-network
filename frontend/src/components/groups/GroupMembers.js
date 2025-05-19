@@ -1,31 +1,38 @@
 import { useState } from 'react';
 import styles from '@/styles/GroupMembers.module.css';
 
-const GroupMembers = ({ groupId }) => {
-  // Dummy members data
-  const [members] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      avatar: '/avatar1.png',
-      role: 'Admin',
-      joinDate: '2024-01-01',
-      isOnline: true
-    },
-    // Add more dummy members...
-  ]);
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", "");// Replace with your actual base URL
 
+const GroupMembers = ({ group }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const membersPerPage = 14;
 
-  // Filter members based on search and tab
-  const filteredMembers = members.filter(member => 
+  // Convert raw member data into usable format
+  const members = (group?.Members || []).map((member) => ({
+    id: member.User?.id,
+    name: `${member.User?.firstName || ''} ${member.User?.lastName || ''}`,
+    avatar: member.Avatar
+      ? `${BASE_URL}/uploads/${member.Avatar}`
+      : '/avatar5.jpg',
+    role: member.Role?.toLowerCase() === 'admin' ? 'Admin' : 'Member',
+    joinDate: member.CreatedAt,
+    isOnline: false, // Adjust if you track online status
+  }));
+
+  // Filter by search
+  let filteredMembers = members.filter((member) =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate pagination
+  // Filter by tab
+  if (activeTab === 'admins') {
+    filteredMembers = filteredMembers.filter((member) => member.role === 'Admin');
+  }
+
+  // Pagination
   const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
   const indexOfLastMember = currentPage * membersPerPage;
   const indexOfFirstMember = indexOfLastMember - membersPerPage;
@@ -62,14 +69,10 @@ const GroupMembers = ({ groupId }) => {
       </div>
 
       <div className={styles.membersGrid}>
-        {currentMembers.map(member => (
+        {currentMembers.map((member) => (
           <div key={member.id} className={styles.memberCard}>
             <div className={styles.memberInfo}>
-              <img
-                src={member.avatar}
-                alt={member.name}
-                className={styles.avatar}
-              />
+              <img src={member.avatar} alt={member.name} className={styles.avatar} />
               <div className={styles.details}>
                 <h3>{member.name}</h3>
                 <span className={member.isOnline ? styles.online : styles.offline}>
@@ -81,9 +84,7 @@ const GroupMembers = ({ groupId }) => {
               </div>
             </div>
             <div className={styles.actions}>
-              <button className={styles.followButton}>
-                Follow
-              </button>
+              <button className={styles.followButton}>Follow</button>
             </div>
           </div>
         ))}
