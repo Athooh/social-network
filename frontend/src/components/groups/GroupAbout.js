@@ -13,6 +13,7 @@ try {
 
 const GroupAbout = ({ group }) => {
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const handleLeaveGroup = () => {
     // TODO: Implement leave group functionality
@@ -83,6 +84,29 @@ const GroupAbout = ({ group }) => {
                 onClick={handleLeaveGroup}
               >
                 Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmDelete && (
+        <div className={styles.confirmDialog}>
+          <div className={styles.dialogContent}>
+            <h3>Delete Group?</h3>
+            <p>Are you sure you want to Delete this group?</p>
+            <div className={styles.dialogActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowConfirmDelete(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmButton}
+                onClick={handleDeleteGroup}
+              >
+                Delete
               </button>
             </div>
           </div>
