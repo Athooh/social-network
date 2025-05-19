@@ -25,28 +25,28 @@ const GroupAbout = ({ group }) => {
       <div className={styles.mainInfo}>
         <h2>About This Group</h2>
         <div className={styles.description}>
-          <p>{group.description}</p>
+          <p>{group.Content}</p>
         </div>
-        
+
         <div className={styles.stats}>
           <div className={styles.statItem}>
             <i className="fas fa-users"></i>
             <div>
-              <h3>{group.memberCount.toLocaleString()}</h3>
+              <h3>{group.MemberCount.toLocaleString()}</h3>
               <p>Members</p>
             </div>
           </div>
           <div className={styles.statItem}>
             <i className="fas fa-calendar"></i>
             <div>
-              <h3>March 2024</h3>
+              <h3>{formatRelativeTime(group.CreatedAt)}</h3>
               <p>Created</p>
             </div>
           </div>
           <div className={styles.statItem}>
-            <i className={`fas ${group.privacy === 'private' ? 'fa-lock' : 'fa-globe'}`}></i>
+            <i className={`fas ${group.Ispublic === true ? 'fa-lock' : 'fa-globe'}`}></i>
             <div>
-              <h3>{group.privacy === 'private' ? 'Private' : 'Public'}</h3>
+              <h3>{group.Ispublic === true ? 'Private' : 'Public'}</h3>
               <p>Privacy</p>
             </div>
           </div>
