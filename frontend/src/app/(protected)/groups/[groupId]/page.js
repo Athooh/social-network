@@ -49,8 +49,10 @@ export default function GroupPostPage() {
   const fetchGroups = async () => {
     try {
       const result = await getgroup(groupId);
+      const postresults = await getgroupposts(groupId);
       console.log("Fetched group data:", result);
       setGroup(result);
+      setPosts(postresults);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching groups:", error);
