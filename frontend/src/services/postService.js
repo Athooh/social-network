@@ -61,7 +61,7 @@ export const usePostService = () => {
 
   const createPost = async (formData) => {
     try {
-      const response = await authenticatedFetch("groups/posts", {
+      const response = await authenticatedFetch("posts", {
         method: "POST",
         body: formData,
       });
@@ -109,6 +109,31 @@ export const usePostService = () => {
         setAllPosts((prev) => [...prev, ...data]);
       }
 
+      return data;
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      showToast(error.message || "Error fetching posts", "error");
+      throw error;
+    }
+  };
+
+  const getUserPosts = async (id) => {
+    try {
+      const response = await authenticatedFetch(
+        `posts/user/${id}`,
+        {
+          method: "GET",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to fetch posts"
+        );
+      }
+      const data = await response.json();
+      console.log(data)
       return data;
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -337,6 +362,7 @@ export const usePostService = () => {
   return {
     createPost,
     getFeedPosts,
+    getUserPosts,
     likePost,
     addComment,
     getPostComments,

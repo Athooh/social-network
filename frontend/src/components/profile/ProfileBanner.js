@@ -1,21 +1,17 @@
-import React, { useState } from 'react';
-import Image from 'next/image';
-import styles from '@/styles/ProfileBanner.module.css';
-import EditProfileModal from './EditProfileModal';
+import React, { useState } from "react";
+import Image from "next/image";
+import styles from "@/styles/ProfileBanner.module.css";
+import EditProfileModal from "./EditProfileModal";
 
 const ProfileBanner = ({
-  bannerUrl,
-  profileUrl,
-  fullName,
-  followersCount,
-  followingCount,
+  userData,
   onNavClick,
-  activeSection = 'posts',
-  isPrivate = false,
+  activeSection = "posts",
   isOwnProfile = true,
   isFollowing = false,
   onFollow,
-  onUnfollow
+  onUnfollow,
+  BASE_URL = "",
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -24,29 +20,48 @@ const ProfileBanner = ({
     onNavClick(section);
   };
 
+  // Create fullName from userData
+  const fullName = userData.fullName || "";
+
+  // Use bannerImage or default for banner
+  const bannerUrl = userData.bannerImage
+  ? `${BASE_URL}/uploads/${userData.bannerImage}`
+  :  "/banner3.jpg";
+
+  
+
+  // Use the same approach as in your original code for profile image
+  const profileUrl = userData.avatar
+    ? `${BASE_URL}/uploads/${userData.avatar}`
+    : "/default-avatar.png";
+    console.log(bannerUrl)
+    console.log(profileUrl)
+  // Use isPrivate from userData or default to false
+  const isPrivate = userData.isPrivate || false;
+
   return (
     <>
       <div className={styles.bannerContainer}>
         <div className={styles.bannerImage}>
           <Image
-            src={bannerUrl || '/banner3.jpg'}
+            src={bannerUrl}
             alt="Profile Banner"
             fill
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: "cover" }}
           />
         </div>
-        
+
         <div className={styles.profileInfo}>
           <div className={styles.leftSection}>
             <div className={styles.profilePicture}>
               <Image
-                src={profileUrl || '/avatar.png'}
+                src={profileUrl}
                 alt="Profile Picture"
                 width={120}
                 height={120}
               />
             </div>
-            
+
             <div className={styles.userInfo}>
               <h2>{fullName}</h2>
               <div className={styles.privacyBadge}>
@@ -79,8 +94,8 @@ const ProfileBanner = ({
                   </div>
                 </div>
                 <div className={styles.following}>
-                  <span>| {followersCount} Followers</span>
-                  <span> | {followingCount} Following</span>
+                  <span>| {userData.followersCount || 0} Followers</span>
+                  <span> | {userData.followingCount || 0} Following</span>
                 </div>
               </div>
             </div>
@@ -89,7 +104,7 @@ const ProfileBanner = ({
           <div className={styles.rightSection}>
             {isOwnProfile ? (
               <>
-                <button 
+                <button
                   className={styles.editButton}
                   onClick={() => setIsEditModalOpen(true)}
                 >
@@ -102,23 +117,18 @@ const ProfileBanner = ({
             ) : (
               <div className={styles.actionButtons}>
                 {isFollowing ? (
-                  <button 
+                  <button
                     className={`${styles.followButton} ${styles.following}`}
                     onClick={onUnfollow}
                   >
                     Following
                   </button>
                 ) : (
-                  <button 
-                    className={styles.followButton}
-                    onClick={onFollow}
-                  >
+                  <button className={styles.followButton} onClick={onFollow}>
                     Follow
                   </button>
                 )}
-                <button className={styles.messageButton}>
-                  Message
-                </button>
+                <button className={styles.messageButton}>Message</button>
               </div>
             )}
           </div>
@@ -126,45 +136,45 @@ const ProfileBanner = ({
 
         <div className={styles.profileNav}>
           <nav>
-            <a 
-              href="#" 
-              className={activeSection === 'posts' ? styles.active : ''} 
-              onClick={(e) => handleNavClick(e, 'posts')}
+            <a
+              href="#"
+              className={activeSection === "posts" ? styles.active : ""}
+              onClick={(e) => handleNavClick(e, "posts")}
             >
               Posts
             </a>
-            <a 
-              href="#" 
-              className={activeSection === 'about' ? styles.active : ''} 
-              onClick={(e) => handleNavClick(e, 'about')}
+            <a
+              href="#"
+              className={activeSection === "about" ? styles.active : ""}
+              onClick={(e) => handleNavClick(e, "about")}
             >
               About
             </a>
-            <a 
-              href="#" 
-              className={activeSection === 'photos' ? styles.active : ''} 
-              onClick={(e) => handleNavClick(e, 'photos')}
+            <a
+              href="#"
+              className={activeSection === "photos" ? styles.active : ""}
+              onClick={(e) => handleNavClick(e, "photos")}
             >
               Photos
             </a>
-            <a 
-              href="#" 
-              className={activeSection === 'groups' ? styles.active : ''} 
-              onClick={(e) => handleNavClick(e, 'groups')}
+            <a
+              href="#"
+              className={activeSection === "groups" ? styles.active : ""}
+              onClick={(e) => handleNavClick(e, "groups")}
             >
               Groups
             </a>
-            <a 
-              href="#" 
-              className={activeSection === 'connections' ? styles.active : ''} 
-              onClick={(e) => handleNavClick(e, 'connections')}
+            <a
+              href="#"
+              className={activeSection === "connections" ? styles.active : ""}
+              onClick={(e) => handleNavClick(e, "connections")}
             >
               Connections
             </a>
-            <a 
-              href="#" 
-              className={activeSection === 'events' ? styles.active : ''} 
-              onClick={(e) => handleNavClick(e, 'events')}
+            <a
+              href="#"
+              className={activeSection === "events" ? styles.active : ""}
+              onClick={(e) => handleNavClick(e, "events")}
             >
               Events
             </a>

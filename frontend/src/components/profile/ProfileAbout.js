@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import styles from '@/styles/ProfileAbout.module.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faGlobe, 
-  faEllipsisH, 
-  faBriefcase, 
-  faGraduationCap, 
-  faEnvelope, 
-  faLink, 
-  faPhone, 
-  faHouse, 
+import React, { useState } from "react";
+import styles from "@/styles/ProfileAbout.module.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faGlobe,
+  faEllipsisH,
+  faBriefcase,
+  faGraduationCap,
+  faEnvelope,
+  faLink,
+  faPhone,
+  faHouse,
   faLocationDot,
   faLock,
   faUser,
@@ -17,76 +17,110 @@ import {
   faPenToSquare,
   faTrash,
   faCode,
-  faBook
-} from '@fortawesome/free-solid-svg-icons';
-import ProfilePhotosGrid from './ProfilePhotosGrid';
-import ContactsList from '../contacts/ContactsList';
+  faBook,
+} from "@fortawesome/free-solid-svg-icons";
+import ProfilePhotosGrid from "./ProfilePhotosGrid";
+import ContactsList from "../contacts/ContactsList";
 
-const ProfileAbout = () => {
+const ProfileAbout = ({ userData }) => {
+  console.log(userData);
   const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
   const [showActionsPopup, setShowActionsPopup] = useState(false);
 
-  // Add the same photos data as in the profile page
+  // Display privacy status based on user data
+  const privacyStatus = userData?.isPublic ? "Public" : "Private";
+  const privacyIcon = userData?.isPublic ? faGlobe : faLock;
+
+  // Parse skills into arrays if they exist
+  const techSkills = userData?.techSkills
+    ? userData.techSkills.split(",").map((skill) => skill.trim())
+    : [];
+  const softSkills = userData?.softSkills
+    ? userData.softSkills.split(",").map((skill) => skill.trim())
+    : [];
+  const interestsList = userData?.interests
+    ? userData.interests.split(",").map((interest) => interest.trim())
+    : [];
+
+  // Add the photos data (this would ideally come from API)
   const photos = [
-    { url: '/photo1.jpg' },
-    { url: '/photo2.jpg' },
-    { url: '/photo3.jpg' },
-    { url: '/photo4.jpg' },
-    { url: '/photo5.jpg' },
-    { url: '/photo6.jpg' },
+    { url: "/photo1.jpg" },
+    { url: "/photo2.jpg" },
+    { url: "/photo3.jpg" },
+    { url: "/photo4.jpg" },
+    { url: "/photo5.jpg" },
+    { url: "/photo6.jpg" },
   ];
 
   return (
     <div className={styles.aboutContainer}>
       <div className={styles.mainContent}>
-        <div className={styles.overviewSection}>
-          <h2>Overview</h2>
-          <div className={styles.highlightCards}>
-            <div className={styles.highlightCard}>
-              <FontAwesomeIcon icon={faBriefcase} className={styles.highlightIcon} />
-              <div className={styles.highlightContent}>
-                <h3>Work</h3>
-                <p>Senior Developer at Tech Corp</p>
-                <p className={styles.timeperiod}>2020 - Present</p>
-              </div>
-            </div>
-            <div className={styles.highlightCard}>
-              <FontAwesomeIcon icon={faGraduationCap} className={styles.highlightIcon} />
-              <div className={styles.highlightContent}>
-                <h3>Education</h3>
-                <p>Master's in Computer Science</p>
-                <p className={styles.timeperiod}>2018 - 2020</p>
-              </div>
-            </div>
-            <div className={styles.highlightCard}>
-              <FontAwesomeIcon icon={faLocationDot} className={styles.highlightIcon} />
-              <div className={styles.highlightContent}>
-                <h3>Location</h3>
-                <p>San Francisco, CA</p>
-                <p className={styles.timeperiod}>From New York</p>
-              </div>
+        {/* Overview Section */}
+        {(userData?.work || userData?.education || userData?.location) && (
+          <div className={styles.overviewSection}>
+            <h2>Overview</h2>
+            <div className={styles.highlightCards}>
+              {userData?.work && (
+                <div className={styles.highlightCard}>
+                  <FontAwesomeIcon
+                    icon={faBriefcase}
+                    className={styles.highlightIcon}
+                  />
+                  <div className={styles.highlightContent}>
+                    <h3>Work</h3>
+                    <p>{userData.work}</p>
+                  </div>
+                </div>
+              )}
+
+              {userData?.education && (
+                <div className={styles.highlightCard}>
+                  <FontAwesomeIcon
+                    icon={faGraduationCap}
+                    className={styles.highlightIcon}
+                  />
+                  <div className={styles.highlightContent}>
+                    <h3>Education</h3>
+                    <p>{userData.education}</p>
+                  </div>
+                </div>
+              )}
+
+              {userData?.location && (
+                <div className={styles.highlightCard}>
+                  <FontAwesomeIcon
+                    icon={faLocationDot}
+                    className={styles.highlightIcon}
+                  />
+                  <div className={styles.highlightContent}>
+                    <h3>Location</h3>
+                    <p>{userData.location}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
+        {/* Bio Section */}
         <div className={styles.bioSection}>
           <div className={styles.sectionHeader}>
             <h2>About</h2>
             <div className={styles.actionButtons}>
-              <button 
+              <button
                 className={styles.privacyButton}
                 onClick={() => setShowPrivacyPopup(!showPrivacyPopup)}
               >
-                <FontAwesomeIcon icon={faGlobe} />
-                <span>Public</span>
+                <FontAwesomeIcon icon={privacyIcon} />
+                <span>{privacyStatus}</span>
               </button>
-              <button 
+              <button
                 className={styles.moreButton}
                 onClick={() => setShowActionsPopup(!showActionsPopup)}
               >
                 <FontAwesomeIcon icon={faEllipsisH} />
               </button>
-              
+
               {showPrivacyPopup && (
                 <div className={styles.popup}>
                   <button className={styles.popupItem}>
@@ -103,7 +137,7 @@ const ProfileAbout = () => {
                   </button>
                 </div>
               )}
-              
+
               {showActionsPopup && (
                 <div className={styles.popup}>
                   <button className={styles.popupItem}>
@@ -118,140 +152,186 @@ const ProfileAbout = () => {
               )}
             </div>
           </div>
-          
-          <p className={styles.bioText}>
-            "Lorem ipsum dolor sit amet consectetur. Nec donec vestibulum eleifend lectus ipsum ultrices et dictum"
-          </p>
 
-          <div className={styles.contactGrid}>
-            <div className={styles.contactItem}>
-              <FontAwesomeIcon icon={faEnvelope} className={styles.contactIcon} />
-              <div className={styles.contactInfo}>
-                <label>Email</label>
-                <span>test@mail.com</span>
-              </div>
+          {userData?.aboutMe ? (
+            <p className={styles.bioText}>"{userData.aboutMe}"</p>
+          ) : (
+            <p className={styles.bioText}>No bio provided</p>
+          )}
+
+          {/* Contact Information */}
+          {(userData?.contactEmail ||
+            userData?.phone ||
+            userData?.website ||
+            userData?.location) && (
+            <div className={styles.contactGrid}>
+              {userData?.contactEmail && (
+                <div className={styles.contactItem}>
+                  <FontAwesomeIcon
+                    icon={faEnvelope}
+                    className={styles.contactIcon}
+                  />
+                  <div className={styles.contactInfo}>
+                    <label>Email</label>
+                    <span>{userData.contactEmail}</span>
+                  </div>
+                </div>
+              )}
+
+              {userData?.phone && (
+                <div className={styles.contactItem}>
+                  <FontAwesomeIcon
+                    icon={faPhone}
+                    className={styles.contactIcon}
+                  />
+                  <div className={styles.contactInfo}>
+                    <label>Phone</label>
+                    <span>{userData.phone}</span>
+                  </div>
+                </div>
+              )}
+
+              {userData?.website && (
+                <div className={styles.contactItem}>
+                  <FontAwesomeIcon
+                    icon={faLink}
+                    className={styles.contactIcon}
+                  />
+                  <div className={styles.contactInfo}>
+                    <label>Website</label>
+                    <span>{userData.website}</span>
+                  </div>
+                </div>
+              )}
+
+              {userData?.location && (
+                <div className={styles.contactItem}>
+                  <FontAwesomeIcon
+                    icon={faLocationDot}
+                    className={styles.contactIcon}
+                  />
+                  <div className={styles.contactInfo}>
+                    <label>Address</label>
+                    <span>{userData.location}</span>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className={styles.contactItem}>
-              <FontAwesomeIcon icon={faPhone} className={styles.contactIcon} />
-              <div className={styles.contactInfo}>
-                <label>Phone</label>
-                <span>(316) 555-0116</span>
-              </div>
-            </div>
-            <div className={styles.contactItem}>
-              <FontAwesomeIcon icon={faLink} className={styles.contactIcon} />
-              <div className={styles.contactInfo}>
-                <label>Website</label>
-                <span>www.wisoky.com</span>
-              </div>
-            </div>
-            <div className={styles.contactItem}>
-              <FontAwesomeIcon icon={faLocationDot} className={styles.contactIcon} />
-              <div className={styles.contactInfo}>
-                <label>Address</label>
-                <span>775 Rolling Green Rd., USA</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Work Experience Section */}
-        <div className={styles.experienceSection}>
-          <h2>Work Experience</h2>
-          <div className={styles.timelineList}>
-            <div className={styles.timelineItem}>
-              <div className={styles.timelineIcon}>
-                <FontAwesomeIcon icon={faBriefcase} />
-              </div>
-              <div className={styles.timelineContent}>
-                <h3>Senior Developer</h3>
-                <p className={styles.company}>Tech Corp</p>
-                <p className={styles.period}>2020 - Present · 3 years</p>
-                <p className={styles.description}>
-                  Led development of core platform features and mentored junior developers.
-                  Implemented microservices architecture that improved system performance by 40%.
-                </p>
-                <div className={styles.skills}>
-                  <span>React</span>
-                  <span>Node.js</span>
-                  <span>AWS</span>
+        {/* Work Experience Section - Only displayed if work exists */}
+        {userData?.work && (
+          <div className={styles.experienceSection}>
+            <h2>Work Experience</h2>
+            <div className={styles.timelineList}>
+              <div className={styles.timelineItem}>
+                <div className={styles.timelineIcon}>
+                  <FontAwesomeIcon icon={faBriefcase} />
+                </div>
+                <div className={styles.timelineContent}>
+                  <h3>{userData.work}</h3>
+                  {/* Additional details would come from an expanded work history API */}
                 </div>
               </div>
             </div>
-            {/* Add more work experiences */}
           </div>
-        </div>
+        )}
 
-        {/* Education Section */}
-        <div className={styles.educationSection}>
-          <h2>Education</h2>
-          <div className={styles.timelineList}>
-            <div className={styles.timelineItem}>
-              <div className={styles.timelineIcon}>
-                <FontAwesomeIcon icon={faGraduationCap} />
-              </div>
-              <div className={styles.timelineContent}>
-                <h3>Master's in Computer Science</h3>
-                <p className={styles.school}>Stanford University</p>
-                <p className={styles.period}>2018 - 2020</p>
-                <p className={styles.description}>
-                  Specialized in Machine Learning and Distributed Systems.
-                  Published 2 research papers in international conferences.
-                </p>
+        {/* Education Section - Only displayed if education exists */}
+        {userData?.education && (
+          <div className={styles.educationSection}>
+            <h2>Education</h2>
+            <div className={styles.timelineList}>
+              <div className={styles.timelineItem}>
+                <div className={styles.timelineIcon}>
+                  <FontAwesomeIcon icon={faGraduationCap} />
+                </div>
+                <div className={styles.timelineContent}>
+                  <h3>{userData.education}</h3>
+                  {/* Additional details would come from an expanded education history API */}
+                </div>
               </div>
             </div>
-            {/* Add more education items */}
           </div>
-        </div>
+        )}
 
-        {/* Skills Section */}
-        <div className={styles.skillsSection}>
-          <h2>Skills & Expertise</h2>
-          <div className={styles.skillsGrid}>
-            <div className={styles.skillCategory}>
-              <h3>Technical Skills</h3>
-              <div className={styles.skillTags}>
-                <span className={styles.skillTag}>JavaScript</span>
-                <span className={styles.skillTag}>React</span>
-                <span className={styles.skillTag}>Node.js</span>
-                <span className={styles.skillTag}>AWS</span>
-                {/* Add more skills */}
-              </div>
-            </div>
-            <div className={styles.skillCategory}>
-              <h3>Soft Skills</h3>
-              <div className={styles.skillTags}>
-                <span className={styles.skillTag}>Leadership</span>
-                <span className={styles.skillTag}>Project Management</span>
-                <span className={styles.skillTag}>Team Collaboration</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Skills Section - Only displayed if skills exist */}
+        {(techSkills.length > 0 || softSkills.length > 0) && (
+          <div className={styles.skillsSection}>
+            <h2>Skills & Expertise</h2>
+            <div className={styles.skillsGrid}>
+              {techSkills.length > 0 && (
+                <div className={styles.skillCategory}>
+                  <h3>Technical Skills</h3>
+                  <div className={styles.skillTags}>
+                    {techSkills.map((skill, index) => (
+                      <span key={`tech-${index}`} className={styles.skillTag}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Interests Section */}
-        <div className={styles.interestsSection}>
-          <h2>Interests</h2>
-          <div className={styles.interestsList}>
-            <div className={styles.interestItem}>
-              <FontAwesomeIcon icon={faCode} className={styles.interestIcon} />
-              <span>Open Source Development</span>
+              {softSkills.length > 0 && (
+                <div className={styles.skillCategory}>
+                  <h3>Soft Skills</h3>
+                  <div className={styles.skillTags}>
+                    {softSkills.map((skill, index) => (
+                      <span key={`soft-${index}`} className={styles.skillTag}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className={styles.interestItem}>
-              <FontAwesomeIcon icon={faBook} className={styles.interestIcon} />
-              <span>Technical Writing</span>
-            </div>
-            {/* Add more interests */}
           </div>
-        </div>
+        )}
+
+        {/* Interests Section - Only displayed if interests exist */}
+        {interestsList.length > 0 && (
+          <div className={styles.interestsSection}>
+            <h2>Interests</h2>
+            <div className={styles.interestsList}>
+              {interestsList.map((interest, index) => (
+                <div key={`interest-${index}`} className={styles.interestItem}>
+                  {/* Using faCode as default icon, could be mapped to different icons based on interest */}
+                  <FontAwesomeIcon
+                    icon={faCode}
+                    className={styles.interestIcon}
+                  />
+                  <span>{interest}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* If no data exists for any section, show a message */}
+        {!userData?.work &&
+          !userData?.education &&
+          !userData?.location &&
+          !userData?.aboutMe &&
+          !userData?.contactEmail &&
+          !userData?.phone &&
+          !userData?.website &&
+          techSkills.length === 0 &&
+          softSkills.length === 0 &&
+          interestsList.length === 0 && (
+            <div className={styles.noDataMessage}>
+              <p>This profile hasn't been completed yet.</p>
+            </div>
+          )}
       </div>
-      
+
       <div className={styles.sidebar}>
-        <ProfilePhotosGrid photos={photos} totalPhotos={20} />
+        <ProfilePhotosGrid photos={photos} totalPhotos={photos.length} />
         <ContactsList />
       </div>
     </div>
   );
 };
 
-export default ProfileAbout; 
+export default ProfileAbout;
