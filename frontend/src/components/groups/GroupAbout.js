@@ -20,6 +20,11 @@ const GroupAbout = ({ group }) => {
     setShowConfirmLeave(false);
   };
 
+  const handleDeleteGroup = () => {
+
+    setShowConfirmDelete(false);
+  };
+
   return (
     <div className={styles.aboutContainer}>
       <div className={styles.mainInfo}>
@@ -53,17 +58,37 @@ const GroupAbout = ({ group }) => {
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.inviteButton}>
-            <i className="fas fa-user-plus"></i>
-            Invite Members
-          </button>
-          <button 
-            className={styles.leaveButton}
-            onClick={() => setShowConfirmLeave(true)}
-          >
-            <i className="fas fa-sign-out-alt"></i>
-            Leave Group
-          </button>
+          {group.IsMember ? (
+            <button className={styles.inviteButton}>
+              <i className="fas fa-user-plus"></i>
+              Invite Members
+            </button>
+          ) : (
+            ""
+          )}
+          {group.IsMember ? (
+            userdata.id === group.Creator.id ? (
+              <button
+                className={styles.leaveButton}
+                onClick={() => setShowConfirmDelete(true)}
+              >
+                <i className="fas fa-sign-out-alt"></i>
+                Delete Group
+              </button>
+            ) : (
+              <button
+                className={styles.leaveButton}
+                onClick={() => setShowConfirmLeave(true)}
+              >
+                <i className="fas fa-sign-out-alt"></i>
+                Leave Group
+              </button>
+            )
+          ) : (
+            <button className={styles.inviteButton}>
+              Join Group
+            </button>
+          )}
         </div>
       </div>
 
@@ -73,13 +98,13 @@ const GroupAbout = ({ group }) => {
             <h3>Leave Group?</h3>
             <p>Are you sure you want to leave this group?</p>
             <div className={styles.dialogActions}>
-              <button 
+              <button
                 className={styles.cancelButton}
                 onClick={() => setShowConfirmLeave(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className={styles.confirmButton}
                 onClick={handleLeaveGroup}
               >
