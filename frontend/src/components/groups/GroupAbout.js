@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import styles from '@/styles/GroupAbout.module.css';
 import { formatRelativeTime } from '@/utils/dateUtils';
+import { useGroupService } from '@/services/groupService';
+import { showToast } from "@/components/ui/ToastContainer";
 
 let userdata = null;
 try {
@@ -14,15 +16,29 @@ try {
 const GroupAbout = ({ group }) => {
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const { leaveGroup, deleteGroup, joinGroup } = useGroupService();
 
   const handleLeaveGroup = () => {
-    // TODO: Implement leave group functionality
+    success = await leaveGroup(group.ID);
+    if (success) {
+      showToast("Left group successfully", "success");
+    }
     setShowConfirmLeave(false);
   };
 
   const handleDeleteGroup = () => {
-
+    success = await deleteGroup(group.ID);
+    if (success) {
+      showToast("Group deleted successfully", "success");
+    }
     setShowConfirmDelete(false);
+  };
+
+  const handlejoiningroup = async () => {
+    success = await joinGroup(group.ID);
+    if (success) {
+      showToast("Joined group successfully", "success");
+    }
   };
 
   return (
@@ -85,7 +101,10 @@ const GroupAbout = ({ group }) => {
               </button>
             )
           ) : (
-            <button className={styles.inviteButton}>
+            <button
+              className={styles.inviteButton}
+              onClick={handlejoiningroup}
+            >
               Join Group
             </button>
           )}
