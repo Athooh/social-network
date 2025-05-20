@@ -1,128 +1,265 @@
 'use client'
 
+import { useState } from 'react'
 import Header from '@/components/header/Header'
-import pageStyles from '@/styles/page.module.css'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LeftSidebar from '@/components/sidebar/LeftSidebar'
 import styles from '@/styles/Friends.module.css'
 
-const sampleFriends = [
-    {
-      id: 1,
-      name: 'Sarah Wilson',
-      image: '/avatar1.png',
-      mutualFriends: {
-        count: 10,
-        previews: ['/avatar2.png', '/avatar3.png', '/avatar4.png']
-      }
-    },
-    {
-      id: 2,
-      name: 'Michael Johnson',
-      image: '/avatar2.png',
-      mutualFriends: {
-        count: 15,
-        previews: ['/avatar1.png', '/avatar5.png', '/avatar6.png']
-      }
-    },
-    {
-      id: 3,
-      name: 'Emma Davis',
-      image: '/avatar3.png',
-      mutualFriends: {
-        count: 8,
-        previews: ['/avatar4.png', '/avatar5.png', '/avatar6.png']
-      }
-    },
-    {
-      id: 4,
-      name: 'James Miller',
-      image: '/avatar4.png',
-      mutualFriends: {
-        count: 12,
-        previews: ['/avatar1.png', '/avatar2.png', '/avatar3.png']
-      }
-    },
-    {
-      id: 5,
-      name: 'Sophia Brown',
-      image: '/avatar5.png',
-      mutualFriends: {
-        count: 6,
-        previews: ['/avatar1.png', '/avatar3.png', '/avatar6.png']
-      }
-    },
-    {
-      id: 6,
-      name: 'Oliver Taylor',
-      image: '/avatar6.png',
-      mutualFriends: {
-        count: 20,
-        previews: ['/avatar2.png', '/avatar4.png', '/avatar5.png']
-      }
+const friendRequests = [
+  {
+    id: 1,
+    name: 'Sarah Wilson',
+    image: '/avatar1.png',
+    mutualFriends: {
+      count: 10,
+      previews: ['/avatar2.png', '/avatar3.png', '/avatar4.png']
     }
-  ];
+  },
+  {
+    id: 2,
+    name: 'Michael Johnson',
+    image: '/avatar2.png',
+    mutualFriends: {
+      count: 15,
+      previews: ['/avatar1.png', '/avatar5.png', '/avatar6.png']
+    }
+  },
+  {
+    id: 3,
+    name: 'Emma Davis',
+    image: '/avatar3.png',
+    mutualFriends: {
+      count: 8,
+      previews: ['/avatar4.png', '/avatar5.png', '/avatar6.png']
+    }
+  },
+  {
+    id: 4,
+    name: 'James Miller',
+    image: '/avatar4.png',
+    mutualFriends: {
+      count: 12,
+      previews: ['/avatar1.png', '/avatar2.png', '/avatar3.png']
+    }
+  },
+  {
+    id: 5,
+    name: 'Sophia Brown',
+    image: '/avatar5.png',
+    mutualFriends: {
+      count: 6,
+      previews: ['/avatar1.png', '/avatar3.png', '/avatar6.png']
+    }
+  },
+  {
+    id: 6,
+    name: 'Oliver Taylor',
+    image: '/avatar6.png',
+    mutualFriends: {
+      count: 20,
+      previews: ['/avatar2.png', '/avatar4.png', '/avatar5.png']
+    }
+  }
+];
+
+const suggestedFriends = [
+  {
+    id: 7,
+    name: 'Emily Rodriguez',
+    image: '/avatar4.png',
+    mutualFriends: {
+      count: 7,
+      previews: ['/avatar1.png', '/avatar2.png', '/avatar3.png']
+    }
+  },
+  {
+    id: 8,
+    name: 'Daniel Lee',
+    image: '/avatar3.png',
+    mutualFriends: {
+      count: 2,
+      previews: ['/avatar4.png', '/avatar5.png', '/avatar6.png']
+    }
+  },
+  {
+    id: 9,
+    name: 'Olivia Garcia',
+    image: '/avatar5.png',
+    mutualFriends: {
+      count: 9,
+      previews: ['/avatar1.png', '/avatar3.png', '/avatar5.png']
+    }
+  },
+  {
+    id: 10,
+    name: 'William Martinez',
+    image: '/avatar6.png',
+    mutualFriends: {
+      count: 11,
+      previews: ['/avatar2.png', '/avatar4.png', '/avatar6.png']
+    }
+  },
+  {
+    id: 11,
+    name: 'Ava Thompson',
+    image: '/avatar4.png',
+    mutualFriends: {
+      count: 5,
+      previews: ['/avatar1.png', '/avatar3.png', '/avatar5.png']
+    }
+  },
+  {
+    id: 12,
+    name: 'Ethan Wilson',
+    image: '/avatar1.png',
+    mutualFriends: {
+      count: 14,
+      previews: ['/avatar2.png', '/avatar4.png', '/avatar6.png']
+    }
+  }
+];
+
+export default function FriendsPage() {
+  const [activeTab, setActiveTab] = useState('requests');
 
   const handleConfirm = (friendId) => {
     // Add your confirm logic here
+    console.log(`Confirmed friend request from ID: ${friendId}`);
   };
 
   const handleDelete = (friendId) => {
     // Add your delete logic here
+    console.log(`Deleted friend request from ID: ${friendId}`);
   };
 
-export default function FriendsPage() {
+  const handleAddFriend = (friendId) => {
+    // Add your add friend logic here
+    console.log(`Added friend with ID: ${friendId}`);
+  };
+
+  const handleRemove = (friendId) => {
+    // Add your remove suggestion logic here
+    console.log(`Removed suggestion with ID: ${friendId}`);
+  };
+
   return (
     <ProtectedRoute>
       <Header />
       <div className={styles.container}>
-      <aside>
-        <LeftSidebar />
-      </aside>
-      <main className={styles.mainContent}>
-      <div className={styles.friendsGrid}>
-            {sampleFriends.map(friend => (
-              //add friend card here
-              <div key={friend.id} className={styles.friendCard}>
-              <img 
-                src={friend.image} 
-                alt={friend.name} 
-                className={styles.profileImage}
-              />
-              <h3 className={styles.friendName}>{friend.name}</h3>
-              <div className={styles.mutualFriends}>
-                <div className={styles.mutualFriendsAvatars}>
-                  {friend.mutualFriends.previews.map((preview, index) => (
-                    <img 
-                      key={index}
-                      src={preview}
-                      alt="Mutual friend"
-                      className={styles.mutualFriendAvatar}
-                      style={{ marginLeft: index > 0 ? '-8px' : '0' }}
-                    />
-                  ))}
-                </div>
-                <span>{friend.mutualFriends.count} mutual friends</span>
-              </div>
-              <div className={styles.actions}>
-                <button 
-                  onClick={() => handleConfirm(friend.id)}
-                  className={styles.confirmButton}
-                >
-                  Confirm
-                </button>
-                <button 
-                  onClick={() => handleDelete(friend.id)}
-                  className={styles.deleteButton}
-                >
-                  Delete
-                </button>
-              </div>
+        <aside className={styles.sidebar}>
+          <LeftSidebar />
+        </aside>
+        <main className={styles.mainContent}>
+          <div className={styles.friendsHeader}>
+            {/* <h1>Friends</h1> */}
+            <div className={styles.tabsContainer}>
+              <button 
+                className={`${styles.tabButton} ${activeTab === 'requests' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('requests')}
+              >
+                Friend Requests <span className={styles.requestCount}>{friendRequests.length}</span>
+              </button>
+              <button 
+                className={`${styles.tabButton} ${activeTab === 'suggestions' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('suggestions')}
+              >
+                People You May Know
+              </button>
             </div>
-            ))}
           </div>
+
+          {activeTab === 'requests' ? (
+            <>
+              <h2 className={styles.sectionTitle}>Friend Requests</h2>
+              <div className={styles.friendsGrid}>
+                {friendRequests.map(friend => (
+                  <div key={friend.id} className={styles.friendCard}>
+                    <img 
+                      src={friend.image} 
+                      alt={friend.name} 
+                      className={styles.profileImage}
+                    />
+                    <h3 className={styles.friendName}>{friend.name}</h3>
+                    <div className={styles.mutualFriends}>
+                      <div className={styles.mutualFriendsAvatars}>
+                        {friend.mutualFriends.previews.map((preview, index) => (
+                          <img 
+                            key={index}
+                            src={preview}
+                            alt="Mutual friend"
+                            className={styles.mutualFriendAvatar}
+                            style={{ marginLeft: index > 0 ? '-8px' : '0' }}
+                          />
+                        ))}
+                      </div>
+                      <span>{friend.mutualFriends.count} mutual friends</span>
+                    </div>
+                    <div className={styles.actions}>
+                      <button 
+                        onClick={() => handleConfirm(friend.id)}
+                        className={styles.confirmButton}
+                      >
+                        Confirm
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(friend.id)}
+                        className={styles.deleteButton}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className={styles.sectionTitle}>People You May Know</h2>
+              <div className={styles.friendsGrid}>
+                {suggestedFriends.map(friend => (
+                  <div key={friend.id} className={styles.friendCard}>
+                    <img 
+                      src={friend.image} 
+                      alt={friend.name} 
+                      className={styles.profileImage}
+                    />
+                    <h3 className={styles.friendName}>{friend.name}</h3>
+                    <div className={styles.mutualFriends}>
+                      <div className={styles.mutualFriendsAvatars}>
+                        {friend.mutualFriends.previews.map((preview, index) => (
+                          <img 
+                            key={index}
+                            src={preview}
+                            alt="Mutual friend"
+                            className={styles.mutualFriendAvatar}
+                            style={{ marginLeft: index > 0 ? '-8px' : '0' }}
+                          />
+                        ))}
+                      </div>
+                      <span>{friend.mutualFriends.count} mutual friends</span>
+                    </div>
+                    <div className={styles.actions}>
+                      <button 
+                        onClick={() => handleAddFriend(friend.id)}
+                        className={styles.confirmButton}
+                      >
+                        Add Friend
+                      </button>
+                      <button 
+                        onClick={() => handleRemove(friend.id)}
+                        className={styles.deleteButton}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </main>
-    </div>
+      </div>
     </ProtectedRoute>
   )
 }
