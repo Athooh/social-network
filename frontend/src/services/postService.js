@@ -133,7 +133,7 @@ export const usePostService = () => {
         );
       }
       const data = await response.json();
-      console.log(data)
+      (data)
       return data;
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -158,7 +158,6 @@ export const usePostService = () => {
         );
       }
       const data = await response.json();
-      console.log(data)
       return data;
     } catch (error) {
       console.error("Error fetching photos:", error);
