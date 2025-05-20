@@ -8,6 +8,56 @@
   margin: 0 auto;
 }
 
+.tabsContainer {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  background-color: none;
+}
+.tabButton::last-child {
+  border-right: none;
+  padding-left: 0;
+}
+
+.tabButton {
+  color: var(--text-secondary);
+  border-right: 2px solid var(--border-color);
+  background-color: none;
+  border-radius: 0;
+}
+
+.tabsContainer button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  background-color: none;
+  border-radius: 0;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-inline: 2px solid var(--border-color);
+}
+
+.activeButton {
+  transform: scale(0.98);
+}
+
+.activeTab {
+  color: #1877f2;
+  border-bottom: 3px solid #1877f2;
+  /* background-color: rgba(24, 119, 242, 0.05); */
+  font-weight: bold;
+}
+
+.requestCount {
+  background-color: var(--background-card);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 50%;
+  margin-left: var(--spacing-sm);
+}
+
 .main {
   margin-bottom: 20px;
 }
