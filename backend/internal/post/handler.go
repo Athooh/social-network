@@ -310,6 +310,55 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	h.sendJSON(w, http.StatusOK, response)
 }
 
+// GetUserPosts handles retrieving all posts by a user
+func (h *Handler) GetUserPhotos(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context (set by auth middleware)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Get target user ID from URL
+	pathParts := strings.Split(r.URL.Path, "/")
+	if len(pathParts) < 3 {
+		h.sendError(w, http.StatusBadRequest, "Invalid URL")
+		return
+	}
+	viewerID := pathParts[len(pathParts)-1]
+	if viewerID == "" {
+		h.sendError(w, http.StatusBadRequest, "Invalid Viewer ID")
+		return
+	}
+
+	// Get posts
+	posts, err := h.service.GetUserPosts(userID, viewerID)
+	if err != nil {
+		h.sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var response []PostResponse
+	for _, post := range posts {
+		if post.ImagePath.String == "" {
+			continue
+		}
+		postResp := PostResponse{
+			ID:        post.ID,
+			UserID:    post.UserID,
+			Privacy:   post.Privacy,
+			CreatedAt: post.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
+			UserData:  post.UserData,
+		}
+		if post.ImagePath.String != "" {
+			postResp.ImageURL = "/uploads/" + post.ImagePath.String
+		}
+		response = append(response, postResp)
+	}
+	h.sendJSON(w, http.StatusOK, response)
+}
+
 // GetPublicPosts handles retrieving public posts with pagination
 func (h *Handler) GetPublicPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)

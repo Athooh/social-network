@@ -134,6 +134,7 @@ func Router(config RouterConfig) http.Handler {
 	})
 	protectedPostGroup.HandleFunc("/comments/", config.PostHandler.HandleComments)
 	protectedPostGroup.HandleFunc("/user/", config.PostHandler.GetUserPosts)
+	protectedPostGroup.HandleFunc("/photos/", config.PostHandler.GetUserPhotos)
 	protectedPostGroup.HandleFunc("/like/", config.PostHandler.LikePost)
 
 	// Add group routes
