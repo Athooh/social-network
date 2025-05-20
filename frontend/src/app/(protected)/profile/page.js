@@ -186,7 +186,15 @@ export default function ProfilePage({ params }) {
 
     switch (activeSection) {
       case "about":
-        return <ProfileAbout userData={userData} />;
+        return (
+          <ProfileAbout
+            photos={photos}
+            isLoading={photosLoading}
+            error={photosError}
+            BASE_URL={BASE_URL}
+            userData={userData}
+          />
+        );
       case "posts":
         return (
           <div className={styles.contentLayout}>

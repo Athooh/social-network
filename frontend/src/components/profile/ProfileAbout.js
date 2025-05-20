@@ -22,7 +22,14 @@ import {
 import ProfilePhotosGrid from "./ProfilePhotosGrid";
 import ContactsList from "../contacts/ContactsList";
 
-const ProfileAbout = ({ userData }) => {
+const ProfileAbout = ({
+  photos = [],
+  totalPhotos = 0,
+  isLoading = false,
+  error = null,
+  BASE_URL = "",
+  userData,
+}) => {
   const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
   const [showActionsPopup, setShowActionsPopup] = useState(false);
 
@@ -40,16 +47,6 @@ const ProfileAbout = ({ userData }) => {
   const interestsList = userData?.interests
     ? userData.interests.split(",").map((interest) => interest.trim())
     : [];
-
-  // Add the photos data (this would ideally come from API)
-  const photos = [
-    { url: "/photo1.jpg" },
-    { url: "/photo2.jpg" },
-    { url: "/photo3.jpg" },
-    { url: "/photo4.jpg" },
-    { url: "/photo5.jpg" },
-    { url: "/photo6.jpg" },
-  ];
 
   return (
     <div className={styles.aboutContainer}>
@@ -326,7 +323,13 @@ const ProfileAbout = ({ userData }) => {
       </div>
 
       <div className={styles.sidebar}>
-        <ProfilePhotosGrid photos={photos} totalPhotos={photos.length} />
+        <ProfilePhotosGrid
+          photos={photos}
+          totalPhotos={photos.length}
+          isLoading={isLoading}
+          error={error}
+          BASE_URL={BASE_URL}
+        />
         <ContactsList />
       </div>
     </div>
