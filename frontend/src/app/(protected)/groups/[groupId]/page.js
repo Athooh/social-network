@@ -50,7 +50,6 @@ export default function GroupPostPage() {
     try {
       const result = await getgroup(groupId);
       const postresults = await getgroupposts(groupId);
-      console.log("Fetched group data:", result);
       setGroup(result);
       setPosts(postresults);
       setLoading(false);
@@ -91,7 +90,7 @@ export default function GroupPostPage() {
       case 'GroupEvents':
         return <GroupEvents groupId={groupId} />;
       case 'GroupChat':
-        return <GroupChat groupId={groupId} groupName={group.name} />;
+        return <GroupChat groupId={groupId} groupName={group.Name} />;
       default:
         return null;
     }
