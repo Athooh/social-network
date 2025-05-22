@@ -90,7 +90,6 @@ export default function GroupPostPage() {
         return <GroupMembers group={group} />;
       case 'GroupEvents':
         return <GroupEvents groupId={groupId} />;
-      // Add to renderContent switch
       case 'GroupChat':
         return <GroupChat groupId={groupId} groupName={group.name} />;
       default:
