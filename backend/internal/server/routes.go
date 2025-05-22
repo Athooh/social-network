@@ -157,6 +157,9 @@ func Router(config RouterConfig) http.Handler {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+	protectedGroupGroup.HandleFunc("/send-message", config.GroupHandler.SendChatMessage)
+	protectedGroupGroup.HandleFunc("/get-messages", config.GroupHandler.GetGroupChatMessages)
+
 	protectedGroupGroup.HandleFunc("/user", config.GroupHandler.GetUserGroups)
 	protectedGroupGroup.HandleFunc("/members", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
