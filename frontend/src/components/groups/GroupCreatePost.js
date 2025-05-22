@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import styles from '@/styles/Posts.module.css';
-import { usePostService } from '@/services/postService';
+import { useGroupService } from '@/services/groupService';
 import { showToast } from '@/components/ui/ToastContainer';
 import Image from 'next/image';
 import { BASE_URL } from '@/utils/constants';
 import EmojiPicker from '@/components/ui/EmojiPicker';
 
-export default function GroupCreatePost({ groupId, groupName }) {
-  const { createPost } = usePostService();
+export default function GroupCreatePost({ groupId, groupName, oncreatePost }) {
+  const { createPost } = useGroupService();
   const [postText, setPostText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -49,6 +49,7 @@ export default function GroupCreatePost({ groupId, groupName }) {
       setSelectedFiles([]);
       setPreviewUrls([]);
       setIsModalOpen(false);
+      oncreatePost();
       showToast('Post created successfully!', 'success');
     } catch (error) {
       console.error('Error submitting post:', error);
