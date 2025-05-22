@@ -112,22 +112,6 @@ const GroupChat = ({ groupId, groupName }) => {
     <div className={styles.chatContainer}>
       <div className={styles.chatHeader}>
         <h2>{groupName} Chat</h2>
-        <div className={styles.activeUsers}>
-          <div className={styles.avatarStack}>
-            {Object.values(typingUsers).slice(0, 3).map((user) => (
-              <img
-                key={user.id}
-                src={user.avatar ? user.avatar.startsWith("http") ? user.avatar : `${BASE_URL}/uploads/${user.avatar}` : '/avatar4.png'}
-                alt={user.name}
-                className={styles.activeUserAvatar}
-              />
-            ))}
-            {Object.values(typingUsers).length > 3 && (
-              <span className={styles.moreUsers}>+{Object.values(typingUsers).length - 3}</span>
-            )}
-          </div>
-          <span>{Object.values(typingUsers).length} typing</span>
-        </div>
       </div>
 
       <div className={styles.chatMessages}>
@@ -152,15 +136,7 @@ const GroupChat = ({ groupId, groupName }) => {
                   </span>
                 </div>
                 <p>{message.Content}</p>
-                {/* {message.reactions.length > 0 && (
-                  <div className={styles.reactions}>
-                    {message.reactions.map((reaction, index) => (
-                      <span key={index} className={styles.reaction}>
-                        {reaction.emoji}
-                      </span>
-                    ))}
-                  </div>
-                )} */}
+                
               </div>
              
             </div>
