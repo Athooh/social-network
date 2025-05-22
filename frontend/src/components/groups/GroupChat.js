@@ -1,98 +1,107 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/GroupChat.module.css';
 import { useAuth } from '@/context/authcontext';
+import { useGroupChatService } from '@/services/groupChatService'; 
+import { BASE_URL } from "@/utils/constants";
+
 
 const GroupChat = ({ groupId, groupName }) => {
-  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [activeUsers, setActiveUsers] = useState([]);
   const [selectedEmoji, setSelectedEmoji] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
-  const { user } = useAuth();
-
-  // Dummy data for testing
-  useEffect(() => {
-    setMessages([
-      {
-        id: 1,
-        content: "Hello everyone!",
-        sender: {
-          id: 1,
-          name: "John Doe",
-          avatar: "/avatar1.png"
-        },
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        reactions: []
-      },
-      {
-        id: 2,
-        content: "Welcome to the group chat!",
-        sender: {
-          id: 2,
-          name: "Jane Smith",
-          avatar: "/avatar2.png"
-        },
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        reactions: []
-      }
-    ]);
-
-    setActiveUsers([
-      { id: 1, name: "John Doe", avatar: "/avatar1.png", isOnline: true },
-      { id: 2, name: "Jane Smith", avatar: "/avatar2.png", isOnline: true },
-    ]);
-
-    setIsLoading(false);
-  }, []);
+  const { currentUser } = useAuth();
+  const { messages, setMessages, typingUsers, sendMessage, loadMessages, sendTypingIndicator } = useGroupChatService(groupId);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
+    const fetchMessages = async () => {
+      setIsLoading(true);
+      try {
+        await loadMessages();
+      } catch (error) {
+        console.error("Failed to fetch group messages:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    console.log("Current user:", currentUser);
+    if (currentUser && groupId) {
+      fetchMessages();
+    }
+  }, [currentUser, groupId, loadMessages]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !currentUser) return;
 
-    const message = {
+    const avatar = currentUser?.avatar
+        ? currentUser.avatar.startsWith("http")
+          ? currentUser.avatar
+          : `${BASE_URL}/uploads/${currentUser.avatar}`
+        : "/avatar4.png";
+
+    const tempMessage = {
       id: Date.now(),
-      content: newMessage,
-      sender: {
-        id: user.id || 'temp-id', // Fallback ID if user.id is not available
-        name: user.name || 'Anonymous',
-        avatar: user.avatar || '/default-avatar.png'
+      Content: newMessage,
+      User: {
+        id: currentUser.id || 'temp-id',
+        firstName: currentUser.firstName || 'Anonymous',
+        avatar: avatar|| '/default-avatar.png',
       },
-      timestamp: new Date().toISOString(),
-      reactions: []
+      CreatedAt: new Date().toISOString(),
+      isTemp: true,
     };
 
-    setMessages(prev => [...prev, message]);
+    // Optimistically update UI
+    setMessages((prev) => [...prev, tempMessage]);
     setNewMessage('');
+
+    try {
+      await sendMessage(newMessage);
+    } catch (error) {
+      // Remove temp message on failure
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
+    }
   };
 
   const handleReaction = (messageId, emoji) => {
-    if (!user) return;
+    if (!currentUser) return;
 
-    setMessages(prev => prev.map(msg => {
-      if (msg.id === messageId) {
-        const reactions = [...msg.reactions];
-        const existingReaction = reactions.findIndex(r => r.userId === user.id);
-        
-        if (existingReaction >= 0) {
-          reactions[existingReaction].emoji = emoji;
-        } else {
-          reactions.push({ userId: user.id, emoji });
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id === messageId) {
+          const reactions = [...msg.reactions];
+          const existingReaction = reactions.findIndex((r) => r.userId === currentUser.id);
+
+          if (existingReaction >= 0) {
+            reactions[existingReaction].emoji = emoji;
+          } else {
+            reactions.push({ userId: currentUser.id, emoji });
+          }
+
+          return { ...msg, reactions };
         }
-        
-        return { ...msg, reactions };
-      }
-      return msg;
-    }));
+        return msg;
+      })
+    );
+  };
+
+  // Handle typing indicator
+  const handleTyping = (e) => {
+    setNewMessage(e.target.value);
+    if (e.target.value.trim() && currentUser) {
+      sendTypingIndicator();
+    }
   };
 
   if (isLoading) {
@@ -105,45 +114,45 @@ const GroupChat = ({ groupId, groupName }) => {
         <h2>{groupName} Chat</h2>
         <div className={styles.activeUsers}>
           <div className={styles.avatarStack}>
-            {activeUsers.slice(0, 3).map(user => (
-              <img 
+            {Object.values(typingUsers).slice(0, 3).map((user) => (
+              <img
                 key={user.id}
-                src={user.avatar}
+                src={user.avatar ? user.avatar.startsWith("http") ? user.avatar : `${BASE_URL}/uploads/${user.avatar}` : '/avatar4.png'}
                 alt={user.name}
                 className={styles.activeUserAvatar}
               />
             ))}
-            {activeUsers.length > 3 && (
-              <span className={styles.moreUsers}>+{activeUsers.length - 3}</span>
+            {Object.values(typingUsers).length > 3 && (
+              <span className={styles.moreUsers}>+{Object.values(typingUsers).length - 3}</span>
             )}
           </div>
-          <span>{activeUsers.length} active</span>
+          <span>{Object.values(typingUsers).length} typing</span>
         </div>
       </div>
 
       <div className={styles.chatMessages}>
-        {messages.map(message => (
-          <div 
-            key={message.id}
+        {messages.map((message) => (
+          <div
+            key={message.ID}
             className={`${styles.messageWrapper} ${
-              user && message.sender.id === user.id ? styles.ownMessage : ''
+              currentUser && message.User.id === currentUser.id ? styles.ownMessage : ''
             }`}
           >
             <div className={styles.message}>
-              <img 
-                src={message.sender.avatar}
-                alt={message.sender.name}
+              <img
+                src={message.User.avatar ? message.User.avatar.startsWith("http") ? message.User.avatar : `${BASE_URL}/uploads/${message.User.avatar}` : '/avatar4.png'}
+                alt={message.User.firstName}
                 className={styles.senderAvatar}
               />
               <div className={styles.messageContent}>
                 <div className={styles.messageHeader}>
-                  <span className={styles.senderName}>{message.sender.name}</span>
+                  <span className={styles.senderName}>{message.User.firstName}</span>
                   <span className={styles.timestamp}>
-                    {new Date(message.timestamp).toLocaleTimeString()}
+                    {new Date(message.CreatedAt).toLocaleTimeString()}
                   </span>
                 </div>
-                <p>{message.content}</p>
-                {message.reactions.length > 0 && (
+                <p>{message.Content}</p>
+                {/* {message.reactions.length > 0 && (
                   <div className={styles.reactions}>
                     {message.reactions.map((reaction, index) => (
                       <span key={index} className={styles.reaction}>
@@ -151,14 +160,9 @@ const GroupChat = ({ groupId, groupName }) => {
                       </span>
                     ))}
                   </div>
-                )}
+                )} */}
               </div>
-              <button 
-                className={styles.reactionButton}
-                onClick={() => setSelectedEmoji(message.id)}
-              >
-                😊
-              </button>
+             
             </div>
           </div>
         ))}
@@ -166,8 +170,8 @@ const GroupChat = ({ groupId, groupName }) => {
       </div>
 
       <form onSubmit={handleSendMessage} className={styles.chatInput}>
-        <button 
-          type="button" 
+        <button
+          type="button"
           className={styles.emojiButton}
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
         >
@@ -176,7 +180,7 @@ const GroupChat = ({ groupId, groupName }) => {
         <input
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={handleTyping}
           placeholder="Type a message..."
         />
         <button type="submit" className={styles.sendButton}>
