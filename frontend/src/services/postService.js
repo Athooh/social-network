@@ -133,10 +133,34 @@ export const usePostService = () => {
         );
       }
       const data = await response.json();
-      console.log(data)
+      (data)
       return data;
     } catch (error) {
       console.error("Error fetching posts:", error);
+      showToast(error.message || "Error fetching posts", "error");
+      throw error;
+    }
+  };
+
+  const getUserPhotos = async (id) => {
+    try {
+      const response = await authenticatedFetch(
+        `posts/photos/${id}`,
+        {
+          method: "GET",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || "Failed to fetch photos"
+        );
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching photos:", error);
       showToast(error.message || "Error fetching posts", "error");
       throw error;
     }
@@ -363,6 +387,7 @@ export const usePostService = () => {
     createPost,
     getFeedPosts,
     getUserPosts,
+    getUserPhotos,
     likePost,
     addComment,
     getPostComments,

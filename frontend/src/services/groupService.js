@@ -47,6 +47,15 @@ export const useGroupService = () => {
 
             const groups = await response.json();
 
+            if (!groups) {
+                return [];
+            }
+
+            if (!Array.isArray(groups)) {
+                throw new Error("Invalid response format");
+            }
+            
+
             // Then fetch posts for each group
             const groupsWithPosts = await Promise.all(
                 groups.map(async (group) => {

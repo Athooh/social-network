@@ -296,7 +296,7 @@ export default function CreatePost() {
           </label>
           <button className={styles.mediaButton}>
             <i className="fas fa-face-smile"></i>
-            <span>Feeling/Activity</span>
+            <span>Feeling</span>
           </button>
         </div>
       </div>

@@ -34,8 +34,6 @@ const ProfileBanner = ({
   const profileUrl = userData.avatar
     ? `${BASE_URL}/uploads/${userData.avatar}`
     : "/default-avatar.png";
-    console.log(bannerUrl)
-    console.log(profileUrl)
   // Use isPrivate from userData or default to false
   const isPrivate = userData.isPrivate || false;
 
