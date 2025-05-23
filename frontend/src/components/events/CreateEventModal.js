@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styles from '@/styles/CreateEventModal.module.css';
 
-const CreateEventModal = ({ isOpen, onClose }) => {
+const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
   const [eventData, setEventData] = useState({
     name: '',
     description: '',
@@ -28,11 +28,44 @@ const CreateEventModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    onClose();
-  };
+    
+    // Validate required fields
+    if (!eventData.name || !eventData.date) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+
+    try {
+        await onSubmit(eventData);
+        onClose();
+        setEventData({
+            name: '',
+            description: '',
+            date: '',
+            privacy: 'public',
+            banner: null,
+        });
+        setBannerPreview(null);
+    } catch (error) {
+        console.error('Error submitting event:', error);
+        showToast(error.message || 'Error creating event', 'error');
+    }
+};
+
+  // Add validation to the date input
+  const handleDateChange = (e) => {
+    const selectedDate = new Date(e.target.value);
+    const now = new Date();
+    
+    if (selectedDate < now) {
+        showToast('Event date cannot be in the past', 'error');
+        return;
+    }
+    
+    setEventData(prev => ({ ...prev, date: e.target.value }));
+};
 
   if (!isOpen) return null;
 
@@ -84,7 +117,8 @@ const CreateEventModal = ({ isOpen, onClose }) => {
                 type="datetime-local"
                 id="event-date"
                 value={eventData.date}
-                onChange={(e) => setEventData(prev => ({ ...prev, date: e.target.value }))}
+                onChange={handleDateChange}
+                min={new Date().toISOString().slice(0, 16)}
                 required
               />
             </div>
@@ -149,4 +183,4 @@ const CreateEventModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default CreateEventModal; 
+export default CreateEventModal;
