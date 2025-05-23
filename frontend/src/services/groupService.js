@@ -223,6 +223,107 @@ export const useGroupService = () => {
         }
       };
 
+    const createEvent = async (groupId, eventData) => {
+        try {
+            const formData = new FormData();
+            formData.append('groupId', groupId);
+            formData.append('title', eventData.name);
+            formData.append('description', eventData.description);
+            // Format the date to RFC3339 format as required by the backend
+            const formattedDate = new Date(eventData.date).toISOString();
+            formData.append('eventDate', formattedDate);
+            
+            if (eventData.banner) {
+                formData.append('banner', eventData.banner);
+            }
+
+            const response = await authenticatedFetch('groups/events', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to create event');
+            }
+
+            const data = await response.json();
+            showToast('Event created successfully!', 'success');
+            return data;
+        } catch (error) {
+            console.error('Error creating event:', error);
+            showToast(error.message || 'Error creating event', 'error');
+            throw error;
+        }
+    };
+
+    const getGroupEvents = async (groupId) => {
+        try {
+            const response = await authenticatedFetch(`groups/events?groupId=${groupId}`, {
+                method: 'GET',
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to fetch events');
+            }
+
+            const events = await response.json();
+            return events;
+        } catch (error) {
+            console.error('Error fetching group events:', error);
+            showToast(error.message || 'Error fetching events', 'error');
+            return [];
+        }
+    };
+
+    const respondToEvent = async (eventId, response) => {
+        try {
+            const resp = await authenticatedFetch('groups/events/respond', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    eventId,
+                    response,
+                }),
+            });
+
+            if (!resp.ok) {
+                const errorData = await resp.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to respond to event');
+            }
+
+            showToast('Response updated successfully!', 'success');
+            return true;
+        } catch (error) {
+            console.error('Error responding to event:', error);
+            showToast(error.message || 'Error responding to event', 'error');
+            return false;
+        }
+    };
+
+    const getEventResponses = async (eventId) => {
+        try {
+            const response = await authenticatedFetch(`groups/events/respond?eventId=${eventId}`, {
+                method: 'GET',
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to fetch responses');
+            }
+
+            const responses = await response.json();
+            return responses;
+        } catch (error) {
+            console.error('Error fetching event responses:', error);
+            showToast(error.message || 'Error fetching responses', 'error');
+            return [];
+        }
+    };
+
     return { 
         createGroup,
         getgroup,
@@ -231,6 +332,10 @@ export const useGroupService = () => {
         deleteGroup, 
         leaveGroup,
         getgroupposts,
-        joinGroup 
+        joinGroup,
+        createEvent,
+        getGroupEvents,
+        respondToEvent,
+        getEventResponses,
     };
 };
