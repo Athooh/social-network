@@ -137,22 +137,41 @@ const GroupEvents = ({ groupId }) => {
                                     {event.goingCount || 0} going
                                 </p>
                                 <div className={styles.actions}>
-                                    <button 
-                                        className={`${styles.invite} ${
-                                            event.userResponse === 'going' ? styles.active : ''
-                                        }`}
-                                        onClick={() => handleEventResponse(event.id, 'going')}
-                                    >
-                                        {event.userResponse === 'going' ? 'Going ✓' : 'Going'}
-                                    </button>
-                                    <button 
-                                        className={`${styles.interestedButton} ${
-                                            event.userResponse === 'interested' ? styles.active : ''
-                                        }`}
-                                        onClick={() => handleEventResponse(event.id, 'interested')}
-                                    >
-                                        {event.userResponse === 'interested' ? 'Interested ✓' : 'Interested'}
-                                    </button>
+                                     {event.userResponse ? (
+                                        // User has already responded
+                                        <div className={styles.responseStatus}>
+                                            <span className={styles.currentResponse}>
+                                                {event.userResponse === 'going' ? 
+                                                    <><i className="fas fa-check-circle"></i> Going</> : 
+                                                    <><i className="fas fa-times-circle"></i> Not Going</>
+                                                }
+                                            </span>
+                                            <button 
+                                                className={styles.changeResponse}
+                                                onClick={() => handleEventResponse(event.id, 
+                                                    event.userResponse === 'going' ? 'not_going' : 'going'
+                                                )}
+                                            >
+                                                Change mind?
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        // User hasn't responded yet
+                                        <div className={styles.responseOptions}>
+                                            <button 
+                                                className={styles.goingButton}
+                                                onClick={() => handleEventResponse(event.id, 'going')}
+                                            >
+                                                <i className="fas fa-check"></i> Going?
+                                            </button>
+                                            <button 
+                                                className={styles.notGoingButton}
+                                                onClick={() => handleEventResponse(event.id, 'not_going')}
+                                            >
+                                                <i className="fas fa-times"></i> Not Going?
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
