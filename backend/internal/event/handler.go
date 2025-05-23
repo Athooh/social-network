@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Athooh/social-network/internal/auth"
 	"github.com/Athooh/social-network/pkg/httputil"
 	"github.com/Athooh/social-network/pkg/logger"
 )
@@ -33,9 +34,9 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -90,9 +91,9 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -124,9 +125,9 @@ func (h *Handler) GetGroupEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -158,9 +159,9 @@ func (h *Handler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -215,9 +216,9 @@ func (h *Handler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -248,9 +249,9 @@ func (h *Handler) RespondToEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -290,9 +291,9 @@ func (h *Handler) GetEventResponses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user ID from context
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -320,4 +321,13 @@ func (h *Handler) GetEventResponses(w http.ResponseWriter, r *http.Request) {
 // Helper method to send JSON responses
 func (h *Handler) sendJSON(w http.ResponseWriter, status int, data interface{}) {
 	httputil.SendJSON(w, status, data)
+}
+
+// Helper method to send error responses
+func (h *Handler) sendError(w http.ResponseWriter, status int, message string) {
+	var isWarning bool = false
+	if status >= 500 {
+		isWarning = true
+	}
+	httputil.SendError(w, status, message, isWarning)
 }

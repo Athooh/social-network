@@ -131,15 +131,15 @@ export default function Groups() {
 
                                     <div className={styles.memberInfo}>
                                         <div className={styles.memberAvatars}>
-                                          {group.Members.slice(0, 3).map((member, index) => (
-                                            <img
-                                              key={member.Id}
-                                              src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
-                                              alt=""
-                                              className={styles.memberAvatar}
-                                              style={{ zIndex: 3 - index }}
-                                            />
-                                          ))}
+                                            {group.Members.slice(0, 3).map((member, index) => (
+                                                <img
+                                                    key={member.ID || member.id || `member-${index}`} // Handle both ID and id cases with fallback
+                                                    src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                                                    alt={`Member ${index + 1}`}
+                                                    className={styles.memberAvatar}
+                                                    style={{ zIndex: 3 - index }}
+                                                />
+                                            ))}
                                         </div>
                                         <span className={styles.memberCount}>
                                           {group.MemberCount.toLocaleString()} members
