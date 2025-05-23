@@ -4,6 +4,10 @@ import { BASE_URL } from '@/utils/constants';
 
 const GroupPhotos = ({ posts }) => {
   console.log("GroupPhotos posts:", posts);
+  if (posts == null || posts.length === 0) { 
+    return <div>No photos available</div>;
+  }
+
   const photos = posts
   .filter(post => post.ImagePath?.Valid)
   .map(post => ({
