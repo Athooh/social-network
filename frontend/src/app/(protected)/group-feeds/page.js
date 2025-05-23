@@ -26,7 +26,7 @@ try {
 
 export default function GroupFeeds() {
   const router = useRouter();
-  const { getallgroups } = useGroupService();
+  const { getallgroups, deleteGroup, joinGroup, leaveGroup } = useGroupService();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +46,40 @@ export default function GroupFeeds() {
   useEffect(() => {
     fetchGroups();
   }, []);
+
+  const handleGroupAction = async (group, action) => {
+    try {
+      let success = false;
+
+      switch (action) {
+        case 'delete':
+          success = await deleteGroup(group.ID);
+          if (success) {
+            showToast("Group deleted successfully", "success");
+          }
+          break;
+        case 'leave':
+          success = await leaveGroup(group.ID);
+          if (success) {
+            showToast("Left group successfully", "success");
+          }
+          break;
+        case 'join':
+          success = await joinGroup(group.ID);
+          if (success) {
+            showToast("Joined group successfully", "success");
+          }
+          break;
+      }
+
+      if (success) {
+        // Refresh groups list
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error(`Error during ${action} action:`, error);
+    }
+  };
 
   const handleGroupClick = (groupId) => {
     router.push(`/groups/${groupId}`);
@@ -98,16 +132,16 @@ export default function GroupFeeds() {
                 <div className={groupFeeds.groupActions}>
                   {group.IsMember ? (
                     userdata.id === group.Creator.id ? (
-                      <button className={groupFeeds.Join}>
+                      <button className={groupFeeds.Join} onClick={() => handleGroupAction(group, 'delete')}>
                         Delete Group
                       </button>
                     ) : (
-                      <button className={groupFeeds.Join}>
+                      <button className={groupFeeds.Join} onClick={() => handleGroupAction(group, 'leave')}>
                         Leave Group
                       </button>
                     )
                   ) : (
-                    <button className={groupFeeds.Join}>
+                    <button className={groupFeeds.Join} onClick={() => handleGroupAction(group, 'join')}>
                       Join Group
                     </button>
                   )}
