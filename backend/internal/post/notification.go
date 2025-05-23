@@ -181,6 +181,10 @@ func (s *NotificationService) SendCommentNotificationToOwner(userID, commenterID
 		return
 	}
 
+	if userID == commenterID {
+		return
+	}
+
 	// Fetch commenter details
 	commenter, err := s.userRepo.GetByID(commenterID)
 	if err != nil {
