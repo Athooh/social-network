@@ -138,7 +138,7 @@ const GroupEvents = ({ groupId }) => {
                                 </p>
                                 <div className={styles.actions}>
                                     <button 
-                                        className={`${styles.responseButton} ${
+                                        className={`${styles.invite} ${
                                             event.userResponse === 'going' ? styles.active : ''
                                         }`}
                                         onClick={() => handleEventResponse(event.id, 'going')}
