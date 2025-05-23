@@ -22,7 +22,6 @@ const GroupEvents = ({ groupId }) => {
         try {
             setLoading(true);
             const fetchedEvents = await getGroupEvents(groupId);
-            console.log('Raw fetched events:', fetchedEvents); // Debug log
             
             // Ensure events are properly formatted
             const formattedEvents = Array.isArray(fetchedEvents) ? fetchedEvents.map(event => ({
@@ -35,7 +34,6 @@ const GroupEvents = ({ groupId }) => {
                 description: event.Description || event.description
             })) : [];
             
-            console.log('Formatted events:', formattedEvents); // Debug log
             setEvents(formattedEvents);
         } catch (error) {
             console.error('Error fetching events:', error);
