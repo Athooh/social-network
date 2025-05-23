@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useGroupService } from '@/services/groupService';
 import styles from '@/styles/GroupEvents.module.css';
+import { BASE_URL } from '@/utils/constants';
 import CreateEventModal from '@/components/events/CreateEventModal';
 
 const GroupEvents = ({ groupId }) => {
@@ -21,10 +22,24 @@ const GroupEvents = ({ groupId }) => {
         try {
             setLoading(true);
             const fetchedEvents = await getGroupEvents(groupId);
-            setEvents(Array.isArray(fetchedEvents) ? fetchedEvents : []);
+            console.log('Raw fetched events:', fetchedEvents); // Debug log
+            
+            // Ensure events are properly formatted
+            const formattedEvents = Array.isArray(fetchedEvents) ? fetchedEvents.map(event => ({
+                id: event.ID || event.id,
+                title: event.Title || event.title,
+                eventDate: event.EventDate || event.eventDate,
+                bannerPath: event.BannerPath?.String || event.bannerPath,
+                goingCount: event.GoingCount || event.goingCount || 0,
+                userResponse: event.UserResponse || event.userResponse,
+                description: event.Description || event.description
+            })) : [];
+            
+            console.log('Formatted events:', formattedEvents); // Debug log
+            setEvents(formattedEvents);
         } catch (error) {
             console.error('Error fetching events:', error);
-            setEvents([]); // Set empty array on error
+            setEvents([]);
         } finally {
             setLoading(false);
         }
@@ -89,49 +104,60 @@ const GroupEvents = ({ groupId }) => {
             </div>
 
             <div className={styles.eventsGrid}>
-                {currentEvents.map(event => (
-                    <div key={event.id} className={styles.eventCard}>
-                        <div className={styles.eventBanner}>
-                            <img 
-                                src={event.bannerPath ? 
-                                    `${BASE_URL}/uploads/${event.bannerPath}` : 
-                                    '/default-event-banner.jpg'} 
-                                alt={event.title} 
-                            />
-                        </div>
-                        <div className={styles.eventInfo}>
-                            <h3>{event.title}</h3>
-                            <p className={styles.date}>
-                                <i className="fas fa-calendar"></i>
-                                {new Date(event.eventDate).toLocaleDateString('en-US', {
-                                    month: 'long',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </p>
-                            <p className={styles.attendees}>
-                                <i className="fas fa-users"></i>
-                                {event.goingCount || 0} going
-                            </p>
-                            <div className={styles.actions}>
-                                <button 
-                                    className={styles.responseButton}
-                                    onClick={() => handleEventResponse(event.id, 'going')}
-                                >
-                                    {event.userResponse === 'going' ? 'Going ✓' : 'Going'}
-                                </button>
-                                <button 
-                                    className={styles.responseButton}
-                                    onClick={() => handleEventResponse(event.id, 'interested')}
-                                >
-                                    {event.userResponse === 'interested' ? 'Interested ✓' : 'Interested'}
-                                </button>
+                {currentEvents.length === 0 ? (
+                    <div className={styles.noEvents}>
+                        <p>No events found</p>
+                    </div>
+                ) : (
+                    currentEvents.map(event => (
+                        <div key={event.id} className={styles.eventCard}>
+                            <div className={styles.eventBanner}>
+                                <img 
+                                    src={event.bannerPath ? 
+                                        `${BASE_URL}/uploads/${event.bannerPath}` : 
+                                        '/default-event-banner.jpg'} 
+                                    alt={event.title} 
+                                />
+                            </div>
+                            <div className={styles.eventInfo}>
+                                <h3>{event.title}</h3>
+                                <p className={styles.description}>{event.description}</p>
+                                <p className={styles.date}>
+                                    <i className="fas fa-calendar"></i>
+                                    {new Date(event.eventDate).toLocaleDateString('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                                <p className={styles.attendees}>
+                                    <i className="fas fa-users"></i>
+                                    {event.goingCount || 0} going
+                                </p>
+                                <div className={styles.actions}>
+                                    <button 
+                                        className={`${styles.responseButton} ${
+                                            event.userResponse === 'going' ? styles.active : ''
+                                        }`}
+                                        onClick={() => handleEventResponse(event.id, 'going')}
+                                    >
+                                        {event.userResponse === 'going' ? 'Going ✓' : 'Going'}
+                                    </button>
+                                    <button 
+                                        className={`${styles.interestedButton} ${
+                                            event.userResponse === 'interested' ? styles.active : ''
+                                        }`}
+                                        onClick={() => handleEventResponse(event.id, 'interested')}
+                                    >
+                                        {event.userResponse === 'interested' ? 'Interested ✓' : 'Interested'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
 
             {totalPages > 1 && (
