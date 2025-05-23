@@ -192,6 +192,36 @@ func Router(config RouterConfig) http.Handler {
 		}
 	})
 
+	// Add Event routes
+	protectedGroupGroup.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			config.EventHandler.CreateEvent(w, r)
+		case http.MethodGet:
+			if r.URL.Query().Get("eventId") != "" {
+				config.EventHandler.GetEvent(w, r)
+			} else {
+				config.EventHandler.GetGroupEvents(w, r)
+			}
+		case http.MethodPut:
+			config.EventHandler.UpdateEvent(w, r)
+		case http.MethodDelete:
+			config.EventHandler.DeleteEvent(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	protectedGroupGroup.HandleFunc("/events/respond", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			config.EventHandler.RespondToEvent(w, r)
+		case http.MethodGet:
+			config.EventHandler.GetEventResponses(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Add Chat routes
 	chatGroup := NewRouteGroup("/api/chat", authenticatedRouteMiddleware)
 	chatGroup.HandleFunc("/send", config.ChatHandler.SendMessage)
