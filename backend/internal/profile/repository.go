@@ -181,8 +181,11 @@ func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, 
 		COALESCE(p.profile_image, '') as profile_image, 
 		COALESCE(p.is_private, 0) as is_private, 
 		COALESCE(p.created_at, u.created_at) as profile_created_at, 
-		COALESCE(p.updated_at, u.updated_at) as profile_updated_at
+		COALESCE(p.updated_at, u.updated_at) as profile_updated_at,
+		COALESCE(us.followers_count, 0) AS followers_count,
+		COALESCE(us.following_count, 0) AS following_count
 	FROM users u
+	LEFT JOIN user_stats us ON u.id = us.user_id
 	LEFT JOIN user_profiles p ON u.id = p.user_id
 	WHERE u.id = ?`
 
@@ -202,7 +205,7 @@ func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, 
 		&profileData.Education, &profileData.ContactEmail, &profileData.Phone, &profileData.Website,
 		&profileData.Location, &profileData.TechSkills, &profileData.SoftSkills, &profileData.Interests,
 		&profileData.BannerImage, &profileData.ProfileImage, &profileData.IsPrivate,
-		&profileCreatedAt, &profileUpdatedAt,
+		&profileCreatedAt, &profileUpdatedAt, &profileData.FollowersCount, &profileData.FollowingCount, 
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
