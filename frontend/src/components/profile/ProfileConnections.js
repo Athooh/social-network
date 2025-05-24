@@ -4,7 +4,7 @@ import ContactsList from "@/components/contacts/ContactsList";
 import { useAuth } from "@/context/authcontext";
 import { BASE_URL } from "@/utils/constants";
 
-const ProfileConnections = () => {
+const ProfileConnections = ({ userData }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showMore, setShowMore] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -35,8 +35,8 @@ const ProfileConnections = () => {
       setIsLoading(true);
       try {
         // Use authenticatedFetch from AuthContext
-        const followingResponse = await authenticatedFetch("follow/following");
-        const followersResponse = await authenticatedFetch("follow/followers");
+        const followingResponse = await authenticatedFetch(`follow/following?userId=${userData.id}`);
+        const followersResponse = await authenticatedFetch(`follow/followers?userId=${userData.id}`);
 
         if (!followingResponse.ok || !followersResponse.ok) {
           throw new Error("Failed to fetch data");
@@ -44,9 +44,6 @@ const ProfileConnections = () => {
 
         const followingData = await followingResponse.json();
         const followersData = await followersResponse.json();
-
-        console.log("Following data:", followingData);
-        console.log("Followers data:", followersData);
 
         setFollowing(followingData);
         setFollowers(followersData);
@@ -78,8 +75,8 @@ const ProfileConnections = () => {
   // Filter based on search term
   const filteredContacts = Array.isArray(displayedContacts)
     ? displayedContacts.filter((contact) =>
-        contact?.UserName?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      contact?.UserName?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : [];
 
   return (
