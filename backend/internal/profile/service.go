@@ -49,6 +49,8 @@ type UserProfileData struct {
 	IsPrivate        bool      `json:"isPrivate"`
 	ProfileCreatedAt time.Time `json:"profileCreatedAt"`
 	ProfileUpdatedAt time.Time `json:"profileUpdatedAt"`
+	FollowersCount   int       `json:"followersCount"`
+	FollowingCount   int       `json:"followingCount"`
 }
 
 // ProfileService implements the Service interface
