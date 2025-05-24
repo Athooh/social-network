@@ -13,11 +13,31 @@ type SQLiteRepository struct {
 	db *sql.DB
 }
 
+// Repository interface for profile data persistence
+type Repository interface {
+	UpdateUserProfile(userID string, profileData map[string]interface{}) error
+	GetUserProfileByID(userID string) (*UserProfileData, error)
+	IsUserProfilePublic(userID string) (bool, error)
+}
+
 // NewSQLiteRepository creates a new SQLite repository
 func NewSQLiteRepository(db *sql.DB) Repository {
 	return &SQLiteRepository{
 		db: db,
 	}
+}
+
+func (r *SQLiteRepository) IsUserProfilePublic(userID string) (bool, error) {
+	var isPublic bool
+	query := `SELECT is_public FROM users WHERE id = ?`
+	err := r.db.QueryRow(query, userID).Scan(&isPublic)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("user not found")
+		}
+		return false, fmt.Errorf("failed to query user visibility: %w", err)
+	}
+	return isPublic, nil
 }
 
 func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[string]interface{}) error {
