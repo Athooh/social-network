@@ -78,22 +78,14 @@ export default function ProfilePage({ params }) {
         console.log("User data:", data);
 
         if (isMounted.current) {
-          setUserData(data);
+          setUserData(data.profile);
           setError(null);
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
 
         if (isMounted.current) {
-          setError("Failed to load user profile. Please try again later.");
-
-          // Fallback to localStorage if API fails
-          const storedUser = JSON.parse(
-            localStorage.getItem("userData") || "{}"
-          );
-          if (storedUser && Object.keys(storedUser).length > 0) {
-            setUserData(storedUser);
-          }
+          setError("Failed to load user profile. Please try again later.")
         }
       } finally {
         if (isMounted.current) {
