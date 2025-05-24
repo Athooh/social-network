@@ -246,7 +246,7 @@ export default function ProfilePage({ params }) {
             userData={userData}
             onNavClick={setActiveSection}
             activeSection={activeSection}
-            isOwnProfile={true}
+            isOwnProfile={false}
             BASE_URL={BASE_URL}
           />
         )}
