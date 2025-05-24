@@ -25,10 +25,10 @@ const ProfileBanner = ({
 
   // Use bannerImage or default for banner
   const bannerUrl = userData.bannerImage
-  ? `${BASE_URL}/uploads/${userData.bannerImage}`
-  :  "/banner3.jpg";
+    ? `${BASE_URL}/uploads/${userData.bannerImage}`
+    : "/banner3.jpg";
 
-  
+
 
   // Use the same approach as in your original code for profile image
   const profileUrl = userData.avatar
@@ -99,37 +99,16 @@ const ProfileBanner = ({
             </div>
           </div>
 
-          <div className={styles.rightSection}>
-            {isOwnProfile ? (
-              <>
-                <button
-                  className={styles.editButton}
-                  onClick={() => setIsEditModalOpen(true)}
-                >
-                  Edit Profile
-                </button>
-                <div className={styles.moreActions}>
-                  <button className={styles.ellipsisButton}>⋮</button>
-                </div>
-              </>
-            ) : (
-              <div className={styles.actionButtons}>
-                {isFollowing ? (
-                  <button
-                    className={`${styles.followButton} ${styles.following}`}
-                    onClick={onUnfollow}
-                  >
-                    Following
-                  </button>
-                ) : (
-                  <button className={styles.followButton} onClick={onFollow}>
-                    Follow
-                  </button>
-                )}
-                <button className={styles.messageButton}>Message</button>
-              </div>
-            )}
-          </div>
+          {isOwnProfile && (
+            <div className={styles.rightSection}>
+              <button
+                className={styles.editButton}
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                Edit Profile
+              </button>
+            </div>
+          )}
         </div>
 
         <div className={styles.profileNav}>
