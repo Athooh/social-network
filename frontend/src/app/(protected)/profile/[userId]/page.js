@@ -25,7 +25,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
 export default function ProfilePage({ params }) {
-  const userId = use(params)
+  const { userId } = use(params)
 
   console.log("userId", userId)
   const { getUserPhotos } = usePostService();
