@@ -201,9 +201,13 @@ func (h *Handler) GetFollowers(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+	profileID := r.URL.Query().Get("userId")
+	if profileID == "" {
+		profileID = userID
+	}
 
 	// Get followers
-	followers, err := h.service.GetFollowers(userID)
+	followers, err := h.service.GetFollowers(profileID)
 	if err != nil {
 		h.log.Error("Failed to get followers: %v", err)
 		h.sendError(w, http.StatusInternalServerError, err.Error())
@@ -222,9 +226,13 @@ func (h *Handler) GetFollowing(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+	profileID := r.URL.Query().Get("userId")
+	if profileID == "" {
+		profileID = userID
+	}
 
 	// Get following
-	following, err := h.service.GetFollowing(userID)
+	following, err := h.service.GetFollowing(profileID)
 	if err != nil {
 		h.log.Error("Failed to get following: %v", err)
 		h.sendError(w, http.StatusInternalServerError, err.Error())
