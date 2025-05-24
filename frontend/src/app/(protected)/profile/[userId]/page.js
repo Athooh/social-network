@@ -68,7 +68,7 @@ export default function ProfilePage({ params }) {
       }
 
       try {
-        const response = await authenticatedFetch(`users/${userId}`);
+        const response = await authenticatedFetch(`users/profile?userId=${userId}`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
