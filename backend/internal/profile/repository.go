@@ -18,6 +18,7 @@ type Repository interface {
 	UpdateUserProfile(userID string, profileData map[string]interface{}) error
 	GetUserProfileByID(userID string) (*UserProfileData, error)
 	IsUserProfilePublic(userID string) (bool, error)
+	IsUserFollowing(followerID string, followingID string) (bool, error)
 }
 
 // NewSQLiteRepository creates a new SQLite repository
@@ -38,6 +39,16 @@ func (r *SQLiteRepository) IsUserProfilePublic(userID string) (bool, error) {
 		return false, fmt.Errorf("failed to query user visibility: %w", err)
 	}
 	return isPublic, nil
+}
+
+func (r *SQLiteRepository) IsUserFollowing(followerID string, followingID string) (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM followers WHERE follower_id = ? AND following_id = ?`
+	err := r.db.QueryRow(query, followerID, followingID).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to check following status: %w", err)
+	}
+	return count > 0, nil
 }
 
 func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[string]interface{}) error {
