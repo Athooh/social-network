@@ -230,8 +230,8 @@ func (h *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 // GetUserPosts handles retrieving all posts by a user
 func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok || userID <= "" {
+	viewerID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || viewerID <= "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -242,14 +242,14 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusBadRequest, "Invalid URL")
 		return
 	}
-	viewerID := pathParts[len(pathParts)-1]
+	targetID := pathParts[len(pathParts)-1]
 	if viewerID == "" {
 		h.sendError(w, http.StatusBadRequest, "Invalid Viewer ID")
 		return
 	}
 
 	// Get posts
-	posts, err := h.service.GetUserPosts(userID, viewerID)
+	posts, err := h.service.GetUserPosts(targetID, viewerID)
 	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -259,7 +259,7 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	var response []PostResponse
 	for _, post := range posts {
 		// Get comments for each post
-		comments, err := h.service.GetPostComments(post.ID, userID)
+		comments, err := h.service.GetPostComments(post.ID, viewerID)
 		if err != nil {
 			h.log.Error("Failed to get comments for post %d: %v", post.ID, err)
 			continue
@@ -313,8 +313,8 @@ func (h *Handler) GetUserPosts(w http.ResponseWriter, r *http.Request) {
 // GetUserPosts handles retrieving all posts by a user
 func (h *Handler) GetUserPhotos(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok || userID <= "" {
+	viewerID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || viewerID <= "" {
 		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -325,14 +325,14 @@ func (h *Handler) GetUserPhotos(w http.ResponseWriter, r *http.Request) {
 		h.sendError(w, http.StatusBadRequest, "Invalid URL")
 		return
 	}
-	viewerID := pathParts[len(pathParts)-1]
+	targetID := pathParts[len(pathParts)-1]
 	if viewerID == "" {
 		h.sendError(w, http.StatusBadRequest, "Invalid Viewer ID")
 		return
 	}
 
 	// Get posts
-	posts, err := h.service.GetUserPosts(userID, viewerID)
+	posts, err := h.service.GetUserPosts(targetID, viewerID)
 	if err != nil {
 		h.sendError(w, http.StatusInternalServerError, err.Error())
 		return
