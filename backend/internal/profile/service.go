@@ -10,27 +10,28 @@ import (
 	"time"
 )
 
-// Repository interface for profile data persistence
-type Repository interface {
-	UpdateUserProfile(userID string, profileData map[string]interface{}) error
-	GetUserProfileByID(userID string) (*UserProfileData, error)
+// Service interface defines the operations for profile management
+type Service interface {
+	UpdateProfile(userID string, profileData map[string]interface{}) error
+	SaveProfileImage(userID string, fileHeader *multipart.FileHeader) (string, error)
+	SaveBannerImage(userID string, fileHeader *multipart.FileHeader) (string, error)
+	GetProfileByUserID(userID string) (*UserProfileData, error)
+	ValidateProfileViewRequest(userID string, targetID string) (bool, error)
 }
 
 // UserProfileData represents the combined user and profile data
 type UserProfileData struct {
 	// User data
-	ID        string    `json:"id"`
-	Email     string    `json:"email,omitempty"` // Authentication email (omitted from JSON)
-	FirstName string    `json:"firstName"`
-	LastName  string    `json:"lastName"`
-	Nickname  string    `json:"nickname"`
-	AboutMe   string    `json:"aboutMe"`
-	Avatar    string    `json:"avatar"`
-	IsPublic  bool      `json:"isPublic"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-
-	// Profile data
+	ID               string    `json:"id"`
+	Email            string    `json:"email,omitempty"` // Authentication email (omitted from JSON)
+	FirstName        string    `json:"firstName"`
+	LastName         string    `json:"lastName"`
+	Nickname         string    `json:"nickname"`
+	AboutMe          string    `json:"aboutMe"`
+	Avatar           string    `json:"avatar"`
+	IsPublic         bool      `json:"isPublic"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 	Username         string    `json:"username"`
 	FullName         string    `json:"fullName"`
 	Bio              string    `json:"bio"`
@@ -48,14 +49,6 @@ type UserProfileData struct {
 	IsPrivate        bool      `json:"isPrivate"`
 	ProfileCreatedAt time.Time `json:"profileCreatedAt"`
 	ProfileUpdatedAt time.Time `json:"profileUpdatedAt"`
-}
-
-// Service interface defines the operations for profile management
-type Service interface {
-	UpdateProfile(userID string, profileData map[string]interface{}) error
-	SaveProfileImage(userID string, fileHeader *multipart.FileHeader) (string, error)
-	SaveBannerImage(userID string, fileHeader *multipart.FileHeader) (string, error)
-	GetProfileByUserID(userID string) (*UserProfileData, error)
 }
 
 // ProfileService implements the Service interface
@@ -141,4 +134,22 @@ func (s *ProfileService) saveImage(userID string, fileHeader *multipart.FileHead
 	// Return the relative path to be stored in the database
 	// This assumes the uploadDir is accessible via a URL path
 	return filepath.Join(imageType, fileName), nil
+}
+
+func (s *ProfileService) ValidateProfileViewRequest(userID string, targetID string) (bool, error) {
+	if userID == targetID {
+		return true, nil
+	}
+	isPublic, err := s.repo.IsUserProfilePublic(targetID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check profile visibility: %w", err)
+	}
+	if isPublic {
+		return true, nil
+	}
+	isFollowing, err := s.repo.IsUserFollowing(userID, targetID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check following status: %w", err)
+	}
+	return isFollowing, nil
 }
