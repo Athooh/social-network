@@ -232,11 +232,11 @@ export default function ProfilePage({ params }) {
           />
         );
       case "groups":
-        return <ProfileGroups />;
+        return <ProfileGroups userData={userData} />;
       case "connections":
-        return <ProfileConnections />;
+        return <ProfileConnections userData={userData} />;
       case "events":
-        return <ProfileEvents />;
+        return <ProfileEvents userData={userData} />;
       default:
         return null;
     }

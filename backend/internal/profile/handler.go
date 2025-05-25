@@ -41,6 +41,47 @@ func NewHandler(service Service, log *logger.Logger) *Handler {
 	}
 }
 
+func (h *Handler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Received profile view request")
+	if r.Method != http.MethodGet {
+		httputil.SendError(w, http.StatusMethodNotAllowed, "Method not allowed", false)
+		return
+	}
+	// Get user ID from context (set by auth middleware)
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID <= "" {
+		httputil.SendError(w, http.StatusUnauthorized, "Unauthorized", true)
+		return
+	}
+	profileID := r.URL.Query().Get("userId")
+	if profileID == "" {
+		httputil.SendError(w, http.StatusBadRequest, "User ID is required", false)
+		return
+	}
+	shouldView, err := h.service.ValidateProfileViewRequest(userID, profileID)
+	if err != nil {
+		h.log.Error("Failed to validate view request" + err.Error())
+		httputil.SendError(w, http.StatusInternalServerError, "Server error", true)
+		return
+	}
+	if !shouldView {
+		httputil.SendError(w, http.StatusForbidden, "Forbidden", true)
+		return
+	}
+	targetProfile, err := h.service.GetProfileByUserID(profileID)
+	if err != nil {
+		h.log.Error("Failed to fetch target profile" + err.Error())
+		httputil.SendError(w, http.StatusInternalServerError, "Server error", true)
+		return
+	}
+	// Return success response with updated profile data
+	httputil.SendJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "Profile fetch successful",
+		"profile": targetProfile,
+	})
+}
+
 func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Received profile update request")
 
@@ -48,7 +89,6 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		httputil.SendError(w, http.StatusMethodNotAllowed, "Method not allowed", false)
 		return
 	}
-
 	// Get user ID from context (set by auth middleware)
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok || userID <= "" {
