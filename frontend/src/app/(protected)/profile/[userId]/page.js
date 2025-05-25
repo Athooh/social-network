@@ -37,6 +37,7 @@ export default function ProfilePage({ params }) {
   const [activeSection, setActiveSection] = useState("posts");
   const [photosLoading, setPhotosLoading] = useState(true);
   const [photosError, setPhotosError] = useState(null);
+  const [isPrivateProfile, setIsPrivateProfile] = useState(false);
 
   // Create ref for component mounting state
   const isMounted = useRef(true);
@@ -70,6 +71,16 @@ export default function ProfilePage({ params }) {
       try {
         const response = await authenticatedFetch(`users/profile?userId=${userId}`);
 
+        if (response.status === 403) {
+          // Handle private profile case
+          if (isMounted.current) {
+            setIsPrivateProfile(true);
+            setError(null);
+            setUserData(null);
+          }
+          return;
+        }
+
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
         }
@@ -80,12 +91,14 @@ export default function ProfilePage({ params }) {
         if (isMounted.current) {
           setUserData(data.profile);
           setError(null);
+          setIsPrivateProfile(false);
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
 
         if (isMounted.current) {
           setError("Failed to load user profile. Please try again later.")
+          setIsPrivateProfile(false);
         }
       } finally {
         if (isMounted.current) {
@@ -95,13 +108,13 @@ export default function ProfilePage({ params }) {
     };
 
     fetchUserData();
-  }, [authenticatedFetch, isAuthenticated]);
+  }, [authenticatedFetch, isAuthenticated, userId]);
 
   // Function to load user photos - defined with useCallback to prevent recreation
   const loadUserPhotos = useCallback(async () => {
     console.log("loadUserPhotos called with userId:", userData?.id);
 
-    if (!userData || !userData.id) {
+    if (!userData || !userData.id || isPrivateProfile) {
       if (isMounted.current) {
         setPhotosLoading(false);
       }
@@ -143,28 +156,45 @@ export default function ProfilePage({ params }) {
         setPhotosLoading(false);
       }
     }
-  }, [userData?.id, getUserPhotos]);
+  }, [userData?.id, getUserPhotos, isPrivateProfile]);
 
   // Load photos once when userData becomes available
   useEffect(() => {
     // Load photos only if:
     // 1. We have userData with an ID
     // 2. Photos haven't been loaded yet
-    if (userData?.id && !photosLoadedRef.current) {
+    // 3. Profile is not private
+    if (userData?.id && !photosLoadedRef.current && !isPrivateProfile) {
       console.log("Loading photos for the first time");
       loadUserPhotos();
     }
-  }, [userData, loadUserPhotos]);
+  }, [userData, loadUserPhotos, isPrivateProfile]);
 
   // Function to refresh photos (can be called after updates)
   const refreshPhotos = useCallback(() => {
-    if (userData?.id) {
+    if (userData?.id && !isPrivateProfile) {
       console.log("Refreshing photos");
       // Reset the flag to allow loading again
       photosLoadedRef.current = false;
       loadUserPhotos();
     }
-  }, [loadUserPhotos, userData?.id]);
+  }, [loadUserPhotos, userData?.id, isPrivateProfile]);
+
+  // Private profile component
+  const PrivateProfileView = () => (
+    <div className={styles.privateProfileContainer}>
+      <div className={styles.privateProfileCard}>
+        <div className={styles.privateProfileIcon}>🔒</div>
+        <h2 className={styles.privateProfileTitle}>This Account is Private</h2>
+        <p className={styles.privateProfileMessage}>
+          Follow this account to see their posts and content.
+        </p>
+        <button className={styles.followRequestButton}>
+          Send Follow Request
+        </button>
+      </div>
+    </div>
+  );
 
   const renderContent = () => {
     // If still loading data, show loading state
@@ -172,6 +202,11 @@ export default function ProfilePage({ params }) {
       return (
         <div className={styles.loadingContainer}>Loading profile data...</div>
       );
+    }
+
+    // If private profile, show private profile view
+    if (isPrivateProfile) {
+      return <PrivateProfileView />;
     }
 
     // If error and no fallback data, show error
@@ -241,7 +276,7 @@ export default function ProfilePage({ params }) {
     <>
       <Header />
       <div className={styles.profileContainer}>
-        {userData && (
+        {userData && !isPrivateProfile && (
           <ProfileBanner
             userData={userData}
             onNavClick={setActiveSection}
