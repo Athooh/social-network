@@ -355,7 +355,6 @@ export const usePostService = () => {
       return true;
     } catch (error) {
       showToast(error.message || "Error Following user", "error");
-      throw err;
     }
   };
   const unfollowUser = async (userId, userName) => {
