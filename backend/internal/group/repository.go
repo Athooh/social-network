@@ -45,6 +45,7 @@ type Repository interface {
 	// User data operations
 	GetUserBasicByID(userID string) (*models.UserBasic, error)
 	UpdateUserGroupCount(userID string, increment bool) (int, error)
+	getNextAvailableID() (int64, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -747,15 +748,21 @@ func (r *SQLiteRepository) CreateGroupPost(post *models.GroupPost) error {
 	now := time.Now()
 	post.CreatedAt = now
 	post.UpdatedAt = now
+	newid, err := r.getNextAvailableID()
+	if err != nil {
+		return err
+	}
+	post.ID = newid
 
 	query := `
 		INSERT INTO group_posts (
-			group_id, user_id, content, image_path, video_path, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?)
+			id, group_id, user_id, content, image_path, video_path, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := r.db.Exec(
+	_, err = r.db.Exec(
 		query,
+		post.ID,
 		post.GroupID,
 		post.UserID,
 		post.Content,
@@ -768,12 +775,6 @@ func (r *SQLiteRepository) CreateGroupPost(post *models.GroupPost) error {
 		return fmt.Errorf("failed to create group post: %w", err)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("failed to get last insert ID: %w", err)
-	}
-
-	post.ID = id
 	return nil
 }
 
@@ -1086,4 +1087,32 @@ func (r *SQLiteRepository) UpdateUserGroupCount(userID string, increment bool) (
 	}
 
 	return currentCount, nil
+}
+
+// getNextAvailableID checks 'posts' and 'group_posts' for max(id) and returns next available int64 ID.
+func (r *SQLiteRepository) getNextAvailableID() (int64, error) {
+    var maxPostID, maxGroupPostID sql.NullInt64
+
+    // Query max id from 'posts'
+    err := r.db.QueryRow("SELECT MAX(id) FROM posts").Scan(&maxPostID)
+    if err != nil {
+        return 0, fmt.Errorf("error querying posts: %v", err)
+    }
+
+    // Query max id from 'group_posts'
+    err = r.db.QueryRow("SELECT MAX(id) FROM group_posts").Scan(&maxGroupPostID)
+    if err != nil {
+        return 0, fmt.Errorf("error querying group_posts: %v", err)
+    }
+
+    // Calculate the next ID
+    maxID := int64(0)
+    if maxPostID.Valid && maxPostID.Int64 > maxID {
+        maxID = maxPostID.Int64
+    }
+    if maxGroupPostID.Valid && maxGroupPostID.Int64 > maxID {
+        maxID = maxGroupPostID.Int64
+    }
+
+    return maxID + 1, nil
 }
