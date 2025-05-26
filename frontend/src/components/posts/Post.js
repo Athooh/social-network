@@ -159,19 +159,19 @@ export default function Post({ post, onPostUpdated }) {
   };
 
   // Function to handle comment deletion
-  const handleDeleteComment = (comment) => {
+  const handleDeleteComment = (comment, postid) => {
     showConfirmation({
       title: "Delete Comment",
       message:
         "Are you sure you want to delete this comment? This action cannot be undone.",
-      onConfirm: () => confirmDeleteComment(comment.id),
+      onConfirm: () => confirmDeleteComment(comment.id, postid),
     });
   };
 
   // Function to confirm comment deletion
-  const confirmDeleteComment = async (commentId) => {
+  const confirmDeleteComment = async (commentId, postid) => {
     try {
-      await deleteComment(commentId);
+      await deleteComment(commentId, postid);
       // Remove the deleted comment from the state
       setComments(comments.filter((comment) => comment.id !== commentId));
       if (onPostUpdated) onPostUpdated();
@@ -286,7 +286,7 @@ export default function Post({ post, onPostUpdated }) {
   const isCurrentUserPost = currentUser?.id === post.userId;
 
   // Update the comment rendering to include delete button for owner
-  const renderComments = () => {
+  const renderComments = (postid) => {
     return comments.map((comment) => {
       const isCommentOwner = currentUser?.id === comment.userData?.id;
 
@@ -319,7 +319,7 @@ export default function Post({ post, onPostUpdated }) {
               {isCommentOwner && (
                 <button
                   className={styles.deleteCommentBtn}
-                  onClick={() => handleDeleteComment(comment)}
+                  onClick={() => handleDeleteComment(comment, postid)}
                 >
                   Delete
                 </button>
@@ -542,7 +542,7 @@ export default function Post({ post, onPostUpdated }) {
             </div>
           )}
 
-          {comments && renderComments()}
+          {comments && renderComments(formattedPost.id)}
         </div>
       )}
 

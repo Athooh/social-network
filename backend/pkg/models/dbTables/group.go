@@ -44,7 +44,7 @@ type GroupMember struct {
 
 // GroupPost represents a post in a group
 type GroupPost struct {
-	ID            int64          `db:"id,pk,autoincrement"`
+	ID            int64          `db:"id,pk"`
 	GroupID       string         `db:"group_id,notnull" index:"idx_group_posts_group_id"`
 	UserID        string         `db:"user_id,notnull" index:"idx_group_posts_user_id"`
 	Content       string         `db:"content"`

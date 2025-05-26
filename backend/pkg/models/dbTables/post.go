@@ -14,7 +14,7 @@ const (
 
 // Post represents a user post in the database
 type Post struct {
-	ID            int64          `db:"id,pk,autoincrement"`
+	ID            int64          `db:"id,pk"`
 	UserID        string         `db:"user_id,notnull" index:"idx_post_user_id"`
 	Content       string         `db:"content,notnull"`
 	ImagePath     sql.NullString `db:"image_path"`

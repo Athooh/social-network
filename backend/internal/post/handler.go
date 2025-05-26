@@ -733,6 +733,8 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	postid := r.URL.Query().Get("postid")
+
 	// Get comment ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 3 {
@@ -746,7 +748,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete comment
-	if err := h.service.DeleteComment(commentID, userID); err != nil {
+	if err := h.service.DeleteComment(commentID, userID, postid); err != nil {
 		h.sendError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

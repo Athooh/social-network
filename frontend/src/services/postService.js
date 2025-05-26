@@ -264,9 +264,9 @@ export const usePostService = () => {
     }
   };
 
-  const deleteComment = async (commentId) => {
+  const deleteComment = async (commentId, postid) => {
     try {
-      const response = await authenticatedFetch(`posts/comments/${commentId}`, {
+      const response = await authenticatedFetch(`posts/comments/${commentId}?postid=${postid}`, {
         method: "DELETE",
       });
 

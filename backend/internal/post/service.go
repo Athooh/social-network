@@ -3,6 +3,7 @@ package post
 import (
 	"errors"
 	"mime/multipart"
+	"strconv"
 
 	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
@@ -24,7 +25,7 @@ type Service interface {
 	// Comments
 	CreateComment(postID int64, userID string, content string, image *multipart.FileHeader) (*models.Comment, error)
 	GetPostComments(postID int64, userID string) ([]*models.Comment, error)
-	DeleteComment(commentID int64, userID string) error
+	DeleteComment(commentID int64, userID, postid string) error
 
 	// Like functionality
 	LikePost(postID int64, userID string) (bool, error)
@@ -481,7 +482,7 @@ func (s *PostService) CreateComment(postID int64, userID string, content string,
 	}
 
 	// Update user stats
-	newCount, err := s.repo.UpdatePostCommentCount(postID)
+	newCount, err := s.repo.UpdatePostCommentCount(postID, true)
 	if err != nil {
 		s.log.Error("Failed to Post comment count: %v", err)
 	}
@@ -528,7 +529,7 @@ func (s *PostService) GetPostComments(postID int64, userID string) ([]*models.Co
 }
 
 // DeleteComment deletes a comment
-func (s *PostService) DeleteComment(commentID int64, userID string) error {
+func (s *PostService) DeleteComment(commentID int64, userID, postid string) error {
 	// Get the comment (would need to add this method to repository)
 	// For now, we'll just delete if the user is the comment author
 	// In a real implementation, you'd check if the user is either the comment author or the post owner
@@ -539,6 +540,15 @@ func (s *PostService) DeleteComment(commentID int64, userID string) error {
 		return err
 	}
 
+	convertedid, err := strconv.ParseInt(postid, 10, 64)
+	if err != nil {
+		return err
+	}
+	_,  err = s.repo.UpdatePostCommentCount(convertedid, false)
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
