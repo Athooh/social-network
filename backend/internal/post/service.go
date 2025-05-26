@@ -481,7 +481,7 @@ func (s *PostService) CreateComment(postID int64, userID string, content string,
 	}
 
 	// Update user stats
-	newCount, err := s.repo.UpdatePostCommentCount(postID)
+	newCount, err := s.repo.UpdatePostCommentCount(postID, true)
 	if err != nil {
 		s.log.Error("Failed to Post comment count: %v", err)
 	}

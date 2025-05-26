@@ -26,7 +26,7 @@ type Repository interface {
 
 	// Comment methods
 	CreateComment(comment *models.Comment) error
-	UpdatePostCommentCount(postId int64) (int, error)
+	UpdatePostCommentCount(postId int64, increase bool) (int, error)
 	GetCommentsByPostID(postID int64) ([]*models.Comment, error)
 	DeleteComment(id int64) error
 
@@ -256,6 +256,11 @@ func (r *SQLiteRepository) UpdatePost(post *models.Post) error {
 func (r *SQLiteRepository) DeletePost(id int64) error {
 	query := "DELETE FROM posts WHERE id = ?"
 	_, err := r.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	_,err = r.UpdatePostCommentCount(id, false)
 	return err
 }
 
@@ -609,7 +614,7 @@ func (r *SQLiteRepository) GetUserDataByID(userID string) (*models.PostUserData,
 	return user, nil
 }
 
-func (r *SQLiteRepository) UpdatePostCommentCount(postId int64) (int, error) {
+func (r *SQLiteRepository) UpdatePostCommentCount(postId int64, increase bool) (int, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return 0, err
@@ -622,36 +627,65 @@ func (r *SQLiteRepository) UpdatePostCommentCount(postId int64) (int, error) {
 
 	now := time.Now()
 
-	// Ensure the post exists and initialize `comments_count` if needed
-	initQuery := `
-		UPDATE posts 
+	// First, check which table the postId exists in
+	var isPost bool
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM posts WHERE id = ?)", postId).Scan(&isPost)
+	if err != nil {
+		return 0, err
+	}
+
+	var isGroupPost bool
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM group_posts WHERE id = ?)", postId).Scan(&isGroupPost)
+	if err != nil {
+		return 0, err
+	}
+
+	if !isPost && !isGroupPost {
+		return 0, errors.New("post not found in either posts or group_posts")
+	}
+
+	// Choose target table
+	var tableName string
+	if isPost {
+		tableName = "posts"
+	} else {
+		tableName = "group_posts"
+	}
+
+	// Initialize comment count if nil
+	initQuery := fmt.Sprintf(`
+		UPDATE %s 
 		SET comments_count = COALESCE(comments_count, (SELECT COUNT(*) FROM comments WHERE post_id = ?)), 
 		    updated_at = ? 
-		WHERE id = ?`
+		WHERE id = ?`, tableName)
 	_, err = tx.Exec(initQuery, postId, now, postId)
 	if err != nil {
 		return 0, err
 	}
 
 	// Increment the comment count
-	updateQuery := "UPDATE posts SET comments_count = comments_count + 1, updated_at = ? WHERE id = ?"
+	updateQuery := ""
+	if increase {
+		updateQuery = fmt.Sprintf("UPDATE %s SET comments_count = comments_count + 1, updated_at = ? WHERE id = ?", tableName)
+	} else {
+		updateQuery = fmt.Sprintf("UPDATE %s SET comments_count = comments_count - 1, updated_at = ? WHERE id = ?", tableName)
+	}
 	result, err := tx.Exec(updateQuery, now, postId)
 	if err != nil {
 		return 0, err
 	}
 
-	// Ensure the post exists
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return 0, err
 	}
 	if rowsAffected == 0 {
-		return 0, errors.New("post not found")
+		return 0, errors.New("failed to update comment count")
 	}
 
-	// Get the new count
+	// Retrieve the new comment count
 	var newCount int
-	selectQuery := "SELECT comments_count FROM posts WHERE id = ?"
+	selectQuery := fmt.Sprintf("SELECT comments_count FROM %s WHERE id = ?", tableName)
 	err = tx.QueryRow(selectQuery, postId).Scan(&newCount)
 	if err != nil {
 		return 0, err
