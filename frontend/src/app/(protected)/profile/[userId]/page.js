@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Header from "@/components/header/Header";
 import styles from "@/styles/ProfilePage.module.css";
 import { use } from "react";
@@ -17,23 +17,47 @@ import ProfileEvents from "@/components/profile/ProfileEvents";
 import ProfileConnections from "@/components/profile/ProfileConnections";
 import { useFriendService } from "@/services/friendService";
 import { useAuth } from "@/context/authcontext";
+import { usePostService } from "@/services/postService";
+import { showToast } from "@/components/ui/ToastContainer";
 
 // Define base URL for media assets
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
 export default function ProfilePage({ params }) {
-  // State for user data
+  const { userId } = use(params)
+
+  console.log("userId", userId)
+  const { getUserPhotos } = usePostService();
+
+  const [photos, setPhotos] = useState([]);
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState("posts");
+  const [photosLoading, setPhotosLoading] = useState(true);
+  const [photosError, setPhotosError] = useState(null);
+  const [isPrivateProfile, setIsPrivateProfile] = useState(false);
+
+  // Create ref for component mounting state
+  const isMounted = useRef(true);
+  // Flag to track if photos have been loaded
+  const photosLoadedRef = useRef(false);
 
   // Get authenticatedFetch from auth context
   const { authenticatedFetch, isAuthenticated } = useAuth();
 
   const resolvedParams = use(params);
   const { contacts, isLoadingContacts } = useFriendService();
+
+  // Set isMounted.current to true on initial render and to false on cleanup
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // Fetch user data when component mounts
   useEffect(() => {
@@ -45,7 +69,17 @@ export default function ProfilePage({ params }) {
       }
 
       try {
-        const response = await authenticatedFetch("users/me");
+        const response = await authenticatedFetch(`users/profile?userId=${userId}`);
+
+        if (response.status === 403) {
+          // Handle private profile case
+          if (isMounted.current) {
+            setIsPrivateProfile(true);
+            setError(null);
+            setUserData(null);
+          }
+          return;
+        }
 
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
@@ -53,34 +87,114 @@ export default function ProfilePage({ params }) {
 
         const data = await response.json();
         console.log("User data:", data);
-        setUserData(data);
-        setError(null);
+
+        if (isMounted.current) {
+          setUserData(data.profile);
+          setError(null);
+          setIsPrivateProfile(false);
+        }
       } catch (err) {
         console.error("Error fetching user data:", err);
-        setError("Failed to load user profile. Please try again later.");
 
-        // Fallback to localStorage if API fails
-        const storedUser = JSON.parse(localStorage.getItem("userData") || "{}");
-        if (storedUser && Object.keys(storedUser).length > 0) {
-          setUserData(storedUser);
+        if (isMounted.current) {
+          setError("Failed to load user profile. Please try again later.")
+          setIsPrivateProfile(false);
         }
       } finally {
-        setIsLoading(false);
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchUserData();
-  }, [authenticatedFetch, isAuthenticated]);
+  }, [authenticatedFetch, isAuthenticated, userId]);
 
-  // Example photos data (should eventually come from API)
-  const photos = [
-    { url: "/photo1.jpg" },
-    { url: "/photo2.jpg" },
-    { url: "/photo3.jpg" },
-    { url: "/photo4.jpg" },
-    { url: "/photo5.jpg" },
-    { url: "/photo6.jpg" },
-  ];
+  // Function to load user photos - defined with useCallback to prevent recreation
+  const loadUserPhotos = useCallback(async () => {
+    console.log("loadUserPhotos called with userId:", userData?.id);
+
+    if (!userData || !userData.id || isPrivateProfile) {
+      if (isMounted.current) {
+        setPhotosLoading(false);
+      }
+      return;
+    }
+
+    try {
+      // Set loading state before fetching
+      if (isMounted.current) {
+        setPhotosLoading(true);
+      }
+
+      // Fetch photos
+      const userPhotos = await getUserPhotos(userData.id);
+      console.log("Fetched photos:", userPhotos);
+
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        // Ensure data is an array
+        if (!userPhotos || !Array.isArray(userPhotos)) {
+          setPhotos([]);
+        } else {
+          setPhotos(userPhotos);
+        }
+        // Reset error state if successful
+        setPhotosError(null);
+        // Mark photos as loaded
+        photosLoadedRef.current = true;
+      }
+    } catch (err) {
+      console.error("Error fetching user photos:", err);
+      if (isMounted.current) {
+        setPhotosError(err.message || "Failed to load photos");
+        showToast("Failed to load photos", "error");
+      }
+    } finally {
+      // Always set loading to false when done
+      if (isMounted.current) {
+        setPhotosLoading(false);
+      }
+    }
+  }, [userData?.id, getUserPhotos, isPrivateProfile]);
+
+  // Load photos once when userData becomes available
+  useEffect(() => {
+    // Load photos only if:
+    // 1. We have userData with an ID
+    // 2. Photos haven't been loaded yet
+    // 3. Profile is not private
+    if (userData?.id && !photosLoadedRef.current && !isPrivateProfile) {
+      console.log("Loading photos for the first time");
+      loadUserPhotos();
+    }
+  }, [userData, loadUserPhotos, isPrivateProfile]);
+
+  // Function to refresh photos (can be called after updates)
+  const refreshPhotos = useCallback(() => {
+    if (userData?.id && !isPrivateProfile) {
+      console.log("Refreshing photos");
+      // Reset the flag to allow loading again
+      photosLoadedRef.current = false;
+      loadUserPhotos();
+    }
+  }, [loadUserPhotos, userData?.id, isPrivateProfile]);
+
+  // Private profile component
+  const PrivateProfileView = () => (
+    <div className={styles.privateProfileContainer}>
+      <div className={styles.privateProfileCard}>
+        <div className={styles.privateProfileIcon}>🔒</div>
+        <h2 className={styles.privateProfileTitle}>This Account is Private</h2>
+        <p className={styles.privateProfileMessage}>
+          Follow this account to see their posts and content.
+        </p>
+        <button className={styles.followRequestButton}>
+          Send Follow Request
+        </button>
+      </div>
+    </div>
+  );
 
   const renderContent = () => {
     // If still loading data, show loading state
@@ -90,6 +204,11 @@ export default function ProfilePage({ params }) {
       );
     }
 
+    // If private profile, show private profile view
+    if (isPrivateProfile) {
+      return <PrivateProfileView />;
+    }
+
     // If error and no fallback data, show error
     if (error && !userData) {
       return <div className={styles.errorContainer}>{error}</div>;
@@ -97,7 +216,15 @@ export default function ProfilePage({ params }) {
 
     switch (activeSection) {
       case "about":
-        return <ProfileAbout userData={userData} />;
+        return (
+          <ProfileAbout
+            photos={photos}
+            isLoading={photosLoading}
+            error={photosError}
+            BASE_URL={BASE_URL}
+            userData={userData}
+          />
+        );
       case "posts":
         return (
           <div className={styles.contentLayout}>
@@ -106,10 +233,16 @@ export default function ProfilePage({ params }) {
             </div>
             <div className={styles.mainContent}>
               <CreatePost />
-              <PostList />
+              <PostList userData={userData} />
             </div>
             <div className={styles.rightSidebar}>
-              <ProfilePhotosGrid photos={photos} totalPhotos={20} />
+              <ProfilePhotosGrid
+                photos={photos}
+                totalPhotos={photos.length}
+                isLoading={photosLoading}
+                error={photosError}
+                BASE_URL={BASE_URL}
+              />
               <ContactsSection
                 contacts={contacts}
                 isLoading={isLoadingContacts}
@@ -119,13 +252,21 @@ export default function ProfilePage({ params }) {
           </div>
         );
       case "photos":
-        return <ProfilePhotos />;
+        return (
+          <ProfilePhotos
+            photos={photos}
+            isLoading={photosLoading}
+            error={photosError}
+            onRefresh={refreshPhotos}
+            BASE_URL={BASE_URL}
+          />
+        );
       case "groups":
-        return <ProfileGroups />;
+        return <ProfileGroups userData={userData} />;
       case "connections":
-        return <ProfileConnections />;
+        return <ProfileConnections userData={userData} />;
       case "events":
-        return <ProfileEvents />;
+        return <ProfileEvents userData={userData} />;
       default:
         return null;
     }
@@ -135,18 +276,13 @@ export default function ProfilePage({ params }) {
     <>
       <Header />
       <div className={styles.profileContainer}>
-        {userData && (
+        {userData && !isPrivateProfile && (
           <ProfileBanner
-            bannerUrl={userData.bannerImage || "/banner2.jpg"}
-            profileUrl={
-              userData.avatar
-                ? `${BASE_URL}/uploads/${userData.avatar}`
-                : "/default-avatar.png"
-            }
-            fullName={`${userData.firstName || ""} ${userData.lastName || ""}`}
-            followersCount={userData.followersCount || 0}
-            followingCount={userData.followingCount || 0}
+            userData={userData}
             onNavClick={setActiveSection}
+            activeSection={activeSection}
+            isOwnProfile={false}
+            BASE_URL={BASE_URL}
           />
         )}
         {renderContent()}

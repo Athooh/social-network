@@ -18,11 +18,11 @@ type Group struct {
 	UpdatedAt      time.Time      `db:"updated_at,default=CURRENT_TIMESTAMP"`
 
 	// Non-DB fields
-	MemberCount  int            `db:"-"`
-	Creator      *UserBasic     `db:"-"`
-	IsMember     bool           `db:"-"`
-	MemberStatus string         `db:"-"`
-	Members      []*GroupMember `db:"-"`
+	MemberCount   int            `db:"-"`
+	Creator       *UserBasic     `db:"-"`
+	IsMember      bool           `db:"-"`
+	MemberStatus  string         `db:"-"`
+	Members 	[]*GroupMember   `db:"-"`
 }
 
 // GroupMember represents a member of a group
@@ -30,7 +30,7 @@ type GroupMember struct {
 	ID        string    `db:"id,pk"`
 	GroupID   string    `db:"group_id,notnull" index:"idx_group_members_group_id"`
 	UserID    string    `db:"user_id,notnull" index:"idx_group_members_user_id"`
-	Role      string    `db:"role,notnull"`                                    // admin, moderator, member
+	Role      string    `db:"role,notnull"` // admin, moderator, member
 	Status    string    `db:"status,notnull" index:"idx_group_members_status"` // pending, accepted, rejected
 	InvitedBy string    `db:"invited_by"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
@@ -38,8 +38,8 @@ type GroupMember struct {
 	Avatar    string    `db:"avatar"`
 
 	// Non-DB fields
-	User    *UserBasic `db:"-"`
-	Inviter *UserBasic `db:"-"`
+	User      *UserBasic `db:"-"`
+	Inviter   *UserBasic `db:"-"`
 }
 
 // GroupPost represents a post in a group
@@ -73,6 +73,7 @@ type GroupEvent struct {
 	CreatedAt   time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time      `db:"updated_at,default=CURRENT_TIMESTAMP"`
 
+
 	// Non-DB fields
 	Creator       *UserBasic  `db:"-"`
 	Group         *GroupBasic `db:"-"`
@@ -90,6 +91,7 @@ type EventResponse struct {
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
 
+
 	// Non-DB fields
 	User *UserBasic `db:"-"`
 }
@@ -101,6 +103,7 @@ type GroupChatMessage struct {
 	UserID    string    `db:"user_id,notnull"`
 	Content   string    `db:"content,notnull"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP" index:"idx_group_chat_messages_created_at"`
+
 
 	// Non-DB fields
 	User *UserBasic `db:"-"`

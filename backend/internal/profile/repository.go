@@ -13,11 +13,42 @@ type SQLiteRepository struct {
 	db *sql.DB
 }
 
+// Repository interface for profile data persistence
+type Repository interface {
+	UpdateUserProfile(userID string, profileData map[string]interface{}) error
+	GetUserProfileByID(userID string) (*UserProfileData, error)
+	IsUserProfilePublic(userID string) (bool, error)
+	IsUserFollowing(followerID string, followingID string) (bool, error)
+}
+
 // NewSQLiteRepository creates a new SQLite repository
 func NewSQLiteRepository(db *sql.DB) Repository {
 	return &SQLiteRepository{
 		db: db,
 	}
+}
+
+func (r *SQLiteRepository) IsUserProfilePublic(userID string) (bool, error) {
+	var isPublic bool
+	query := `SELECT is_public FROM users WHERE id = ?`
+	err := r.db.QueryRow(query, userID).Scan(&isPublic)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("user not found")
+		}
+		return false, fmt.Errorf("failed to query user visibility: %w", err)
+	}
+	return isPublic, nil
+}
+
+func (r *SQLiteRepository) IsUserFollowing(followerID string, followingID string) (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM followers WHERE follower_id = ? AND following_id = ?`
+	err := r.db.QueryRow(query, followerID, followingID).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to check following status: %w", err)
+	}
+	return count > 0, nil
 }
 
 func (r *SQLiteRepository) UpdateUserProfile(userID string, profileData map[string]interface{}) error {
@@ -150,8 +181,11 @@ func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, 
 		COALESCE(p.profile_image, '') as profile_image, 
 		COALESCE(p.is_private, 0) as is_private, 
 		COALESCE(p.created_at, u.created_at) as profile_created_at, 
-		COALESCE(p.updated_at, u.updated_at) as profile_updated_at
+		COALESCE(p.updated_at, u.updated_at) as profile_updated_at,
+		COALESCE(us.followers_count, 0) AS followers_count,
+		COALESCE(us.following_count, 0) AS following_count
 	FROM users u
+	LEFT JOIN user_stats us ON u.id = us.user_id
 	LEFT JOIN user_profiles p ON u.id = p.user_id
 	WHERE u.id = ?`
 
@@ -171,7 +205,7 @@ func (r *SQLiteRepository) GetUserProfileByID(userID string) (*UserProfileData, 
 		&profileData.Education, &profileData.ContactEmail, &profileData.Phone, &profileData.Website,
 		&profileData.Location, &profileData.TechSkills, &profileData.SoftSkills, &profileData.Interests,
 		&profileData.BannerImage, &profileData.ProfileImage, &profileData.IsPrivate,
-		&profileCreatedAt, &profileUpdatedAt,
+		&profileCreatedAt, &profileUpdatedAt, &profileData.FollowersCount, &profileData.FollowingCount, 
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

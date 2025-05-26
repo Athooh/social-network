@@ -22,11 +22,6 @@ const ProfilePhotosGrid = ({
   // Only show "+X more" if we have more than 6 photos total
   const remainingPhotos = actualTotal > 6 ? actualTotal - 6 : 0;
 
-  // For debugging - log data to console
-  console.log("PhotosGrid - isLoading:", isLoading);
-  console.log("PhotosGrid - hasPhotos:", hasPhotos);
-  console.log("PhotosGrid - displayPhotos:", displayPhotos);
-
   // Render loading state
   if (isLoading) {
     return (

@@ -248,16 +248,26 @@ func (n *Notifications) NotifyGroupPostCreated(post *models.GroupPost) {
 // NotifyGroupChatMessage notifies about a new group chat message
 func (n *Notifications) NotifyGroupChatMessage(message *models.GroupChatMessage) {
 	event := events.Event{
-		Type: "group_chat_message",
+		Type: events.GroupMessage,
 		Payload: map[string]interface{}{
-			"message": message,
+			"id":      message.ID,
+			"Content": message.Content,
+			"User": map[string]interface{}{
+				"id":        message.UserID,
+				"firstName": message.User.FirstName,
+				"avatar":    message.User.Avatar,
+			},
+			"CreatedAt": message.CreatedAt,
+			"GroupID":   message.GroupID,
 		},
 	}
 
 	// Notify all members
 	members, _ := n.repo.GetGroupMembers(message.GroupID, "accepted")
 	for _, member := range members {
-		n.wsHub.BroadcastToUser(member.UserID, event)
+		if member.UserID != message.User.ID {
+			n.wsHub.BroadcastToUser(member.UserID, event)
+		}
 	}
 }
 

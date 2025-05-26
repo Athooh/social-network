@@ -102,8 +102,11 @@ func Router(config RouterConfig) http.Handler {
 	protectedUserGroup.HandleFunc("/me", config.AuthHandler.Me)
 
 	protectedUserGroup.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPut {
+		switch r.Method {
+		case http.MethodPut:
 			config.ProfileHandler.UpdateProfile(w, r)
+		case http.MethodGet:
+			config.ProfileHandler.GetUserProfile(w, r)
 		}
 	})
 	// protectedUserGroup.HandleFunc("/profile", config.ProfileHandler.UpdateProfile)

@@ -127,6 +127,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  position: relative; /* Makes the form the positioning context for the emoji picker */
 }
 
 .chatInput input {
@@ -137,7 +138,21 @@
   outline: none;
 }
 
-.emojiButton, .sendButton {
+.emojiButton {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+  position: relative; /* Ensures the emoji button can serve as a reference point */
+}
+
+.emojiButton:hover {
+  color: #0066cc;
+}
+
+.sendButton {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -146,7 +161,7 @@
   transition: color 0.2s;
 }
 
-.emojiButton:hover, .sendButton:hover {
+.sendButton:hover {
   color: #0066cc;
 }
 
