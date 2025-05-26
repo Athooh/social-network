@@ -73,9 +73,7 @@ export default function GroupPostPage() {
               <div key={post.ID}>
                 <GroupPost
                   post={post}
-                  onPostUpdated={() => {
-                    // Handle post update
-                  }}
+                  onPostUpdated={fetchGroups}
                 />
               </div>
             ))}
