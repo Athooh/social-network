@@ -61,14 +61,19 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 	now := time.Now()
 	post.CreatedAt = now
 	post.UpdatedAt = now
-
+    newid, err := r.getNextAvailableID()
+	if err != nil {
+		return err
+	}
+	post.ID = newid
 	query := `
-		INSERT INTO posts (user_id, content, image_path, video_path, privacy, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO posts (id, user_id, content, image_path, video_path, privacy, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := r.db.Exec(
+	_, err = r.db.Exec(
 		query,
+		post.ID,
 		post.UserID,
 		post.Content,
 		post.ImagePath.String,
@@ -80,11 +85,6 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 	if err != nil {
 		return err
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-	post.ID = id
 
 	return nil
 }
