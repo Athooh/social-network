@@ -18,11 +18,11 @@ type Group struct {
 	UpdatedAt      time.Time      `db:"updated_at,default=CURRENT_TIMESTAMP"`
 
 	// Non-DB fields
-	MemberCount  int            `db:"-"`
-	Creator      *UserBasic     `db:"-"`
-	IsMember     bool           `db:"-"`
-	MemberStatus string         `db:"-"`
-	Members      []*GroupMember `db:"-"`
+	MemberCount   int            `db:"-"`
+	Creator       *UserBasic     `db:"-"`
+	IsMember      bool           `db:"-"`
+	MemberStatus  string         `db:"-"`
+	Members 	[]*GroupMember   `db:"-"`
 }
 
 // GroupMember represents a member of a group
@@ -30,7 +30,7 @@ type GroupMember struct {
 	ID        string    `db:"id,pk"`
 	GroupID   string    `db:"group_id,notnull" index:"idx_group_members_group_id"`
 	UserID    string    `db:"user_id,notnull" index:"idx_group_members_user_id"`
-	Role      string    `db:"role,notnull"`                                    // admin, moderator, member
+	Role      string    `db:"role,notnull"` // admin, moderator, member
 	Status    string    `db:"status,notnull" index:"idx_group_members_status"` // pending, accepted, rejected
 	InvitedBy string    `db:"invited_by"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
@@ -38,26 +38,27 @@ type GroupMember struct {
 	Avatar    string    `db:"avatar"`
 
 	// Non-DB fields
-	User    *UserBasic `db:"-"`
-	Inviter *UserBasic `db:"-"`
+	User      *UserBasic `db:"-"`
+	Inviter   *UserBasic `db:"-"`
 }
 
 // GroupPost represents a post in a group
 type GroupPost struct {
-	ID        int64          `db:"id,pk,autoincrement"`
-	GroupID   string         `db:"group_id,notnull" index:"idx_group_posts_group_id"`
-	UserID    string         `db:"user_id,notnull" index:"idx_group_posts_user_id"`
-	Content   string         `db:"content"`
-	ImagePath sql.NullString `db:"image_path"`
-	VideoPath sql.NullString `db:"video_path"`
-	CreatedAt time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time      `db:"updated_at,default=CURRENT_TIMESTAMP"`
+	ID            int64          `db:"id,pk,autoincrement"`
+	GroupID       string         `db:"group_id,notnull" index:"idx_group_posts_group_id"`
+	UserID        string         `db:"user_id,notnull" index:"idx_group_posts_user_id"`
+	Content       string         `db:"content"`
+	ImagePath     sql.NullString `db:"image_path"`
+	VideoPath     sql.NullString `db:"video_path"`
+	LikesCount    int64          `db:"likes_count,default=0"`
+	CommentsCount int64          `db:"comments_count,default=0"`
+	CreatedAt     time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`
+	UpdatedAt     time.Time      `db:"updated_at,default=CURRENT_TIMESTAMP"`
 
 	// Non-DB fields
-	User          *PostUserData `db:"-"`
-	Group         *GroupBasic   `db:"-"`
-	LikesCount    int           `db:"-"`
-	CommentsCount int           `db:"-"`
+	User  *PostUserData `db:"-"`
+	Group *GroupBasic   `db:"-"`
+	Isliked bool          `db:"-"`
 }
 
 // GroupEvent represents an event in a group
@@ -71,6 +72,7 @@ type GroupEvent struct {
 	BannerPath  sql.NullString `db:"banner_path"`
 	CreatedAt   time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time      `db:"updated_at,default=CURRENT_TIMESTAMP"`
+
 
 	// Non-DB fields
 	Creator       *UserBasic  `db:"-"`
@@ -89,6 +91,7 @@ type EventResponse struct {
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `db:"updated_at,default=CURRENT_TIMESTAMP"`
 
+
 	// Non-DB fields
 	User *UserBasic `db:"-"`
 }
@@ -100,6 +103,7 @@ type GroupChatMessage struct {
 	UserID    string    `db:"user_id,notnull"`
 	Content   string    `db:"content,notnull"`
 	CreatedAt time.Time `db:"created_at,default=CURRENT_TIMESTAMP" index:"idx_group_chat_messages_created_at"`
+
 
 	// Non-DB fields
 	User *UserBasic `db:"-"`

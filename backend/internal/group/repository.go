@@ -34,7 +34,7 @@ type Repository interface {
 
 	// Group posts operations
 	CreateGroupPost(post *models.GroupPost) error
-	GetGroupPosts(groupID string, limit, offset int) ([]*models.GroupPost, error)
+	GetGroupPosts(groupID string, currentUserID string, limit, offset int) ([]*models.GroupPost, error)
 	GetGroupPostByID(id int64) (*models.GroupPost, error)
 	DeleteGroupPost(id int64) error
 
@@ -300,10 +300,10 @@ func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*mo
 		}
 		group.Members = members
 
-		member , err := r.GetMemberByID(group.ID, userid)
-		if err != nil {	
-			return nil, fmt.Errorf("failed to get member info: %w", err)	
-		} 
+		member, err := r.GetMemberByID(group.ID, userid)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get member info: %w", err)
+		}
 		if member != nil {
 			group.IsMember = true
 		}
@@ -367,7 +367,6 @@ func (r *SQLiteRepository) DeleteGroup(id string) error {
 		return fmt.Errorf("failed to delete group: %w", err)
 	}
 
-	
 	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
@@ -694,7 +693,7 @@ func (r *SQLiteRepository) RemoveMember(groupID, userID string) error {
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	
+
 	// Update user's group count if status was accepted
 	if member.Status == "accepted" {
 		_, err = r.UpdateUserGroupCount(userID, false)
@@ -779,16 +778,19 @@ func (r *SQLiteRepository) CreateGroupPost(post *models.GroupPost) error {
 }
 
 // GetGroupPosts gets all posts in a group with pagination
-func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*models.GroupPost, error) {
+func (r *SQLiteRepository) GetGroupPosts(groupID string, currentUserID string, limit, offset int) ([]*models.GroupPost, error) {
 	query := `
-		SELECT id, group_id, user_id, content, image_path, video_path, created_at, updated_at
-		FROM group_posts
-		WHERE group_id = ?
-		ORDER BY created_at DESC
-		LIMIT ? OFFSET ?
-	`
+        SELECT gp.id, gp.group_id, gp.user_id, gp.content, gp.image_path, gp.video_path, 
+               gp.likes_count, gp.comments_count, gp.created_at, gp.updated_at,
+               CASE WHEN pl.user_id IS NOT NULL THEN 1 ELSE 0 END as is_liked
+        FROM group_posts gp
+        LEFT JOIN post_likes pl ON pl.post_id = gp.id AND pl.user_id = ?
+        WHERE gp.group_id = ?
+        ORDER BY gp.created_at DESC
+        LIMIT ? OFFSET ?
+    `
 
-	rows, err := r.db.Query(query, groupID, limit, offset)
+	rows, err := r.db.Query(query, currentUserID, groupID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get group posts: %w", err)
 	}
@@ -799,6 +801,7 @@ func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*
 	for rows.Next() {
 		var post models.GroupPost
 		var imagePath, videoPath sql.NullString
+		var isLiked bool
 
 		err := rows.Scan(
 			&post.ID,
@@ -807,8 +810,11 @@ func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*
 			&post.Content,
 			&imagePath,
 			&videoPath,
+			&post.LikesCount,
+			&post.CommentsCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
+			&isLiked,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan post row: %w", err)
@@ -816,6 +822,7 @@ func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*
 
 		post.ImagePath = imagePath
 		post.VideoPath = videoPath
+		post.Isliked = isLiked
 
 		// Get user data
 		userData, err := r.GetUserBasicByID(post.UserID)
@@ -843,7 +850,7 @@ func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*
 // GetGroupPostByID gets a post by ID
 func (r *SQLiteRepository) GetGroupPostByID(id int64) (*models.GroupPost, error) {
 	query := `
-		SELECT id, group_id, user_id, content, image_path, video_path, created_at, updated_at
+		SELECT id, group_id, user_id, content, image_path, video_path, likes_count, comments_count, created_at, updated_at
 		FROM group_posts
 		WHERE id = ?
 	`
@@ -858,6 +865,8 @@ func (r *SQLiteRepository) GetGroupPostByID(id int64) (*models.GroupPost, error)
 		&post.Content,
 		&imagePath,
 		&videoPath,
+		&post.LikesCount,
+		&post.CommentsCount,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)

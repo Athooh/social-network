@@ -744,7 +744,7 @@ func (s *GroupService) GetGroupPosts(groupID, userID string, limit, offset int) 
 	}
 
 	// Get posts
-	posts, err := s.repo.GetGroupPosts(groupID, limit, offset)
+	posts, err := s.repo.GetGroupPosts(groupID, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
