@@ -6,7 +6,7 @@ import { useAuth } from "@/context/authcontext";
 const GROUP_EVENT_TYPES = {
   GROUP_MESSAGE: "group_message",
   GROUP_MESSAGES_READ: "group_messages_read",
-  GROUP_USER_TYPING: "group_user_typing",
+  // GROUP_USER_TYPING: "group_user_typing",
   GROUP_USER_JOINED: "group_user_joined",
   GROUP_USER_LEFT: "group_user_left",
 };
@@ -78,140 +78,62 @@ export const useGroupChatService = (groupId) => {
     [authenticatedFetch, groupId]
   );
 
-  // Mark group messages as read
-  const markMessagesAsRead = useCallback(
-    async () => {
-      try {
-        const response = await authenticatedFetch("chat/group/mark-read", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            groupId,
-          }),
-        });
 
-        if (!response.ok) throw new Error("Failed to mark group messages as read");
 
-        setUnreadCounts(0);
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (!msg.isRead) {
-              return { ...msg, isRead: true, readAt: new Date().toISOString() };
-            }
-            return msg;
-          })
-        );
 
-        return true;
-      } catch (error) {
-        console.error("Error marking group messages as read:", error);
-        return false;
-      }
-    },
-    [authenticatedFetch, groupId]
-  );
-
-  // Send typing indicator for the group
-  const sendTypingIndicator = useCallback(
-    async () => {
-      try {
-        await authenticatedFetch("chat/group/typing", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            groupId,
-          }),
-        });
-        return true;
-      } catch (error) {
-        console.error("Error sending group typing indicator:", error);
-        return false;
-      }
-    },
-    [authenticatedFetch, groupId]
-  );
-
-  // Load active group members
-  const loadActiveUsers = useCallback(
-    async () => {
-      try {
-        // const response = await authenticatedFetch(`chat/group/members?groupId=${groupId}`);
-        // if (!response.ok) throw new Error("Failed to load group members");
-          // const data = await response.json();
-        const data = [
-            { id: 1, name: "John Doe", avatar: "/avatar1.png", isOnline: true },
-            { id: 2, name: "Jane Smith", avatar: "/avatar2.png", isOnline: true },]
-        setActiveUsers(data);
-        return data;
-      } catch (error) {
-        console.error("Error loading group members:", error);
-        return [];
-      }
-    },
-    [authenticatedFetch, groupId]
-  );
-
+  
   // Initialize WebSocket subscriptions
   const initializeWebSocketSubscriptions = useCallback(() => {
     if (!currentUser?.id || isInitialized || !groupId) return;
 
     // Handle new group messages
     const messageUnsubscribe = subscribe(GROUP_EVENT_TYPES.GROUP_MESSAGE, (payload) => {
-      if (!payload || payload.groupId !== groupId) return;
-
+      console.log("Payload Received: ", payload);
+      if (!payload || payload.GroupID !== groupId) return;
+    
       const {
-        messageId,
-        senderId,
-        groupId: receivedGroupId,
-        content,
-        createdAt,
-        isRead,
-        senderName,
-        senderAvatar,
+        id,
+        Content,
+        CreatedAt,
+        GroupID,
+        User
       } = payload;
-
+    
       const message = {
-        id: messageId,
-        senderId,
-        groupId: receivedGroupId,
-        content,
-        createdAt,
-        isRead,
-        sender: {
-          id: senderId,
-          firstName: senderName?.split(" ")[0] || "",
-          lastName: senderName?.split(" ")[1] || "",
-          avatar: senderAvatar,
-        },
+        id,
+        Content,
+        CreatedAt,
+        groupId: GroupID,
+        senderId: User.id,
+        senderName: User.firstName,
+        senderAvatar: User.avatar,
+        User,
+        isRead: false, // Optional: may be updated elsewhere
       };
-
+    
       setMessages((prev) => {
         const messageExists = prev.some(
           (msg) =>
-            msg.id === messageId ||
-            (msg.isTemp && msg.senderId === senderId && msg.content === content)
+            msg.id === id ||
+            (msg.isTemp && msg.senderId === User.id && msg.content === Content)
         );
-
+    
         if (messageExists) {
           return prev.map((msg) =>
-            msg.isTemp && msg.senderId === senderId && msg.content === content
+            msg.isTemp && msg.senderId === User.id && msg.content === Content
               ? message
               : msg
           );
         }
-
+    
         return [...prev, message];
       });
-
-      if (senderId !== currentUser.id && !isRead) {
+    
+      if (User.id !== currentUser.id && !message.isRead) {
         setUnreadCounts((prev) => prev + 1);
       }
     });
-
+    
     // Handle group messages read
     const readUnsubscribe = subscribe(GROUP_EVENT_TYPES.GROUP_MESSAGES_READ, (payload) => {
       if (!payload || payload.groupId !== groupId) return;
@@ -326,16 +248,14 @@ export const useGroupChatService = (groupId) => {
   useEffect(() => {
     if (currentUser?.id && groupId) {
       loadMessages();
-      loadActiveUsers();
     }
-  }, [currentUser, groupId, loadMessages, loadActiveUsers]);
+  }, [currentUser, groupId, loadMessages]);
 
   return {
     loadMessages,
     sendMessage,
-    markMessagesAsRead,
-    sendTypingIndicator,
-    loadActiveUsers,
+    // markMessagesAsRead,
+    // loadActiveUsers,
     messages,
     setMessages, 
     typingUsers,

@@ -12,7 +12,7 @@ const GroupChat = ({ groupId, groupName }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const { currentUser } = useAuth();
-  const { messages, setMessages, typingUsers, sendMessage, loadMessages, sendTypingIndicator } = useGroupChatService(groupId);
+  const { messages, setMessages, typingUsers, sendMessage, loadMessages } = useGroupChatService(groupId);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,9 +99,7 @@ const GroupChat = ({ groupId, groupName }) => {
   // Handle typing indicator
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
-    if (e.target.value.trim() && currentUser) {
-      sendTypingIndicator();
-    }
+   
   };
 
   if (isLoading) {

@@ -23,6 +23,9 @@ const (
 	MessagesRead   EventType = "messages_read"
 	UserTyping     EventType = "user_typing"
 
+	// group events
+	GroupMessage EventType = "group_message"
+
 	// header notifications
 	HeaderNotificationUpdate EventType = "notification_Update"
 )
