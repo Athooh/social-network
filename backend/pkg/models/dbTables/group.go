@@ -58,6 +58,7 @@ type GroupPost struct {
 	// Non-DB fields
 	User  *PostUserData `db:"-"`
 	Group *GroupBasic   `db:"-"`
+	Isliked bool          `db:"-"`
 }
 
 // GroupEvent represents an event in a group
