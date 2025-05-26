@@ -12,6 +12,7 @@ import MessageItem from "@/components/chat/MessageItem";
 import { formatRelativeTime } from "@/utils/dateUtils";
 import { showToast } from "@/components/ui/ToastContainer";
 import { BASE_URL } from "@/utils/constants";
+import EmojiPicker from "@/components/ui/EmojiPicker";
 
 export default function Messages() {
   const { currentUser } = useAuth();
@@ -36,6 +37,7 @@ export default function Messages() {
   const [newMessageText, setNewMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [localLoading, setLocalLoading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -139,6 +141,17 @@ export default function Messages() {
         console.error("Error marking messages as read:", error);
       }
     }
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    if (emoji) {
+      setNewMessage((prev) => prev + emoji);
+    }
+    setShowEmojiPicker(false);
+  };
+
+  const handleCloseEmojiPicker = () => {
+    setShowEmojiPicker(false);
   };
 
   // Filter contacts based on search query
@@ -416,9 +429,19 @@ export default function Messages() {
                 onSubmit={handleSendMessage}
                 className={styles.messageInputContainer}
               >
-                <button type="button" className={styles.attachButton}>
-                  <i className="fas fa-paperclip"></i>
-                </button>
+                <button
+                      type="button"
+                      className={styles.emojiButton}
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      😊
+                    </button>
+                    {showEmojiPicker && (
+                      <EmojiPicker
+                        onEmojiSelect={handleEmojiSelect}
+                        onClose={handleCloseEmojiPicker}
+                      />
+                )}
                 <input
                   type="text"
                   placeholder="Type a message..."
