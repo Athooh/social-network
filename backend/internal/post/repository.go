@@ -256,11 +256,6 @@ func (r *SQLiteRepository) UpdatePost(post *models.Post) error {
 func (r *SQLiteRepository) DeletePost(id int64) error {
 	query := "DELETE FROM posts WHERE id = ?"
 	_, err := r.db.Exec(query, id)
-	if err != nil {
-		return err
-	}
-
-	_,err = r.UpdatePostCommentCount(id, false)
 	return err
 }
 
