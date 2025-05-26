@@ -40,7 +40,6 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
   const [likesCount, setLikesCount] = useState(post.LikesCount || 0);
   const router = useRouter();
 
-  console.log(post)
   // Format the post data
   const formattedPost = {
     id: post.ID,
@@ -61,7 +60,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
       ? `${BASE_URL}/${post.VideoPath.String}`
       : null,
     userId: post.UserID,
-    groupName: post.Group?.name || null, // fallback if Group is null
+    groupName: post.Group?.name || null,
   };
   
 
@@ -75,7 +74,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
     if (loadingComments) return;
     setLoadingComments(true);
     try {
-      const commentsData = await getPostComments(post.id);
+      const commentsData = await getPostComments(formattedPost.id);
       if (commentsData) {
         setComments(commentsData.map(comment => ({
           ...comment,
@@ -132,7 +131,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
 
   const confirmDelete = async () => {
     try {
-      await deletePost(post.id);
+      await deletePost(formattedPost.id);
       if (onPostUpdated) onPostUpdated();
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -143,7 +142,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
 
   const handleLike = async () => {
     try {
-      const response = await likePost(post.id);
+      const response = await likePost(formattedPost.id);
       setIsLiked(response.isLiked);
       setLikesCount(response.likesCount);
       if (onPostUpdated) onPostUpdated();
@@ -161,7 +160,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
     }
 
     try {
-      const newComment = await addComment(post.id, commentText, commentImage);
+      const newComment = await addComment(formattedPost.id, commentText, commentImage);
       setComments(prev => [...prev, {
         ...newComment,
         authorName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "You",
@@ -273,7 +272,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
             <i className="fas fa-thumbs-up" style={{ color: "#2078f4" }}></i>
             <i className="fas fa-heart" style={{ color: "#f33e58" }}></i>
           </span>
-          <span>{formattedPost.LikesCount} likes</span>
+          <span>{formattedPost.likes} likes</span>
         </div>
         <div className={styles.engagement}>
           <span>{formattedPost.commentCount} comments</span>

@@ -92,13 +92,22 @@ func (r *SQLiteRepository) CreatePost(post *models.Post) error {
 func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 	query := `
 		SELECT id, user_id, content, image_path, video_path, privacy, likes_count, created_at, updated_at
-		FROM posts
-		WHERE id = ?
+		FROM (
+			SELECT id, user_id, content, image_path, video_path, privacy, likes_count, created_at, updated_at
+			FROM posts
+			WHERE id = ?
+			UNION ALL
+			SELECT id, user_id, content, image_path, video_path, 'public' as privacy, likes_count, created_at, updated_at
+			FROM group_posts
+			WHERE id = ?
+		)
+		LIMIT 1
 	`
 
 	post := &models.Post{}
 	var imagePath, videoPath sql.NullString
-	err := r.db.QueryRow(query, id).Scan(
+
+	err := r.db.QueryRow(query, id, id).Scan(
 		&post.ID,
 		&post.UserID,
 		&post.Content,
@@ -109,6 +118,7 @@ func (r *SQLiteRepository) GetPostByID(id int64) (*models.Post, error) {
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -426,12 +436,16 @@ func (r *SQLiteRepository) LikePost(postID int64, userID string) error {
 		return err
 	}
 
-	// Increment likes count
+	// Increment likes count in both tables
 	_, err = tx.Exec(`
 		UPDATE posts 
 		SET likes_count = likes_count + 1 
-		WHERE id = ?
-	`, postID)
+		WHERE id = ?;
+
+		UPDATE group_posts 
+		SET likes_count = likes_count + 1 
+		WHERE id = ?;
+	`, postID, postID)
 	if err != nil {
 		return err
 	}
@@ -462,12 +476,16 @@ func (r *SQLiteRepository) UnlikePost(postID int64, userID string) error {
 	}
 
 	if rowsAffected > 0 {
-		// Decrement likes count only if a like was actually removed
+		// Decrement likes count in both tables if a like was actually removed
 		_, err = tx.Exec(`
 			UPDATE posts 
 			SET likes_count = likes_count - 1 
-			WHERE id = ? AND likes_count > 0
-		`, postID)
+			WHERE id = ? AND likes_count > 0;
+
+			UPDATE group_posts 
+			SET likes_count = likes_count - 1 
+			WHERE id = ? AND likes_count > 0;
+		`, postID, postID)
 		if err != nil {
 			return err
 		}
@@ -492,8 +510,12 @@ func (r *SQLiteRepository) HasLiked(postID int64, userID string) (bool, error) {
 func (r *SQLiteRepository) GetLikesCount(postID int64) (int, error) {
 	var count int
 	err := r.db.QueryRow(`
-		SELECT likes_count FROM posts WHERE id = ?
-	`, postID).Scan(&count)
+		SELECT COALESCE(
+			(SELECT likes_count FROM posts WHERE id = ?),
+			(SELECT likes_count FROM group_posts WHERE id = ?),
+			0
+		)
+	`, postID, postID).Scan(&count)
 	return count, err
 }
 

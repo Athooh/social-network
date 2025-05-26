@@ -781,7 +781,7 @@ func (r *SQLiteRepository) CreateGroupPost(post *models.GroupPost) error {
 // GetGroupPosts gets all posts in a group with pagination
 func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*models.GroupPost, error) {
 	query := `
-		SELECT id, group_id, user_id, content, image_path, video_path, created_at, updated_at
+		SELECT id, group_id, user_id, content, image_path, video_path, likes_count, comments_count, created_at, updated_at
 		FROM group_posts
 		WHERE group_id = ?
 		ORDER BY created_at DESC
@@ -807,6 +807,8 @@ func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*
 			&post.Content,
 			&imagePath,
 			&videoPath,
+			&post.LikesCount,
+			&post.CommentsCount,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
@@ -843,7 +845,7 @@ func (r *SQLiteRepository) GetGroupPosts(groupID string, limit, offset int) ([]*
 // GetGroupPostByID gets a post by ID
 func (r *SQLiteRepository) GetGroupPostByID(id int64) (*models.GroupPost, error) {
 	query := `
-		SELECT id, group_id, user_id, content, image_path, video_path, created_at, updated_at
+		SELECT id, group_id, user_id, content, image_path, video_path, likes_count, comments_count, created_at, updated_at
 		FROM group_posts
 		WHERE id = ?
 	`
@@ -858,6 +860,8 @@ func (r *SQLiteRepository) GetGroupPostByID(id int64) (*models.GroupPost, error)
 		&post.Content,
 		&imagePath,
 		&videoPath,
+		&post.LikesCount,
+		&post.CommentsCount,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)
