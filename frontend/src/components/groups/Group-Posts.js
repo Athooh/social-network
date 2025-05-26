@@ -12,7 +12,15 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-export default function GroupPost({ post, onPostUpdated, isDetailView = false }) {
+let userdata = null;
+try {
+  const raw = localStorage.getItem("userData");
+  if (raw) userdata = JSON.parse(raw);
+} catch (e) {
+  console.error("Invalid userData in localStorage:", e);
+}
+
+export default function GroupPost({ currentUser, post, onPostUpdated, isDetailView = false }) {
   const {
     likePost,
     addComment,
@@ -22,7 +30,6 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
     updatePostLikes,
   } = usePostService();
   const { subscribe } = useWebSocket();
-  const { currentUser } = useAuth();
   const [isLiked, setIsLiked] = useState(post.Isliked);
   const [showComments, setShowComments] = useState(isDetailView);
   const [commentText, setCommentText] = useState("");
@@ -164,7 +171,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
       setComments(prev => [...prev, {
         ...newComment,
         authorName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "You",
-        authorImage: currentUser?.avatar || "/avatar4.png",
+        authorImage: currentUser ? `${currentUser.avatar}` : "/avatar4.png",
         timestamp: "just now"
       }]);
       setCommentText("");
@@ -206,6 +213,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
     router.push(`/profile/${userId}`);
   };
 
+  console.log(userdata)
   return (
     <article className={styles.post}>
       <div className={styles.postHeader}>
@@ -304,7 +312,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
         <div className={styles.commentsSection}>
           <form onSubmit={handleComment} className={styles.commentForm}>
             <img
-              src={currentUser?.avatar || "/avatar4.png"}
+              src={`${BASE_URL}uploads/${userdata.avatar}` || "/avatar4.png"}
               alt="Your avatar"
               className={styles.commentAvatar}
             />
@@ -364,7 +372,7 @@ export default function GroupPost({ post, onPostUpdated, isDetailView = false })
             return (
               <div key={`comment-${comment.id}`} className={styles.comment}>
                 <Image
-                  src={comment.authorImage || "/avatar4.png"}
+                  src={comment.authorImage ? `${comment.authorImage}` : "/avatar4.png"}
                   alt={`${comment.authorName}'s avatar`}
                   height={32}
                   width={32}

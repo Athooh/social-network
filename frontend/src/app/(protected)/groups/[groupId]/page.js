@@ -72,6 +72,7 @@ export default function GroupPostPage() {
             {posts !== null && posts.map(post => (
               <div key={post.ID}>
                 <GroupPost
+                  currentuser= {userdata}
                   post={post}
                   onPostUpdated={fetchGroups}
                 />
