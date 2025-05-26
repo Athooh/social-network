@@ -43,6 +43,7 @@ type Repository interface {
 	// New method
 	GetUserFollowers(userID string) ([]string, error)
 	UpdateUserStats(userID string, statsType string, increment bool) (int, error)
+	getNextAvailableID() (int64, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -818,4 +819,32 @@ func (r *SQLiteRepository) updateUserStatsWithValue(userID string, statsType str
 	}
 
 	return value, nil
+}
+
+// getNextAvailableID checks 'posts' and 'group_posts' for max(id) and returns next available int64 ID.
+func (r *SQLiteRepository) getNextAvailableID() (int64, error) {
+    var maxPostID, maxGroupPostID sql.NullInt64
+
+    // Query max id from 'posts'
+    err := r.db.QueryRow("SELECT MAX(id) FROM posts").Scan(&maxPostID)
+    if err != nil {
+        return 0, fmt.Errorf("error querying posts: %v", err)
+    }
+
+    // Query max id from 'group_posts'
+    err = r.db.QueryRow("SELECT MAX(id) FROM group_posts").Scan(&maxGroupPostID)
+    if err != nil {
+        return 0, fmt.Errorf("error querying group_posts: %v", err)
+    }
+
+    // Calculate the next ID
+    maxID := int64(0)
+    if maxPostID.Valid && maxPostID.Int64 > maxID {
+        maxID = maxPostID.Int64
+    }
+    if maxGroupPostID.Valid && maxGroupPostID.Int64 > maxID {
+        maxID = maxGroupPostID.Int64
+    }
+
+    return maxID + 1, nil
 }
