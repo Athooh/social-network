@@ -3,6 +3,7 @@ import styles from '@/styles/GroupChat.module.css';
 import { useAuth } from '@/context/authcontext';
 import { useGroupChatService } from '@/services/groupChatService'; 
 import { BASE_URL } from "@/utils/constants";
+import EmojiPicker from '../ui/EmojiPicker';
 
 
 const GroupChat = ({ groupId, groupName }) => {
@@ -101,6 +102,17 @@ const GroupChat = ({ groupId, groupName }) => {
     setNewMessage(e.target.value);
    
   };
+  const handleEmojiSelect = (emoji) => {
+    if (emoji) {
+      setNewMessage((prev) => prev + emoji);
+    }
+    setShowEmojiPicker(false);
+  };
+
+  const handleCloseEmojiPicker = () => {
+    setShowEmojiPicker(false);
+  };
+
 
   if (isLoading) {
     return <div className={styles.loading}>Loading chat...</div>;
@@ -115,7 +127,7 @@ const GroupChat = ({ groupId, groupName }) => {
       <div className={styles.chatMessages}>
         {messages.map((message) => (
           <div
-            key={message.ID}
+            key={message.ID * Math.random(50)}
             className={`${styles.messageWrapper} ${
               currentUser && message.User.id === currentUser.id ? styles.ownMessage : ''
             }`}
@@ -151,6 +163,12 @@ const GroupChat = ({ groupId, groupName }) => {
         >
           😊
         </button>
+        {showEmojiPicker && (
+          <EmojiPicker
+            onEmojiSelect={handleEmojiSelect}
+            onClose={handleCloseEmojiPicker}
+          />
+        )}
         <input
           type="text"
           value={newMessage}
