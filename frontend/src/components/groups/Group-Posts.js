@@ -116,17 +116,17 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
     setShowOptions(false);
   };
 
-  const handleDeleteComment = (comment) => {
+  const handleDeleteComment = (comment, postid) => {
     showConfirmation({
       title: "Delete Comment",
       message: "Are you sure you want to delete this comment?",
-      onConfirm: () => confirmDeleteComment(comment.id),
+      onConfirm: () => confirmDeleteComment(comment.id, postid),
     });
   };
 
-  const confirmDeleteComment = async (commentId) => {
+  const confirmDeleteComment = async (commentId,postid) => {
     try {
-      await deleteComment(commentId);
+      await deleteComment(commentId,postid);
       setComments(comments.filter((comment) => comment.id !== commentId));
       if (onPostUpdated) onPostUpdated();
     } catch (error) {
@@ -397,7 +397,7 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
                     {isCommentOwner && (
                       <button
                         className={styles.deleteCommentBtn}
-                        onClick={() => handleDeleteComment(comment)}
+                        onClick={() => handleDeleteComment(comment, formattedPost.id)}
                       >
                         Delete
                       </button>
