@@ -6,7 +6,6 @@ import (
 	"mime/multipart"
 	"time"
 
-	"github.com/Athooh/social-network/internal/event"
 	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
@@ -41,17 +40,6 @@ type Service interface {
 	GetGroupPosts(groupID, userID string, limit, offset int) ([]*models.GroupPost, error)
 	DeleteGroupPost(postID int64, userID string) error
 
-	// Group events operations
-	CreateEvent(groupID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error)
-	GetEvent(eventID, userID string) (*models.GroupEvent, error)
-	GetGroupEvents(groupID, userID string) ([]*models.GroupEvent, error)
-	UpdateEvent(eventID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error)
-	DeleteEvent(eventID, userID string) error
-
-	// Event responses operations
-	RespondToEvent(eventID, userID, response string) error
-	GetEventResponses(eventID, userID string, responseType string) ([]*models.EventResponse, error)
-
 	// Group chat operations
 	SendChatMessage(groupID, userID, content string) (*models.GroupChatMessage, error)
 	GetGroupChatMessages(groupID, userID string, limit, offset int) ([]*models.GroupChatMessage, error)
@@ -63,12 +51,11 @@ type GroupService struct {
 	fileStore     *filestore.FileStore
 	log           *logger.Logger
 	wsHub         *websocket.Hub
-	eventService  event.Service
 	notifications *Notifications
 }
 
 // NewService creates a new group service
-func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, wsHub *websocket.Hub, eventService event.Service) *GroupService {
+func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, wsHub *websocket.Hub) *GroupService {
 	notifications := NewNotifications(repo, wsHub, log)
 
 	return &GroupService{
@@ -76,7 +63,6 @@ func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Log
 		fileStore:     fileStore,
 		log:           log,
 		wsHub:         wsHub,
-		eventService:  eventService,
 		notifications: notifications,
 	}
 }
@@ -796,41 +782,6 @@ func (s *GroupService) DeleteGroupPost(postID int64, userID string) error {
 	}
 
 	return nil
-}
-
-// CreateEvent creates a new event in a group
-func (s *GroupService) CreateEvent(groupID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error) {
-	return s.eventService.CreateEvent(groupID, userID, title, description, eventDate, banner)
-}
-
-// GetEvent gets an event by ID
-func (s *GroupService) GetEvent(eventID, userID string) (*models.GroupEvent, error) {
-	return s.eventService.GetEvent(eventID, userID)
-}
-
-// GetGroupEvents gets all events in a group
-func (s *GroupService) GetGroupEvents(groupID, userID string) ([]*models.GroupEvent, error) {
-	return s.eventService.GetGroupEvents(groupID, userID)
-}
-
-// UpdateEvent updates an event
-func (s *GroupService) UpdateEvent(eventID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error) {
-	return s.eventService.UpdateEvent(eventID, userID, title, description, eventDate, banner)
-}
-
-// DeleteEvent deletes an event
-func (s *GroupService) DeleteEvent(eventID, userID string) error {
-	return s.eventService.DeleteEvent(eventID, userID)
-}
-
-// RespondToEvent adds or updates a user's response to an event
-func (s *GroupService) RespondToEvent(eventID, userID, responseType string) error {
-	return s.eventService.RespondToEvent(eventID, userID, responseType)
-}
-
-// GetEventResponses gets all responses to an event
-func (s *GroupService) GetEventResponses(eventID, userID string, responseType string) ([]*models.EventResponse, error) {
-	return s.eventService.GetEventResponses(eventID, userID, responseType)
 }
 
 // SendChatMessage sends a message to a group chat
