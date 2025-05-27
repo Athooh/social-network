@@ -14,7 +14,6 @@ export const useGroupService = () => {
                 body: formData,
             });
 
-            console.log("Response from createGroup:", response);
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(
@@ -90,7 +89,6 @@ export const useGroupService = () => {
             const response = await authenticatedFetch(`groups?id=${groupId}`, {
                 method: "DELETE",
             });
-            console.log("Response from deleteGroup:", response);
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || "Failed to delete group");
@@ -166,7 +164,6 @@ export const useGroupService = () => {
 
             const group = await response.json();
 
-            console.log(group)
             return group;
         } catch (error) {
             console.error("Error fetching groups:", error);
