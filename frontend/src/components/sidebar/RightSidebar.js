@@ -4,11 +4,15 @@ import styles from "@/styles/Sidebar.module.css";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useFriendService } from "@/services/friendService";
+import { useGroupService } from "@/services/groupService";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useUserStatus } from "@/services/userStatusService";
 import ContactsSection from "@/components/contacts/ContactsList";
+import { showToast } from "@/components/ui/ToastContainer";
 
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", "");
 // Separate components for better organization
 const FriendRequestSection = ({
   friendRequests,
@@ -53,27 +57,36 @@ const FriendRequestSection = ({
     )}
   </section>
 );
-const GroupsSection = ({ groups }) => (
+const GroupsSection = ({ groups, onJoin }) => (
   <section className={styles.groups}>
     <h2>Groups</h2>
-    {groups.map((group) => (
-      <div key={group.id} className={styles.groupItem}>
-        <div className={styles.groupProfile}>
-          <img src={group.image} alt={group.name} />
-          <div className={styles.groupInfo}>
-            <h3>{group.name}</h3>
-            <span>{group.members} members</span>
+    {groups
+      .filter(group => !group.IsMember)
+      .slice(0, 3)
+      .map((group) => (
+        <div key={group.ID} className={styles.groupItem}>
+          <div className={styles.groupProfile}>
+            <img src={group.ProfilePicPath?.String ?
+              `${BASE_URL}/uploads/${group.ProfilePicPath.String}` :
+              "/avatar5.jpg"}
+              alt={group.Name} />
+            <div className={styles.groupInfo}>
+              <h3>{group.Name}</h3>
+              <span>{group.MemberCount} members</span>
+            </div>
+          </div>
+          <div className={styles.joinActions}>
+            <button
+              className={styles.joinButton}
+              onClick={() => onJoin(group.ID)}
+            >Join</button>
           </div>
         </div>
-        <div className={styles.joinActions}>
-          <button className={styles.joinButton}>Join</button>
-        </div>
-      </div>
-    ))}
+      ))}
     <Link href="/groups">
       <div className={styles.viewGroup}>
         <button className={styles.viewButton}>
-          View Groups <i className="fa-solid fa-users-line"></i>
+          See All Groups <i className="fas fa-arrow-right"></i>
         </button>
       </div>
     </Link>
@@ -81,14 +94,8 @@ const GroupsSection = ({ groups }) => (
 );
 
 export default function RightSidebar() {
-  // Static data for groups (could be moved to a service later)
-  const groups = [
-    { id: 1, name: "React Developers", image: "/react.png", members: 45 },
-    { id: 2, name: "Vue.js Enthusiasts", image: "/vue.png", members: 32 },
-    { id: 3, name: "Angular Developers", image: "/angular.png", members: 28 },
-  ];
-
-  // Use our friend service
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
   const {
     friendRequests,
     contacts,
@@ -97,9 +104,39 @@ export default function RightSidebar() {
     isLoadingRequests,
     isLoadingContacts,
   } = useFriendService();
+  const { getallgroups, joinGroup } = useGroupService();
+  const router = useRouter();
 
   // Limit contacts to display (to avoid cluttering the sidebar)
   const displayedContacts = contacts.slice(0, 10);
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const fetchGroups = async () => {
+    try {
+      const fetchedGroups = await getallgroups();
+      setGroups(fetchedGroups);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinGroup = async (group) => {
+    try {
+      const success = await joinGroup(group.ID);
+      if (success) {
+        showToast("Joined group successfully", "success");
+        fetchGroups(); // Refresh the groups list
+      }
+    } catch (error) {
+      console.error("Error joining group:", error);
+      showToast("Failed to join group", "error");
+    }
+  };
 
   return (
     <div className={styles.rightSidebar}>
@@ -116,7 +153,13 @@ export default function RightSidebar() {
         isProfilePage={false}
       />
 
-      <GroupsSection groups={groups} />
+      {loading ? (
+        <div className={styles.loadingContainer}>
+          <LoadingSpinner size="small" color="primary" />
+        </div>
+      ) : (
+        <GroupsSection groups={groups} onJoin={handleJoinGroup} />
+      )}
     </div>
   );
 }
