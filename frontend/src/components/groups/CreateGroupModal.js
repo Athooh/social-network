@@ -4,7 +4,7 @@ import { useState } from 'react';
 import styles from '@/styles/CreateGroupModal.module.css';
 import { useGroupService } from '@/services/groupService';
 
-const CreateGroupModal = ({ isOpen, onClose }) => {
+const CreateGroupModal = ({ isOpen, onClose, onGroupCreated }) => {
   const [groupData, setGroupData] = useState({
     name: '',
     description: '',
@@ -43,6 +43,7 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
     if (groupData.banner) formData.append('banner', groupData.banner);
     if (groupData.profilePic) formData.append('profilePic', groupData.profilePic);
     createGroup(formData)
+    onGroupCreated();
     onClose();
   };
 
