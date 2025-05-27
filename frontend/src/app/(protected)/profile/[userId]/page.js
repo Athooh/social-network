@@ -27,7 +27,6 @@ const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base U
 export default function ProfilePage({ params }) {
   const { userId } = use(params)
 
-  console.log("userId", userId)
   const { getUserPhotos } = usePostService();
 
   const [photos, setPhotos] = useState([]);
@@ -86,7 +85,6 @@ export default function ProfilePage({ params }) {
         }
 
         const data = await response.json();
-        console.log("User data:", data);
 
         if (isMounted.current) {
           setUserData(data.profile);
@@ -112,7 +110,6 @@ export default function ProfilePage({ params }) {
 
   // Function to load user photos - defined with useCallback to prevent recreation
   const loadUserPhotos = useCallback(async () => {
-    console.log("loadUserPhotos called with userId:", userData?.id);
 
     if (!userData || !userData.id || isPrivateProfile) {
       if (isMounted.current) {
@@ -129,7 +126,6 @@ export default function ProfilePage({ params }) {
 
       // Fetch photos
       const userPhotos = await getUserPhotos(userData.id);
-      console.log("Fetched photos:", userPhotos);
 
       // Only update state if component is still mounted
       if (isMounted.current) {
@@ -165,7 +161,6 @@ export default function ProfilePage({ params }) {
     // 2. Photos haven't been loaded yet
     // 3. Profile is not private
     if (userData?.id && !photosLoadedRef.current && !isPrivateProfile) {
-      console.log("Loading photos for the first time");
       loadUserPhotos();
     }
   }, [userData, loadUserPhotos, isPrivateProfile]);
@@ -173,7 +168,6 @@ export default function ProfilePage({ params }) {
   // Function to refresh photos (can be called after updates)
   const refreshPhotos = useCallback(() => {
     if (userData?.id && !isPrivateProfile) {
-      console.log("Refreshing photos");
       // Reset the flag to allow loading again
       photosLoadedRef.current = false;
       loadUserPhotos();
