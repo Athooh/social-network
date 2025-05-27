@@ -13,6 +13,7 @@ import {
   faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "@/styles/EditProfileModal.module.css";
+import { showToast } from "../ui/ToastContainer";
 
 import { useAuth } from "@/context/authcontext";
 
@@ -226,6 +227,7 @@ const EditProfileModal = ({
         onProfileUpdate(updatedProfile);
       }
       router.refresh()
+      showToast("Profile updated successfully", "success")
 
       onClose();
     } catch (err) {
