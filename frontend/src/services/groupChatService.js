@@ -30,7 +30,6 @@ export const useGroupChatService = (groupId) => {
           if (!response.ok) throw new Error("Failed to load group messages");
           
           const data = await response.json();
-          console.log("Loaded group messages:", data);
           
           if (!data) {
               setMessages([]); 
@@ -88,7 +87,6 @@ export const useGroupChatService = (groupId) => {
 
     // Handle new group messages
     const messageUnsubscribe = subscribe(GROUP_EVENT_TYPES.GROUP_MESSAGE, (payload) => {
-      console.log("Payload Received: ", payload);
       if (!payload || payload.GroupID !== groupId) return;
     
       const {
