@@ -41,8 +41,8 @@ type NewNotification struct {
 	SenderId        sql.NullString
 	NotficationType string
 	Message         string
-	TargetGroupID   sql.NullInt64
-	TargetEventID   sql.NullInt64
+	TargetGroupID   sql.NullString
+	TargetEventID   sql.NullString
 }
 
 // NewService creates a new notification service
