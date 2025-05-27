@@ -117,19 +117,19 @@ func (h *Handler) GetUserGroups(w http.ResponseWriter, r *http.Request) {
 
 	// Check for userId query parameter
 	userID := r.URL.Query().Get("userId")
+	viewerID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
 	// If query parameter is empty, fallback to context
 	if userID == "" {
-		var ok bool
-		userID, ok = auth.GetUserIDFromContext(r.Context())
-		if !ok || userID == "" {
-			h.sendError(w, http.StatusUnauthorized, "Unauthorized")
-			return
-		}
+		userID = viewerID
 	}
 
 	// Get groups
-	groups, err := h.service.GetUserGroups(userID)
+	groups, err := h.service.GetUserGroups(userID, viewerID)
 	if err != nil {
 		h.log.Error("Failed to get user groups: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
