@@ -72,7 +72,6 @@ export default function ProfilePage({ params }) {
         }
 
         const data = await response.json();
-        console.log("User data:", data);
 
         if (isMounted.current) {
           setUserData(data);
@@ -104,7 +103,6 @@ export default function ProfilePage({ params }) {
 
   // Function to load user photos - defined with useCallback to prevent recreation
   const loadUserPhotos = useCallback(async () => {
-    console.log("loadUserPhotos called with userId:", userData?.id);
 
     if (!userData || !userData.id) {
       if (isMounted.current) {
@@ -121,7 +119,6 @@ export default function ProfilePage({ params }) {
 
       // Fetch photos
       const userPhotos = await getUserPhotos(userData.id);
-      console.log("Fetched photos:", userPhotos);
 
       // Only update state if component is still mounted
       if (isMounted.current) {
@@ -156,7 +153,6 @@ export default function ProfilePage({ params }) {
     // 1. We have userData with an ID
     // 2. Photos haven't been loaded yet
     if (userData?.id && !photosLoadedRef.current) {
-      console.log("Loading photos for the first time");
       loadUserPhotos();
     }
   }, [userData, loadUserPhotos]);
@@ -164,7 +160,6 @@ export default function ProfilePage({ params }) {
   // Function to refresh photos (can be called after updates)
   const refreshPhotos = useCallback(() => {
     if (userData?.id) {
-      console.log("Refreshing photos");
       // Reset the flag to allow loading again
       photosLoadedRef.current = false;
       loadUserPhotos();
