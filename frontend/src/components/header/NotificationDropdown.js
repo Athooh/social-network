@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "@/styles/NotificationDropdown.module.css";
 import { formatDistanceToNow } from "date-fns";
-import { useNotificationService } from "@/services/notificationService"; // Adjust the path based on your project structure
+import { useNotificationService } from "@/services/notificationService";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,9 +30,10 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle friend request response (accept/decline)
-  const handleNotificationResponse = async (followerId,notificationId, action) => {
-    await handleFriendRequest(followerId,notificationId, action);
+  // Handle friend request or group event response (accept/decline)
+  const handleNotificationResponse = async (id, notificationId, action, type) => {
+    await handleFriendRequest(id, notificationId, action, type);
+    fetchNotifications();
   };
 
   const handleMarkAllAsRead = async () => {
@@ -116,7 +117,7 @@ export default function NotificationDropdown() {
               <div className={styles.actions}>
                 <button
                   onClick={() =>
-                    handleNotificationResponse(notification.senderId,notification.id, "accept")
+                    handleNotificationResponse(notification.senderId, notification.id, "accept", "friendRequest")
                   }
                   className={styles.acceptButton}
                 >
@@ -124,7 +125,7 @@ export default function NotificationDropdown() {
                 </button>
                 <button
                   onClick={() =>
-                    handleNotificationResponse(notification.senderId,notification.id, "decline")
+                    handleNotificationResponse(notification.senderId, notification.id, "decline", "friendRequest")
                   }
                   className={styles.declineButton}
                 >
@@ -148,6 +149,42 @@ export default function NotificationDropdown() {
               You have been invited to {notification.contentType} by{" "}
               <strong>{notification.sender}</strong>
             </span>
+          </div>
+        );
+      case "groupEvent":
+        return (
+          <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
+            </div>
+            <div className={styles.textBox}>
+              <span className={styles.text}>
+                You have been invited to the event <strong>{notification.contentType}</strong> by{" "}
+                <strong>{notification.sender}</strong>
+              </span>
+              <div className={styles.actions}>
+                <button
+                  onClick={() =>
+                    handleNotificationResponse(notification.eventId, notification.id, "going", "groupEvent")
+                  }
+                  className={styles.acceptButton}
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() =>
+                    handleNotificationResponse(notification.eventId, notification.id, "not_going", "groupEvent")
+                  }
+                  className={styles.declineButton}
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
           </div>
         );
       default:
