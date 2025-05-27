@@ -31,7 +31,6 @@ const GroupChat = ({ groupId, groupName }) => {
       }
     };
 
-    console.log("Current user:", currentUser);
     if (currentUser && groupId) {
       fetchMessages();
     }
