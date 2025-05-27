@@ -19,7 +19,6 @@ let userdata = null;
 try {
   const raw = localStorage.getItem("userData");
   if (raw) userdata = JSON.parse(raw);
-  console.log("User data from localStorage:", userdata);
 } catch (e) {
   console.error("Invalid userData in localStorage:", e);
 }
@@ -35,7 +34,6 @@ export default function GroupFeeds() {
     try {
       const fetchedGroups = await getallgroups();
       setGroups(fetchedGroups);
-      console.log('Fetched groups:', fetchedGroups);
     } catch (error) {
       console.error('Error fetching groups:', error);
     } finally {
