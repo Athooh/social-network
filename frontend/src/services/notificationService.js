@@ -32,7 +32,6 @@ export const useNotificationService = () => {
       }
 
       const data = await response.json();
-      console.log("Fetched notifications:", data);
 
       if (data) {
         // Transform the data to match the component's expected format
@@ -194,7 +193,6 @@ export const useNotificationService = () => {
           }
         }
       } else if (type === "groupEvent") {
-        console.log(`Responding to group event with ID: ${id} and action: ${action}`);
         const response = await respondToEvent(id, action);
         if (!response) {
           return;
@@ -217,7 +215,6 @@ export const useNotificationService = () => {
   useEffect(() => {
     // Listen for new notifications
     const unsubscribeNotification = subscribe(EVENT_TYPES.NOTIFICATION_UPDATE, (payload) => {
-      console.log("New notification payload:", payload);
       if (payload) {
         const newNotification = {
           id: payload.id,
