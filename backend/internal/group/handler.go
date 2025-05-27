@@ -115,11 +115,17 @@ func (h *Handler) GetUserGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user ID from context
-	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok || userID <= "" {
-		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
-		return
+	// Check for userId query parameter
+	userID := r.URL.Query().Get("userId")
+
+	// If query parameter is empty, fallback to context
+	if userID == "" {
+		var ok bool
+		userID, ok = auth.GetUserIDFromContext(r.Context())
+		if !ok || userID == "" {
+			h.sendError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 	}
 
 	// Get groups
