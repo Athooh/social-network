@@ -46,8 +46,8 @@ func (r *SQLiteRepository) CreateNotification(notification *models.Notification)
 		notification.Message,
 		notification.IsRead,
 		notification.CreatedAt,
-		utils.NullableInt64(notification.TargetGroupID),
-		utils.NullableInt64(notification.TargetEventID),
+		utils.NullableString(notification.TargetGroupID),
+		utils.NullableString(notification.TargetEventID),
 	)
 	if err != nil {
 		return err
