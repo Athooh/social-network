@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import styles from '@/styles/CreateEventModal.module.css';
+import { showToast } from '../ui/ToastContainer';
 
 const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
   const [eventData, setEventData] = useState({
@@ -148,7 +149,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
                   <i className="fas fa-globe"></i>
                   <div>
                     <span>Public</span>
-                    <small>Anyone can see who's attending the event and what they post.</small>
+                    <small>Anyone can see who&apos;s attending the event and what they post.</small>
                   </div>
                 </label>
                 <label className={styles.radioLabel}>
@@ -162,7 +163,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
                   <i className="fas fa-lock"></i>
                   <div>
                     <span>Private</span>
-                    <small>Only members can see who's attending the event and what they post.</small>
+                    <small>Only members can see who&apos;s attending the event and what they post.</small>
                   </div>
                 </label>
               </div>
