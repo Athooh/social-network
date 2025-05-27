@@ -3,7 +3,8 @@ import styles from '@/styles/GroupPhotos.module.css';  // Update import to use c
 import { BASE_URL } from '@/utils/constants';
 
 const GroupPhotos = ({ posts }) => {
-  console.log("GroupPhotos posts:", posts);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   if (posts == null || posts.length === 0) { 
     return <div>No photos available</div>;
   }
@@ -16,10 +17,6 @@ const GroupPhotos = ({ posts }) => {
   }));
 
 
-  console.log("Photos:", photos);
-
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const photosPerPage = 20;
 
   const handlePhotoClick = (index) => {
