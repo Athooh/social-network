@@ -1,10 +1,15 @@
 package utils
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 // checks nullable stirngs
 func NullableString(ns sql.NullString) interface{} {
+	fmt.Println("=============NullableString:===================", ns)
 	if ns.Valid {
+		fmt.Println("NullableString:", ns.String)
 		return ns.String
 	}
 	return nil
