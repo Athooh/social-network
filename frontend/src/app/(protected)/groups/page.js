@@ -17,7 +17,6 @@ let userdata = null;
 try {
   const raw = localStorage.getItem("userData");
   if (raw) userdata = JSON.parse(raw);
-  console.log("User data from localStorage:", userdata);
 } catch (e) {
   console.error("Invalid userData in localStorage:", e);
 }
