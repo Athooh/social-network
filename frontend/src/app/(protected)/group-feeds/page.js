@@ -11,6 +11,7 @@ import groupFeeds from "@/styles/GroupFeeds.module.css";
 import GroupPost from '@/components/groups/Group-Posts';
 import { useGroupService } from '@/services/groupService';
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
+import { showToast } from "@/components/ui/ToastContainer";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", "");
