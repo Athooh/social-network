@@ -13,6 +13,6 @@ type Notification struct {
 	Message       string         `db:"message,notnull"`                                                                           // Notification message
 	IsRead        bool           `db:"is_read,notnull,default=false"`                                                             // Read status
 	CreatedAt     time.Time      `db:"created_at,default=CURRENT_TIMESTAMP"`                                                      // Creation time
-	TargetGroupID sql.NullInt64  `db:"target_group_id" references:"groups(id) ON DELETE SET NULL"`                                // Nullable group FK
-	TargetEventID sql.NullInt64  `db:"target_event_id" references:"group_events(id) ON DELETE SET NULL"`                          // Nullable event FK
+	TargetGroupID sql.NullString `db:"target_group_id" references:"groups(id) ON DELETE SET NULL"`                                // Nullable group FK
+	TargetEventID sql.NullString `db:"target_event_id" references:"group_events(id) ON DELETE SET NULL"`                          // Nullable event FK
 }
