@@ -2,6 +2,10 @@ import React from 'react';
 import styles from '@/styles/ProfileGroups.module.css';
 import groupStyles from '@/styles/Groups.module.css';
 import ContactsList from '@/components/contacts/ContactsList';
+import { useGroupService } from '@/services/groupService';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { showToast } from '../ui/ToastContainer';
 
 // Import the sample groups (you should later replace this with actual user groups data)
 const sampleGroups = [
@@ -34,7 +38,7 @@ const sampleGroups = [
   {
     id: 3,
     name: "Travelers",
-    banner: "/banner3.jpg", 
+    banner: "/banner3.jpg",
     profilePic: "/avatar2.png",
     isPublic: true,
     memberCount: 8433,
@@ -82,18 +86,37 @@ const sampleGroups = [
       { id: 17, avatar: "/avatar.png" },
       { id: 18, avatar: "/avatar1.png" },
     ]
-},
+  },
   // ... you can import more groups from the groups page
 ];
 
-const ProfileGroups = () => {
+const ProfileGroups = ({ userData }) => {
+  const router = useRouter();
+  const [userGroups, setUserGroups] = useState([]);
+  const { getusergroups, deleteGroup, leaveGroup, joinGroup } = useGroupService();
+
+  const fetchGroups = async () => {
+    try {
+      
+      const result = await getusergroups(userData.id)
+      console.log(result)
+      setUserGroups(result)
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
+
+  }
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
   return (
     <div className={styles.groupsContainer}>
       <div className={styles.mainContent}>
         <div className={groupStyles.groupsHeader}>
           <h2>My Groups</h2>
         </div>
-        
+
         <div className={groupStyles.groupsGrid}>
           {sampleGroups.map(group => (
             <div key={group.id} className={groupStyles.groupCard}>
@@ -107,14 +130,14 @@ const ProfileGroups = () => {
                   <i className={`fas ${group.isPublic ? 'fa-globe' : 'fa-lock'}`}></i>
                   {group.isPublic ? 'Public Group' : 'Private Group'}
                 </span>
-                
+
                 <div className={groupStyles.memberInfo}>
                   <div className={groupStyles.memberAvatars}>
                     {group.members.map((member, index) => (
-                      <img 
-                        key={member.id} 
-                        src={member.avatar} 
-                        alt="" 
+                      <img
+                        key={member.id}
+                        src={member.avatar}
+                        alt=""
                         className={groupStyles.memberAvatar}
                         style={{ zIndex: 3 - index }}
                       />
@@ -124,12 +147,12 @@ const ProfileGroups = () => {
                     {group.memberCount.toLocaleString()} members
                   </span>
                 </div>
-                
+
                 <hr className={groupStyles.divider} />
-                
+
                 <div className={groupStyles.groupActions}>
                   <button className={styles.inviteBtn}>
-                     View Group
+                    View Group
                   </button>
                   <button className={styles.manageBtn}>
                     Manage Group
