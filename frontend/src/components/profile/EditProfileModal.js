@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useRouter } from "next/navigation";
 import {
   faCamera,
   faTimes,
@@ -21,6 +22,7 @@ const EditProfileModal = ({
   profileData,
   onProfileUpdate,
 }) => {
+  const router = useRouter();
   // Get auth context with authenticatedFetch
   const { authenticatedFetch, isAuthenticated } = useAuth();
   // Predefined lists of skills and interests
@@ -223,6 +225,7 @@ const EditProfileModal = ({
       if (onProfileUpdate) {
         onProfileUpdate(updatedProfile);
       }
+      router.refresh()
 
       onClose();
     } catch (err) {
