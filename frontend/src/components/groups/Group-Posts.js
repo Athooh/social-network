@@ -213,7 +213,6 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
     router.push(`/profile/${userId}`);
   };
 
-  console.log(userdata)
   return (
     <article className={styles.post}>
       <div className={styles.postHeader}>
