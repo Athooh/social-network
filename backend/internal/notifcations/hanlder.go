@@ -33,8 +33,8 @@ type NotificationResponse struct {
 	Message       string `json:"message"`
 	IsRead        bool   `json:"isRead"`
 	CreatedAt     string `json:"createdAt"`
-	TargetGroupID int64  `json:"targetGroupId,omitempty"`
-	TargetEventID int64  `json:"targetEventId,omitempty"`
+	TargetGroupID string `json:"targetGroupId,omitempty"`
+	TargetEventID string `json:"targetEventId,omitempty"`
 	SenderName    string `json:"senderName,omitempty"`
 	SenderAvatar  string `json:"senderAvatar,omitempty"`
 }
@@ -85,8 +85,8 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 			Message:       notification.Message,
 			IsRead:        notification.IsRead,
 			CreatedAt:     notification.CreatedAt.Format(time.RFC3339),
-			TargetGroupID: notification.TargetGroupID.Int64,
-			TargetEventID: notification.TargetEventID.Int64,
+			TargetGroupID: notification.TargetGroupID.String,
+			TargetEventID: notification.TargetEventID.String,
 			SenderName:    notification.SenderName,
 			SenderAvatar:  notification.SenderAvatar,
 		}
@@ -96,11 +96,11 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if notification.TargetGroupID.Valid {
-			resp.TargetGroupID = *&notification.TargetGroupID.Int64
+			resp.TargetGroupID = *&notification.TargetGroupID.String
 		}
 
 		if notification.TargetEventID.Valid {
-			resp.TargetEventID = *&notification.TargetEventID.Int64
+			resp.TargetEventID = *&notification.TargetEventID.String
 		}
 
 		response = append(response, resp)
