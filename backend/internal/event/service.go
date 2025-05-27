@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"time"
 
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
@@ -29,19 +30,23 @@ type Service interface {
 
 // EventService implements the Service interface
 type EventService struct {
-	repo      Repository
-	fileStore *filestore.FileStore
-	log       *logger.Logger
-	wsHub     *websocket.Hub
+	repo                Repository
+	fileStore           *filestore.FileStore
+	log                 *logger.Logger
+	wsHub               *websocket.Hub
+	notificationService *NotificationService
 }
 
 // NewService creates a new event service
-func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, wsHub *websocket.Hub) *EventService {
+func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, NotificationRepo notifications.Service, wsHub *websocket.Hub) *EventService {
+	notificationSvc := NewNotificationService(wsHub, repo, NotificationRepo, log)
+
 	return &EventService{
-		repo:      repo,
-		fileStore: fileStore,
-		log:       log,
-		wsHub:     wsHub,
+		repo:                repo,
+		fileStore:           fileStore,
+		log:                 log,
+		wsHub:               wsHub,
+		notificationService: notificationSvc,
 	}
 }
 
@@ -89,7 +94,7 @@ func (s *EventService) CreateEvent(groupID, userID, title, description string, e
 	}
 
 	// Notify group members about new event
-	s.notifyGroupEventCreated(fullEvent)
+	s.notificationService.SendEventCreatedNotification(fullEvent)
 
 	return fullEvent, nil
 }
@@ -205,9 +210,6 @@ func (s *EventService) UpdateEvent(eventID, userID, title, description string, e
 		return nil, err
 	}
 
-	// Notify group members about event update
-	s.notifyGroupEventUpdated(updatedEvent)
-
 	return updatedEvent, nil
 }
 
@@ -236,9 +238,6 @@ func (s *EventService) DeleteEvent(eventID, userID string) error {
 	if err := s.repo.DeleteEvent(eventID); err != nil {
 		return err
 	}
-
-	// Notify group members about event deletion
-	s.notifyGroupEventDeleted(event)
 
 	return nil
 }
@@ -278,9 +277,6 @@ func (s *EventService) RespondToEvent(eventID, userID, responseType string) erro
 		return err
 	}
 
-	// Notify group members about response
-	s.notifyEventResponseUpdated(event, userID, responseType)
-
 	return nil
 }
 
@@ -309,90 +305,4 @@ func (s *EventService) GetEventResponses(eventID, userID, responseType string) (
 	}
 
 	return responses, nil
-}
-
-// notifyGroupEventCreated notifies about group event creation
-func (s *EventService) notifyGroupEventCreated(event *models.GroupEvent) {
-	wsEvent := websocket.Message{
-		Type: "group_event_created",
-		Payload: map[string]interface{}{
-			"event": event,
-		},
-	}
-
-	// Notify all members
-	members, _ := s.repo.GetGroupMembers(event.GroupID, "accepted")
-	for _, member := range members {
-		s.wsHub.BroadcastToUser(member.UserID, wsEvent)
-	}
-}
-
-// notifyGroupEventUpdated notifies about group event updates
-func (s *EventService) notifyGroupEventUpdated(event *models.GroupEvent) {
-	wsEvent := websocket.Message{
-		Type: "group_event_updated",
-		Payload: map[string]interface{}{
-			"event": event,
-		},
-	}
-
-	// Notify all members
-	members, _ := s.repo.GetGroupMembers(event.GroupID, "accepted")
-	for _, member := range members {
-		s.wsHub.BroadcastToUser(member.UserID, wsEvent)
-	}
-}
-
-// notifyGroupEventDeleted notifies about group event deletion
-func (s *EventService) notifyGroupEventDeleted(event *models.GroupEvent) {
-	wsEvent := websocket.Message{
-		Type: "group_event_deleted",
-		Payload: map[string]interface{}{
-			"eventId": event.ID,
-			"groupId": event.GroupID,
-		},
-	}
-
-	// Notify all members
-	members, _ := s.repo.GetGroupMembers(event.GroupID, "accepted")
-	for _, member := range members {
-		s.wsHub.BroadcastToUser(member.UserID, wsEvent)
-	}
-}
-
-// notifyEventResponseUpdated notifies about event response updates
-func (s *EventService) notifyEventResponseUpdated(event *models.GroupEvent, userID, responseType string) {
-	// Get user info
-	user, err := s.repo.GetUserBasicByID(userID)
-	if err != nil {
-		s.log.Error("Failed to get user info for notification: %v", err)
-		return
-	}
-
-	// Get updated counts
-	going, notGoing, err := s.repo.GetEventResponseCounts(event.ID)
-	if err != nil {
-		s.log.Error("Failed to get response counts for notification: %v", err)
-		return
-	}
-
-	wsEvent := websocket.Message{
-		Type: "event_response_updated",
-		Payload: map[string]interface{}{
-			"eventId":       event.ID,
-			"groupId":       event.GroupID,
-			"userId":        userID,
-			"userName":      user.FirstName + " " + user.LastName,
-			"userAvatar":    user.Avatar,
-			"responseType":  responseType,
-			"goingCount":    going,
-			"notGoingCount": notGoing,
-		},
-	}
-
-	// Notify all members
-	members, _ := s.repo.GetGroupMembers(event.GroupID, "accepted")
-	for _, member := range members {
-		s.wsHub.BroadcastToUser(member.UserID, wsEvent)
-	}
 }
