@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { EVENT_TYPES, useWebSocket } from "./websocketService";
 import { useFriendService } from "@/services/friendService";
 import { BASE_URL } from "@/utils/constants";
+import { useGroupService } from "./groupService";
 
 export const useNotificationService = () => {
   const { authenticatedFetch } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const { respondToEvent } = useGroupService();
   const {
     acceptFriendRequest,
     declineFriendRequest,
@@ -30,15 +32,14 @@ export const useNotificationService = () => {
       }
 
       const data = await response.json();
-    
-
+      console.log("Fetched notifications:", data);
 
       if (data) {
         // Transform the data to match the component's expected format
         const formattedNotifications = data.map((notification) => ({
           id: notification.id,
           type: notification.type,
-          senderId:notification.senderId,
+          senderId: notification.senderId,
           sender: notification.senderName || "Unknown",
           avatar: notification.senderAvatar
             ? `${BASE_URL}/uploads/${notification.senderAvatar}`
@@ -51,7 +52,10 @@ export const useNotificationService = () => {
               ? notification.message.split(" ").pop()
               : notification.type === "invitation"
               ? notification.message.split("to ")[1]
+              : notification.type === "groupEvent"
+              ? notification.message.split("to ")[1]
               : undefined,
+          eventId: notification.type === "groupEvent" ? notification.targetEventId : undefined,
         }));
         setNotifications(formattedNotifications);
         return formattedNotifications;
@@ -154,7 +158,6 @@ export const useNotificationService = () => {
 
   const DeleteNotification = async (notificationId) => {
     try {
-      
       const response = await authenticatedFetch(`notification/delete?notificationId=${notificationId}`, {
         method: "DELETE",
       });
@@ -174,18 +177,26 @@ export const useNotificationService = () => {
       return;
     }
   };
-  // Handle friend request response (accept/decline)
-  const handleFriendRequest = async (followerId,notificationId, action) => {
+
+  // Handle friend request or group event response (accept/decline)
+  const handleFriendRequest = async (id, notificationId, action, type = "friendRequest") => {
     try {
-      
-      if (action === "accept") {
-        const response = await acceptFriendRequest(followerId)
-        if (!response){
-          return;
+      if (type === "friendRequest") {
+        if (action === "accept") {
+          const response = await acceptFriendRequest(id);
+          if (!response) {
+            return;
+          }
+        } else if (action === "decline") {
+          const response = await declineFriendRequest(id);
+          if (!response) {
+            return;
+          }
         }
-      } else if (action === "decline") {
-        const response = await declineFriendRequest(followerId)
-        if (!response){
+      } else if (type === "groupEvent") {
+        console.log(`Responding to group event with ID: ${id} and action: ${action}`);
+        const response = await respondToEvent(id, action);
+        if (!response) {
           return;
         }
       }
@@ -193,11 +204,11 @@ export const useNotificationService = () => {
       setNotifications((prev) =>
         prev.filter((notification) => notification.id !== notificationId)
       );
-      DeleteNotification(notificationId)
+      DeleteNotification(notificationId);
       return true;
     } catch (error) {
-      console.error(`Error ${action}ing friend request:`, error);
-      showToast(error.message || `Error ${action}ing friend request`, "error");
+      console.error(`Error ${action}ing ${type}:`, error);
+      showToast(error.message || `Error ${action}ing ${type}`, "error");
       return false;
     }
   };
@@ -206,6 +217,7 @@ export const useNotificationService = () => {
   useEffect(() => {
     // Listen for new notifications
     const unsubscribeNotification = subscribe(EVENT_TYPES.NOTIFICATION_UPDATE, (payload) => {
+      console.log("New notification payload:", payload);
       if (payload) {
         const newNotification = {
           id: payload.id,
@@ -221,9 +233,10 @@ export const useNotificationService = () => {
           contentType:
             payload.type === "reaction" || payload.type === "comment"
               ? payload.message.split(" ").pop()
-              : payload.type === "invitation"
+              : payload.type === "invitation" || payload.type === "groupEvent"
               ? payload.message.split("to ")[1]
               : undefined,
+          eventId: payload.type === "groupEvent" ? payload.eventId : undefined,
         };
         setNotifications((prev) => [newNotification, ...prev]);
         showToast("New notification received", "info");
