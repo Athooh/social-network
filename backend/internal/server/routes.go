@@ -93,6 +93,11 @@ func Router(config RouterConfig) http.Handler {
 	publicAuthGroup := NewRouteGroup("/api/auth", publicRouteMiddleware)
 	publicAuthGroup.HandleFunc("/register", config.AuthHandler.Register)
 	publicAuthGroup.HandleFunc("/login", config.AuthHandler.LoginJWT)
+	publicAuthGroup.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 
 	protectedAuthGroup := NewRouteGroup("/api/auth", authenticatedRouteMiddleware)
 	protectedAuthGroup.HandleFunc("/logout", config.AuthHandler.Logout)
