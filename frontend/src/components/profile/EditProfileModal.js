@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useRouter } from "next/navigation";
 import {
   faCamera,
   faTimes,
@@ -12,6 +13,7 @@ import {
   faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "@/styles/EditProfileModal.module.css";
+import { showToast } from "../ui/ToastContainer";
 
 import { useAuth } from "@/context/authcontext";
 
@@ -21,6 +23,7 @@ const EditProfileModal = ({
   profileData,
   onProfileUpdate,
 }) => {
+  const router = useRouter();
   // Get auth context with authenticatedFetch
   const { authenticatedFetch, isAuthenticated } = useAuth();
   // Predefined lists of skills and interests
@@ -223,6 +226,8 @@ const EditProfileModal = ({
       if (onProfileUpdate) {
         onProfileUpdate(updatedProfile);
       }
+      router.refresh()
+      showToast("Profile updated successfully", "success")
 
       onClose();
     } catch (err) {

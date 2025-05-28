@@ -18,7 +18,7 @@ type Service interface {
 	// Group operations
 	CreateGroup(userID, name, description string, isPublic bool, banner, profilePic *multipart.FileHeader) (*models.Group, error)
 	GetGroup(id, userID string) (*models.Group, error)
-	GetUserGroups(userID string) ([]*models.Group, error)
+	GetUserGroups(userID, viewerID string) ([]*models.Group, error)
 	GetAllGroups(userID string, limit, offset int) ([]*models.Group, error)
 	UpdateGroup(id, userID, name, description string, isPublic bool, banner, profilePic *multipart.FileHeader) (*models.Group, error)
 	DeleteGroup(id, userID string) error
@@ -154,8 +154,8 @@ func (s *GroupService) GetGroup(id, userID string) (*models.Group, error) {
 }
 
 // GetUserGroups gets all groups a user is a member of
-func (s *GroupService) GetUserGroups(userID string) ([]*models.Group, error) {
-	return s.repo.GetUserGroups(userID)
+func (s *GroupService) GetUserGroups(userID, viewerID string) ([]*models.Group, error) {
+	return s.repo.GetUserGroups(userID, viewerID)
 }
 
 // GetAllGroups gets all public groups and private groups the user is a member of

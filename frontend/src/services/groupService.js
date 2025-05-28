@@ -30,6 +30,52 @@ export const useGroupService = () => {
         }
     }
 
+    const getusergroups = async (userID) => {
+        try {
+            const response = await authenticatedFetch(`groups/user?userId=${userID}`, {
+                method: "GET"
+            })
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(
+                    errorData.message || errorData.error || "Failed to fetch user groups"
+                )
+            }
+            const groups = await response.json()
+            if (!groups) {
+                return []
+            }
+            if (!Array.isArray(groups)) {
+                throw new Error("Invalid response format");
+            }
+            const groupsWithPosts = await Promise.all(
+                groups.map(async (group) => {
+                    const postsResponse = await authenticatedFetch(`groups/posts?groupId=${group.ID}`, {
+                        method: "GET",
+                    });
+
+                    if (postsResponse.ok) {
+                        const posts = await postsResponse.json();
+                        return {
+                            ...group,
+                            posts: posts || []
+                        };
+                    }
+                    return {
+                        ...group,
+                        posts: []
+                    };
+                })
+            );
+
+            return groupsWithPosts;
+        } catch (error) {
+            console.error("Error fetching groups:", error);
+            showToast(error.message || "Error fetching groups", "error");
+            return [];
+        }
+    }
+
     const getallgroups = async () => {
         try {
             // First fetch all groups
@@ -53,7 +99,7 @@ export const useGroupService = () => {
             if (!Array.isArray(groups)) {
                 throw new Error("Invalid response format");
             }
-            
+
 
             // Then fetch posts for each group
             const groupsWithPosts = await Promise.all(
@@ -197,28 +243,28 @@ export const useGroupService = () => {
 
     const createPost = async (formData) => {
         try {
-          const response = await authenticatedFetch("groups/posts", {
-            method: "POST",
-            body: formData,
-          });
-    
-          // Check if response is not ok
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(
-              errorData.message || errorData.error || "Failed to create post"
-            );
-          }
-    
-          const data = await response.json();
-          showToast("Post created successfully!", "success");
-          return data;
+            const response = await authenticatedFetch("groups/posts", {
+                method: "POST",
+                body: formData,
+            });
+
+            // Check if response is not ok
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData.message || errorData.error || "Failed to create post"
+                );
+            }
+
+            const data = await response.json();
+            showToast("Post created successfully!", "success");
+            return data;
         } catch (error) {
-          console.error("Error creating post:", error);
-          showToast(error.message || "Error creating post", "error");
-          throw error;
+            console.error("Error creating post:", error);
+            showToast(error.message || "Error creating post", "error");
+            throw error;
         }
-      };
+    };
 
     const createEvent = async (groupId, eventData) => {
         try {
@@ -229,7 +275,7 @@ export const useGroupService = () => {
             // Format the date to RFC3339 format as required by the backend
             const formattedDate = new Date(eventData.date).toISOString();
             formData.append('eventDate', formattedDate);
-            
+
             if (eventData.banner) {
                 formData.append('banner', eventData.banner);
             }
@@ -321,12 +367,13 @@ export const useGroupService = () => {
         }
     };
 
-    return { 
+    return {
         createGroup,
         getgroup,
         createPost,
-        getallgroups, 
-        deleteGroup, 
+        getusergroups,
+        getallgroups,
+        deleteGroup,
         leaveGroup,
         getgroupposts,
         joinGroup,

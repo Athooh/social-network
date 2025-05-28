@@ -15,7 +15,7 @@ type Repository interface {
 	// Group operations
 	CreateGroup(group *models.Group) error
 	GetGroupByID(id string) (*models.Group, error)
-	GetGroupsByUserID(userID string) ([]*models.Group, error)
+	GetGroupsByUserID(userID, viewerID string) ([]*models.Group, error)
 	GetAllGroups(userid string, limit, offset int) ([]*models.Group, error)
 	UpdateGroup(group *models.Group) error
 	DeleteGroup(id string) error
@@ -25,7 +25,7 @@ type Repository interface {
 	AddMember(member *models.GroupMember) error
 	GetMemberByID(groupID, userID string) (*models.GroupMember, error)
 	GetGroupMembers(groupID string, status string) ([]*models.GroupMember, error)
-	GetUserGroups(userID string) ([]*models.Group, error)
+	GetUserGroups(userID, viewerID string) ([]*models.Group, error)
 	UpdateMemberStatus(groupID, userID, status string) error
 	UpdateMemberRole(groupID, userID, role string) error
 	RemoveMember(groupID, userID string) error
@@ -172,7 +172,7 @@ func (r *SQLiteRepository) GetGroupByID(id string) (*models.Group, error) {
 }
 
 // GetGroupsByUserID retrieves all groups a user is a member of
-func (r *SQLiteRepository) GetGroupsByUserID(userID string) ([]*models.Group, error) {
+func (r *SQLiteRepository) GetGroupsByUserID(userID, viewerID string) ([]*models.Group, error) {
 	query := `
 		SELECT g.id, g.name, g.description, g.creator_id, g.banner_path, g.profile_pic_path, 
 		       g.is_public, g.created_at, g.updated_at, gm.role, gm.status
@@ -229,8 +229,19 @@ func (r *SQLiteRepository) GetGroupsByUserID(userID string) ([]*models.Group, er
 		}
 		group.Creator = creator
 
-		group.IsMember = true
+		members, err := r.GetGroupMembers(group.ID, "accepted")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get group members: %w", err)
+		}
+		group.Members = members
 
+		member, err := r.GetMemberByID(group.ID, viewerID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get member info: %w", err)
+		}
+		if member != nil {
+			group.IsMember = true
+		}
 		groups = append(groups, &group)
 	}
 
@@ -579,8 +590,8 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 }
 
 // GetUserGroups gets all groups a user is a member of
-func (r *SQLiteRepository) GetUserGroups(userID string) ([]*models.Group, error) {
-	return r.GetGroupsByUserID(userID)
+func (r *SQLiteRepository) GetUserGroups(userID, viewerID string) ([]*models.Group, error) {
+	return r.GetGroupsByUserID(userID, viewerID)
 }
 
 // UpdateMemberStatus updates a member's status
@@ -1091,28 +1102,28 @@ func (r *SQLiteRepository) UpdateUserGroupCount(userID string, increment bool) (
 
 // getNextAvailableID checks 'posts' and 'group_posts' for max(id) and returns next available int64 ID.
 func (r *SQLiteRepository) getNextAvailableID() (int64, error) {
-    var maxPostID, maxGroupPostID sql.NullInt64
+	var maxPostID, maxGroupPostID sql.NullInt64
 
-    // Query max id from 'posts'
-    err := r.db.QueryRow("SELECT MAX(id) FROM posts").Scan(&maxPostID)
-    if err != nil {
-        return 0, fmt.Errorf("error querying posts: %v", err)
-    }
+	// Query max id from 'posts'
+	err := r.db.QueryRow("SELECT MAX(id) FROM posts").Scan(&maxPostID)
+	if err != nil {
+		return 0, fmt.Errorf("error querying posts: %v", err)
+	}
 
-    // Query max id from 'group_posts'
-    err = r.db.QueryRow("SELECT MAX(id) FROM group_posts").Scan(&maxGroupPostID)
-    if err != nil {
-        return 0, fmt.Errorf("error querying group_posts: %v", err)
-    }
+	// Query max id from 'group_posts'
+	err = r.db.QueryRow("SELECT MAX(id) FROM group_posts").Scan(&maxGroupPostID)
+	if err != nil {
+		return 0, fmt.Errorf("error querying group_posts: %v", err)
+	}
 
-    // Calculate the next ID
-    maxID := int64(0)
-    if maxPostID.Valid && maxPostID.Int64 > maxID {
-        maxID = maxPostID.Int64
-    }
-    if maxGroupPostID.Valid && maxGroupPostID.Int64 > maxID {
-        maxID = maxGroupPostID.Int64
-    }
+	// Calculate the next ID
+	maxID := int64(0)
+	if maxPostID.Valid && maxPostID.Int64 > maxID {
+		maxID = maxPostID.Int64
+	}
+	if maxGroupPostID.Valid && maxGroupPostID.Int64 > maxID {
+		maxID = maxGroupPostID.Int64
+	}
 
-    return maxID + 1, nil
+	return maxID + 1, nil
 }

@@ -20,8 +20,8 @@ const ProfileBanner = ({
     onNavClick(section);
   };
 
-  // Create fullName from userData
   const fullName = userData.fullName || "";
+  const nickname = userData.nickname || "";
 
   // Use bannerImage or default for banner
   const bannerUrl = userData.bannerImage
@@ -61,7 +61,7 @@ const ProfileBanner = ({
             </div>
 
             <div className={styles.userInfo}>
-              <h2>{fullName}</h2>
+              <h2>{fullName} {nickname && `(${nickname})`}</h2>
               <div className={styles.privacyBadge}>
                 {isPrivate ? (
                   <span className={`${styles.badge} ${styles.private}`}>

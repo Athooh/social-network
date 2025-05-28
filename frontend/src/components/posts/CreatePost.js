@@ -175,7 +175,6 @@ export default function CreatePost() {
   // Get user's full name or nickname
   const getUserDisplayName = () => {
     if (userData) {
-      if (userData.nickname) return userData.nickname;
       return (
         `${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
         "User"
