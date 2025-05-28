@@ -19,6 +19,7 @@ import { useFriendService } from "@/services/friendService";
 import { useAuth } from "@/context/authcontext";
 import { usePostService } from "@/services/postService";
 import { showToast } from "@/components/ui/ToastContainer";
+import { useRouter } from "next/navigation";
 
 // Define base URL for media assets
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -26,8 +27,9 @@ const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base U
 
 export default function ProfilePage({ params }) {
   const { userId } = use(params)
+  const router = useRouter()
 
-  const { getUserPhotos } = usePostService();
+  const { getUserPhotos, followUser } = usePostService();
 
   const [photos, setPhotos] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -174,21 +176,30 @@ export default function ProfilePage({ params }) {
     }
   }, [loadUserPhotos, userData?.id, isPrivateProfile]);
 
-  // Private profile component
-  const PrivateProfileView = () => (
-    <div className={styles.privateProfileContainer}>
-      <div className={styles.privateProfileCard}>
-        <div className={styles.privateProfileIcon}>🔒</div>
-        <h2 className={styles.privateProfileTitle}>This Account is Private</h2>
-        <p className={styles.privateProfileMessage}>
-          Follow this account to see their posts and content.
-        </p>
-        <button className={styles.followRequestButton}>
-          Send Follow Request
-        </button>
+  const PrivateProfileView = () => {
+    const handleFollowRequest = async () => {
+      await followUser(userId)
+      router.push("/home")
+    };
+
+    return (
+      <div className={styles.privateProfileContainer}>
+        <div className={styles.privateProfileCard}>
+          <div className={styles.privateProfileIcon}>🔒</div>
+          <h2 className={styles.privateProfileTitle}>This Account is Private</h2>
+          <p className={styles.privateProfileMessage}>
+            Follow this account to see their posts and content.
+          </p>
+          <button
+            className={styles.followRequestButton}
+            onClick={handleFollowRequest}
+          >
+            Send Follow Request
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     // If still loading data, show loading state
