@@ -1,94 +1,22 @@
 import React from 'react';
-import styles from '@/styles/ProfileGroups.module.css';
 import groupStyles from '@/styles/Groups.module.css';
 import ContactsList from '@/components/contacts/ContactsList';
 import { useGroupService } from '@/services/groupService';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import pageStyles from "@/styles/page.module.css";
+import styles from "@/styles/Groups.module.css";
 import { showToast } from '../ui/ToastContainer';
+const API_URL = process.env.API_URL || "http://localhost:8080/api";
+const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
-// Import the sample groups (you should later replace this with actual user groups data)
-const sampleGroups = [
-  {
-    id: 1,
-    name: "Photography Enthusiasts",
-    banner: "/banner1.jpg",
-    profilePic: "/avatar1.png",
-    isPublic: true,
-    memberCount: 5234,
-    members: [
-      { id: 1, avatar: "/avatar1.png" },
-      { id: 2, avatar: "/avatar2.png" },
-      { id: 3, avatar: "/avatar3.png" },
-    ]
-  },
-  {
-    id: 2,
-    name: "Tech Innovators",
-    banner: "/banner2.jpg",
-    profilePic: "/avatar4.png",
-    isPublic: false,
-    memberCount: 3122,
-    members: [
-      { id: 4, avatar: "/avatar4.png" },
-      { id: 5, avatar: "/avatar5.png" },
-      { id: 6, avatar: "/avatar6.png" },
-    ]
-  },
-  {
-    id: 3,
-    name: "Travelers",
-    banner: "/banner3.jpg",
-    profilePic: "/avatar2.png",
-    isPublic: true,
-    memberCount: 8433,
-    members: [
-      { id: 7, avatar: "/avatar2.png" },
-      { id: 8, avatar: "/avatar.png" },
-      { id: 9, avatar: "/avatar5.png" },
-    ]
-  },
-  {
-    id: 4,
-    name: "Book Club",
-    banner: "/banner4.jpg",
-    profilePic: "/avatar3.png",
-    isPublic: true,
-    memberCount: 2891,
-    members: [
-      { id: 10, avatar: "/avatar1.png" },
-      { id: 11, avatar: "/avatar3.png" },
-      { id: 12, avatar: "/avatar2.png" },
-    ]
-  },
-  {
-    id: 5,
-    name: "Foodies Unite",
-    banner: "/banner5.jpg",
-    profilePic: "/avatar6.png",
-    isPublic: false,
-    memberCount: 4567,
-    members: [
-      { id: 13, avatar: "/avatar3.png" },
-      { id: 14, avatar: "/avatar4.png" },
-      { id: 15, avatar: "/avatar5.png" },
-    ]
-  },
-  {
-    id: 6,
-    name: "Fitness Fanatics",
-    banner: "/banner6.jpg",
-    profilePic: "/avatar5.png",
-    isPublic: true,
-    memberCount: 6789,
-    members: [
-      { id: 16, avatar: "/avatar6.png" },
-      { id: 17, avatar: "/avatar.png" },
-      { id: 18, avatar: "/avatar1.png" },
-    ]
-  },
-  // ... you can import more groups from the groups page
-];
+let viewerdata = null;
+try {
+  const raw = localStorage.getItem("viewerData");
+  if (raw) viewerdata = JSON.parse(raw);
+} catch (e) {
+  console.error("Invalid viewerData in localStorage:", e);
+}
 
 const ProfileGroups = ({ userData }) => {
   const router = useRouter();
@@ -97,9 +25,7 @@ const ProfileGroups = ({ userData }) => {
 
   const fetchGroups = async () => {
     try {
-      
       const result = await getusergroups(userData.id)
-      console.log(result)
       setUserGroups(result)
     } catch (error) {
       console.error("Error fetching groups:", error);
@@ -110,6 +36,44 @@ const ProfileGroups = ({ userData }) => {
   useEffect(() => {
     fetchGroups();
   }, []);
+
+  const handleGroupAction = async (group, action) => {
+    try {
+      let success = false;
+
+      switch (action) {
+        case 'delete':
+          success = await deleteGroup(group.ID);
+          if (success) {
+            showToast("Group deleted successfully", "success");
+          }
+          break;
+        case 'leave':
+          success = await leaveGroup(group.ID);
+          if (success) {
+            showToast("Left group successfully", "success");
+          }
+          break;
+        case 'join':
+          success = await joinGroup(group.ID);
+          if (success) {
+            showToast("Joined group successfully", "success");
+          }
+          break;
+      }
+
+      if (success) {
+        // Refresh groups list
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error(`Error during ${action} action:`, error);
+    }
+  };
+  const handleGroupClick = (groupId) => {
+    router.push(`/groups/${groupId}`);
+  };
+
   return (
     <div className={styles.groupsContainer}>
       <div className={styles.mainContent}>
@@ -117,54 +81,92 @@ const ProfileGroups = ({ userData }) => {
           <h2>My Groups</h2>
         </div>
 
-        <div className={groupStyles.groupsGrid}>
-          {sampleGroups.map(group => (
-            <div key={group.id} className={groupStyles.groupCard}>
-              <div className={groupStyles.groupBanner}>
-                <img src={group.banner} alt="" className={groupStyles.bannerImg} />
+        <div className={styles.groupsGrid}>
+          {userGroups === null && (
+            <div className={styles.noGroups}>
+              <h2>No groups found</h2>
+              <p>Start by creating a new group!</p>
+            </div>
+          )}
+
+          {userGroups != null && userGroups.map(group => (
+            <div
+              key={group.ID}
+              className={styles.groupCard}
+              onClick={() => handleGroupClick(group.ID)}
+            >
+              <div className={styles.groupBanner}>
+                <img
+                  src={group.BannerPath?.String ?
+                    `${BASE_URL}/uploads/${group.BannerPath.String}` :
+                    "/banner5.jpg"}
+                  alt=""
+                  className={styles.bannerImg}
+                />
               </div>
-              <div className={groupStyles.groupInfo}>
-                <img src={group.profilePic} alt="" className={groupStyles.profilePic} />
-                <h3 className={groupStyles.groupName}>{group.name}</h3>
-                <span className={groupStyles.groupPrivacy}>
-                  <i className={`fas ${group.isPublic ? 'fa-globe' : 'fa-lock'}`}></i>
-                  {group.isPublic ? 'Public Group' : 'Private Group'}
+              <div className={styles.groupInfo}>
+                <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
+                <h3 className={styles.groupName}>{group.Name}</h3>
+                <span className={styles.groupPrivacy}>
+                  <i className={`fas ${group.IsPublic ? 'fa-globe' : 'fa-lock'}`}></i>
+                  {group.IsPublic ? 'Public Group' : 'Private Group'}
                 </span>
 
-                <div className={groupStyles.memberInfo}>
-                  <div className={groupStyles.memberAvatars}>
-                    {group.members.map((member, index) => (
+                <div className={styles.memberInfo}>
+                  <div className={styles.memberAvatars}>
+                    {group.Members.slice(0, 3).map((member, index) => (
                       <img
-                        key={member.id}
-                        src={member.avatar}
-                        alt=""
-                        className={groupStyles.memberAvatar}
+                        key={member.ID || member.id || `member-${index}`} // Handle both ID and id cases with fallback
+                        src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                        alt={`Member ${index + 1}`}
+                        className={styles.memberAvatar}
                         style={{ zIndex: 3 - index }}
                       />
                     ))}
                   </div>
-                  <span className={groupStyles.memberCount}>
-                    {group.memberCount.toLocaleString()} members
+                  <span className={styles.memberCount}>
+                    {group.MemberCount.toLocaleString()} members
                   </span>
                 </div>
 
-                <hr className={groupStyles.divider} />
+                <hr className={styles.divider} />
 
-                <div className={groupStyles.groupActions}>
-                  <button className={styles.inviteBtn}>
-                    View Group
-                  </button>
-                  <button className={styles.manageBtn}>
-                    Manage Group
-                  </button>
+                <div className={styles.groupActions} onClick={e => e.stopPropagation()}>
+                  {group.IsMember && (
+                    <button className={styles.inviteBtn}>
+                      <i className="fas fa-user-plus"></i> Invite
+                    </button>
+                  )}
+
+                  {group.IsMember ? (
+                    viewerdata?.id === group.Creator?.id ? (
+                      <button
+                        className={styles.leaveBtn}
+                        onClick={() => handleGroupAction(group, 'delete')}
+                      >
+                        Delete Group
+                      </button>
+                    ) : (
+                      <button
+                        className={styles.leaveBtn}
+                        onClick={() => handleGroupAction(group, 'leave')}
+                      >
+                        Leave Group
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      className={styles.inviteBtn}
+                      onClick={() => handleGroupAction(group, 'join')}
+                    >
+                      Join Group
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
-      </div>
-      <div className={styles.sidebar}>
-        <ContactsList />
       </div>
     </div>
   );
