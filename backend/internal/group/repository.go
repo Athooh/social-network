@@ -229,6 +229,12 @@ func (r *SQLiteRepository) GetGroupsByUserID(userID, viewerID string) ([]*models
 		}
 		group.Creator = creator
 
+		members, err := r.GetGroupMembers(group.ID, "accepted")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get group members: %w", err)
+		}
+		group.Members = members
+
 		member, err := r.GetMemberByID(group.ID, viewerID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get member info: %w", err)
