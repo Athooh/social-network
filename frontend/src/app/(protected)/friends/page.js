@@ -128,18 +128,8 @@ export default function FriendsPage() {
                     />
                     <h3 className={styles.friendName}>{friend.name}</h3>
                     <div className={styles.mutualFriends}>
-                      <div className={styles.mutualFriendsAvatars}>
-                        {friend.mutualFriends.previews.map((preview, index) => (
-                          <img 
-                            key={index}
-                            src={preview}
-                            alt="Mutual friend"
-                            className={styles.mutualFriendAvatar}
-                            style={{ marginLeft: index > 0 ? '-8px' : '0' }}
-                          />
-                        ))}
-                      </div>
-                      <span>{friend.mutualFriends.count} mutual friends</span>
+                      
+                      <span>{friend.mutualFriends} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
                       <button 
