@@ -5,63 +5,7 @@ import Header from '@/components/header/Header'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LeftSidebar from '@/components/sidebar/LeftSidebar'
 import styles from '@/styles/Friends.module.css'
-
-const friendRequests = [
-  {
-    id: 1,
-    name: 'Sarah Wilson',
-    image: '/avatar1.png',
-    mutualFriends: {
-      count: 10,
-      previews: ['/avatar2.png', '/avatar3.png', '/avatar4.png']
-    }
-  },
-  {
-    id: 2,
-    name: 'Michael Johnson',
-    image: '/avatar2.png',
-    mutualFriends: {
-      count: 15,
-      previews: ['/avatar1.png', '/avatar5.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 3,
-    name: 'Emma Davis',
-    image: '/avatar3.png',
-    mutualFriends: {
-      count: 8,
-      previews: ['/avatar4.png', '/avatar5.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 4,
-    name: 'James Miller',
-    image: '/avatar4.png',
-    mutualFriends: {
-      count: 12,
-      previews: ['/avatar1.png', '/avatar2.png', '/avatar3.png']
-    }
-  },
-  {
-    id: 5,
-    name: 'Sophia Brown',
-    image: '/avatar5.png',
-    mutualFriends: {
-      count: 6,
-      previews: ['/avatar1.png', '/avatar3.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 6,
-    name: 'Oliver Taylor',
-    image: '/avatar6.png',
-    mutualFriends: {
-      count: 20,
-      previews: ['/avatar2.png', '/avatar4.png', '/avatar5.png']
-    }
-  }
-];
+import { useFriendService } from '@/services/friendService'
 
 const suggestedFriends = [
   {
