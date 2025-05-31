@@ -128,21 +128,21 @@ export default function FriendsPage() {
                     />
                     <h3 className={styles.friendName}>{friend.name}</h3>
                     <div className={styles.mutualFriends}>
-                      
+
                       <span>{friend.mutualFriends} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
                       <button
-                        onClick={() => handleConfirm(friend.id)}
+                        onClick={() => handleConfirm(friend)}
                         className={styles.confirmButton}
                       >
                         Confirm
                       </button>
                       <button
-                        onClick={() => handleDelete(friend.id)}
-                        className={styles.deleteButton}
+                        onClick={() => handleDecline(friend)}
+                        className={styles.declineButton}
                       >
-                        Delete
+                        Decline
                       </button>
                     </div>
                   </div>
@@ -184,7 +184,7 @@ export default function FriendsPage() {
                       </button>
                       <button
                         onClick={() => handleRemove(friend.id)}
-                        className={styles.deleteButton}
+                        className={styles.declineButton}
                       >
                         Remove
                       </button>
