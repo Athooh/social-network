@@ -69,14 +69,18 @@ export default function FriendsPage() {
   const { friendRequests, acceptFriendRequest, declineFriendRequest } = useFriendService()
   const [activeTab, setActiveTab] = useState('requests');
 
-  const handleConfirm = (friendId) => {
-    // Add your confirm logic here
-    console.log(`Confirmed friend request from ID: ${friendId}`);
+  const handleConfirm = async (friend) => {
+    const success = await acceptFriendRequest(friend.followerId);
+    if (success) {
+      console.log(`Confirmed friend request from ${friend.name} (ID: ${friend.followerId})`);
+    }
   };
 
-  const handleDelete = (friendId) => {
-    // Add your delete logic here
-    console.log(`Deleted friend request from ID: ${friendId}`);
+  const handleDecline = async (friend) => {
+    const success = await declineFriendRequest(friend.followerId);
+    if (success) {
+      console.log(`Declined friend request from ${friend.name} (ID: ${friend.followerId})`);
+    }
   };
 
   const handleAddFriend = (friendId) => {
