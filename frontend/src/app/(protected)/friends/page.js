@@ -1,67 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/header/Header'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LeftSidebar from '@/components/sidebar/LeftSidebar'
 import styles from '@/styles/Friends.module.css'
-
-const friendRequests = [
-  {
-    id: 1,
-    name: 'Sarah Wilson',
-    image: '/avatar1.png',
-    mutualFriends: {
-      count: 10,
-      previews: ['/avatar2.png', '/avatar3.png', '/avatar4.png']
-    }
-  },
-  {
-    id: 2,
-    name: 'Michael Johnson',
-    image: '/avatar2.png',
-    mutualFriends: {
-      count: 15,
-      previews: ['/avatar1.png', '/avatar5.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 3,
-    name: 'Emma Davis',
-    image: '/avatar3.png',
-    mutualFriends: {
-      count: 8,
-      previews: ['/avatar4.png', '/avatar5.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 4,
-    name: 'James Miller',
-    image: '/avatar4.png',
-    mutualFriends: {
-      count: 12,
-      previews: ['/avatar1.png', '/avatar2.png', '/avatar3.png']
-    }
-  },
-  {
-    id: 5,
-    name: 'Sophia Brown',
-    image: '/avatar5.png',
-    mutualFriends: {
-      count: 6,
-      previews: ['/avatar1.png', '/avatar3.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 6,
-    name: 'Oliver Taylor',
-    image: '/avatar6.png',
-    mutualFriends: {
-      count: 20,
-      previews: ['/avatar2.png', '/avatar4.png', '/avatar5.png']
-    }
-  }
-];
+import { useFriendService } from '@/services/friendService'
 
 const suggestedFriends = [
   {
@@ -121,16 +66,27 @@ const suggestedFriends = [
 ];
 
 export default function FriendsPage() {
-  const [activeTab, setActiveTab] = useState('requests');
 
-  const handleConfirm = (friendId) => {
-    // Add your confirm logic here
-    console.log(`Confirmed friend request from ID: ${friendId}`);
+  const { friendRequests, acceptFriendRequest, declineFriendRequest } = useFriendService()
+  const [activeTab, setActiveTab] = useState('requests');
+  const router = useRouter();
+
+  const handleCardClick = (followerId) => {
+    router.push(`/profile/${followerId}`);
   };
 
-  const handleDelete = (friendId) => {
-    // Add your delete logic here
-    console.log(`Deleted friend request from ID: ${friendId}`);
+  const handleConfirm = async (friend) => {
+    const success = await acceptFriendRequest(friend.followerId);
+    if (success) {
+      console.log(`Confirmed friend request from ${friend.name} (followerId: ${friend.followerId})`);
+    }
+  };
+
+  const handleDecline = async (friend) => {
+    const success = await declineFriendRequest(friend.followerId);
+    if (success) {
+      console.log(`Declined friend request from ${friend.name} (followerId: ${friend.followerId})`);
+    }
   };
 
   const handleAddFriend = (friendId) => {
@@ -154,13 +110,13 @@ export default function FriendsPage() {
           <div className={styles.friendsHeader}>
             {/* <h1>Friends</h1> */}
             <div className={styles.tabsContainer}>
-              <button 
+              <button
                 className={`${styles.tabButton} ${activeTab === 'requests' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('requests')}
               >
                 Friend Requests <span className={styles.requestCount}>{friendRequests.length}</span>
               </button>
-              <button 
+              <button
                 className={`${styles.tabButton} ${activeTab === 'suggestions' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('suggestions')}
               >
@@ -174,39 +130,40 @@ export default function FriendsPage() {
               <h2 className={styles.sectionTitle}>Friend Requests</h2>
               <div className={styles.friendsGrid}>
                 {friendRequests.map(friend => (
-                  <div key={friend.id} className={styles.friendCard}>
-                    <img 
-                      src={friend.image} 
-                      alt={friend.name} 
+                  <div
+                    key={friend.id}
+                    className={styles.friendCard}
+                    onClick={() => handleCardClick(friend.followerId)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <img
+                      src={friend.image}
+                      alt={friend.name}
                       className={styles.profileImage}
                     />
                     <h3 className={styles.friendName}>{friend.name}</h3>
                     <div className={styles.mutualFriends}>
-                      <div className={styles.mutualFriendsAvatars}>
-                        {friend.mutualFriends.previews.map((preview, index) => (
-                          <img 
-                            key={index}
-                            src={preview}
-                            alt="Mutual friend"
-                            className={styles.mutualFriendAvatar}
-                            style={{ marginLeft: index > 0 ? '-8px' : '0' }}
-                          />
-                        ))}
-                      </div>
-                      <span>{friend.mutualFriends.count} mutual friends</span>
+
+                      <span>{friend.mutualFriends} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
-                      <button 
-                        onClick={() => handleConfirm(friend.id)}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConfirm(friend);
+                        }}
                         className={styles.confirmButton}
                       >
                         Confirm
                       </button>
-                      <button 
-                        onClick={() => handleDelete(friend.id)}
-                        className={styles.deleteButton}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDecline(friend);
+                        }}
+                        className={styles.declineButton}
                       >
-                        Delete
+                        Decline
                       </button>
                     </div>
                   </div>
@@ -219,16 +176,16 @@ export default function FriendsPage() {
               <div className={styles.friendsGrid}>
                 {suggestedFriends.map(friend => (
                   <div key={friend.id} className={styles.friendCard}>
-                    <img 
-                      src={friend.image} 
-                      alt={friend.name} 
+                    <img
+                      src={friend.image}
+                      alt={friend.name}
                       className={styles.profileImage}
                     />
                     <h3 className={styles.friendName}>{friend.name}</h3>
                     <div className={styles.mutualFriends}>
                       <div className={styles.mutualFriendsAvatars}>
                         {friend.mutualFriends.previews.map((preview, index) => (
-                          <img 
+                          <img
                             key={index}
                             src={preview}
                             alt="Mutual friend"
@@ -240,15 +197,15 @@ export default function FriendsPage() {
                       <span>{friend.mutualFriends.count} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
-                      <button 
+                      <button
                         onClick={() => handleAddFriend(friend.id)}
                         className={styles.confirmButton}
                       >
                         Add Friend
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleRemove(friend.id)}
-                        className={styles.deleteButton}
+                        className={styles.declineButton}
                       >
                         Remove
                       </button>
