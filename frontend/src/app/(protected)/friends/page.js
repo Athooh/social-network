@@ -100,13 +100,13 @@ export default function FriendsPage() {
           <div className={styles.friendsHeader}>
             {/* <h1>Friends</h1> */}
             <div className={styles.tabsContainer}>
-              <button 
+              <button
                 className={`${styles.tabButton} ${activeTab === 'requests' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('requests')}
               >
                 Friend Requests <span className={styles.requestCount}>{friendRequests.length}</span>
               </button>
-              <button 
+              <button
                 className={`${styles.tabButton} ${activeTab === 'suggestions' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('suggestions')}
               >
@@ -121,9 +121,9 @@ export default function FriendsPage() {
               <div className={styles.friendsGrid}>
                 {friendRequests.map(friend => (
                   <div key={friend.id} className={styles.friendCard}>
-                    <img 
-                      src={friend.image} 
-                      alt={friend.name} 
+                    <img
+                      src={friend.image}
+                      alt={friend.name}
                       className={styles.profileImage}
                     />
                     <h3 className={styles.friendName}>{friend.name}</h3>
@@ -132,13 +132,13 @@ export default function FriendsPage() {
                       <span>{friend.mutualFriends} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
-                      <button 
+                      <button
                         onClick={() => handleConfirm(friend.id)}
                         className={styles.confirmButton}
                       >
                         Confirm
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(friend.id)}
                         className={styles.deleteButton}
                       >
@@ -155,16 +155,16 @@ export default function FriendsPage() {
               <div className={styles.friendsGrid}>
                 {suggestedFriends.map(friend => (
                   <div key={friend.id} className={styles.friendCard}>
-                    <img 
-                      src={friend.image} 
-                      alt={friend.name} 
+                    <img
+                      src={friend.image}
+                      alt={friend.name}
                       className={styles.profileImage}
                     />
                     <h3 className={styles.friendName}>{friend.name}</h3>
                     <div className={styles.mutualFriends}>
                       <div className={styles.mutualFriendsAvatars}>
                         {friend.mutualFriends.previews.map((preview, index) => (
-                          <img 
+                          <img
                             key={index}
                             src={preview}
                             alt="Mutual friend"
@@ -176,13 +176,13 @@ export default function FriendsPage() {
                       <span>{friend.mutualFriends.count} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
-                      <button 
+                      <button
                         onClick={() => handleAddFriend(friend.id)}
                         className={styles.confirmButton}
                       >
                         Add Friend
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleRemove(friend.id)}
                         className={styles.deleteButton}
                       >
