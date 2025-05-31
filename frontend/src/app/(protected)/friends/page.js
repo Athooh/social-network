@@ -65,6 +65,8 @@ const suggestedFriends = [
 ];
 
 export default function FriendsPage() {
+
+  const { friendRequests, acceptFriendRequest, declineFriendRequest } = useFriendService()
   const [activeTab, setActiveTab] = useState('requests');
 
   const handleConfirm = (friendId) => {
