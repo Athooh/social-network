@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/header/Header'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LeftSidebar from '@/components/sidebar/LeftSidebar'
@@ -68,18 +69,23 @@ export default function FriendsPage() {
 
   const { friendRequests, acceptFriendRequest, declineFriendRequest } = useFriendService()
   const [activeTab, setActiveTab] = useState('requests');
+  const router = useRouter();
+
+  const handleCardClick = (followerId) => {
+    router.push(`/profile/${followerId}`);
+  };
 
   const handleConfirm = async (friend) => {
     const success = await acceptFriendRequest(friend.followerId);
     if (success) {
-      console.log(`Confirmed friend request from ${friend.name} (ID: ${friend.followerId})`);
+      console.log(`Confirmed friend request from ${friend.name} (followerId: ${friend.followerId})`);
     }
   };
 
   const handleDecline = async (friend) => {
     const success = await declineFriendRequest(friend.followerId);
     if (success) {
-      console.log(`Declined friend request from ${friend.name} (ID: ${friend.followerId})`);
+      console.log(`Declined friend request from ${friend.name} (followerId: ${friend.followerId})`);
     }
   };
 
@@ -124,7 +130,12 @@ export default function FriendsPage() {
               <h2 className={styles.sectionTitle}>Friend Requests</h2>
               <div className={styles.friendsGrid}>
                 {friendRequests.map(friend => (
-                  <div key={friend.id} className={styles.friendCard}>
+                  <div
+                    key={friend.id}
+                    className={styles.friendCard}
+                    onClick={() => handleCardClick(friend.followerId)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <img
                       src={friend.image}
                       alt={friend.name}
@@ -137,13 +148,19 @@ export default function FriendsPage() {
                     </div>
                     <div className={styles.actions}>
                       <button
-                        onClick={() => handleConfirm(friend)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConfirm(friend);
+                        }}
                         className={styles.confirmButton}
                       >
                         Confirm
                       </button>
                       <button
-                        onClick={() => handleDecline(friend)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDecline(friend);
+                        }}
                         className={styles.declineButton}
                       >
                         Decline
