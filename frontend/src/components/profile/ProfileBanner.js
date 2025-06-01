@@ -148,13 +148,6 @@ const ProfileBanner = ({
             >
               Connections
             </a>
-            <a
-              href="#"
-              className={activeSection === "events" ? styles.active : ""}
-              onClick={(e) => handleNavClick(e, "events")}
-            >
-              Events
-            </a>
           </nav>
         </div>
       </div>

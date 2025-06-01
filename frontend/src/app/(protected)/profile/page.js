@@ -13,7 +13,6 @@ import ContactsSection from "@/components/contacts/ContactsList";
 import ProfileAbout from "@/components/profile/ProfileAbout";
 import ProfilePhotos from "@/components/profile/ProfilePhotos";
 import ProfileGroups from "@/components/profile/ProfileGroups";
-import ProfileEvents from "@/components/profile/ProfileEvents";
 import ProfileConnections from "@/components/profile/ProfileConnections";
 import { useFriendService } from "@/services/friendService";
 import { useAuth } from "@/context/authcontext";
@@ -230,8 +229,6 @@ export default function ProfilePage({ params }) {
         return <ProfileGroups userData={userData} />;
       case "connections":
         return <ProfileConnections userData={userData} />;
-      case "events":
-        return <ProfileEvents userData={userData} />;
       default:
         return null;
     }
