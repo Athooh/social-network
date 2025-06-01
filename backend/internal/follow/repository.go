@@ -30,6 +30,8 @@ type Repository interface {
 	// Mutual friends
 	GetMutualFollowers(userID1, userID2 string) ([]*Follower, error)
 	GetMutualFollowersCount(userID1, userID2 string) (int, error)
+
+	GetUsersNotFollowed(userID string) ([]*BasicUser, error)
 }
 
 // SQLiteRepository implements Repository interface for SQLite
@@ -170,7 +172,6 @@ func (r *SQLiteRepository) CreateFollower(followerID, followingID string) error 
 	// Commit transaction
 	return tx.Commit()
 }
-
 
 func (r *SQLiteRepository) DeleteFollower(followerID, followingID string) error {
 	// Start transaction
@@ -430,4 +431,40 @@ func (r *SQLiteRepository) GetMutualFollowersCount(userID1, userID2 string) (int
 	}
 
 	return count, nil
+}
+
+func (r *SQLiteRepository) GetUsersNotFollowed(userID string) ([]*BasicUser, error) {
+	query := `
+		SELECT u.id
+		FROM users u
+		WHERE u.id != ? 
+		AND u.id NOT IN (
+			SELECT f.following_id 
+			FROM followers f 
+			WHERE f.follower_id = ?
+		)
+		AND u.id NOT IN (
+			SELECT fr.following_id 
+			FROM follow_requests fr 
+			WHERE fr.follower_id = ? AND fr.status = 'pending'
+		)
+		ORDER BY u.created_at DESC
+	`
+	rows, err := r.db.Query(query, userID, userID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*BasicUser
+	for rows.Next() {
+		var user BasicUser
+		err := rows.Scan(&user.ID)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+
+	return users, rows.Err()
 }
