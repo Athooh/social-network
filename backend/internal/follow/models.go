@@ -31,3 +31,18 @@ type Follower struct {
 	FollowingID string // User being followed
 	CreatedAt   time.Time
 }
+
+type BasicUser struct {
+	ID string
+}
+
+type SuggestedFriend struct {
+	ID            string  `json:"id"`
+	FirstName     string  `json:"firstName"`
+	LastName      string  `json:"lastName"`
+	Nickname      string  `json:"nickname"`
+	Avatar        string  `json:"avatar"`
+	IsPublic      bool    `json:"isPublic"`
+	MutualFriends int     `json:"mutualFriends"`
+	IsOnline      bool    `json:"isOnline"`
+}
