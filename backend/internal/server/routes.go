@@ -120,6 +120,7 @@ func Router(config RouterConfig) http.Handler {
 	protectedFollowGroup := NewRouteGroup("/api/follow", authenticatedRouteMiddleware)
 	protectedFollowGroup.HandleFunc("/follow", config.FollowHandler.FollowUser)
 	protectedFollowGroup.HandleFunc("/unfollow", config.FollowHandler.UnfollowUser)
+	protectedFollowGroup.HandleFunc("/suggested-friends", config.FollowHandler.GetSuggestedFriends)
 	protectedFollowGroup.HandleFunc("/accept", config.FollowHandler.AcceptFollowRequest)
 	protectedFollowGroup.HandleFunc("/decline", config.FollowHandler.DeclineFollowRequest)
 	protectedFollowGroup.HandleFunc("/pending-requests", config.FollowHandler.GetPendingFollowRequests)
