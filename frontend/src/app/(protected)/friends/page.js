@@ -7,9 +7,12 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LeftSidebar from '@/components/sidebar/LeftSidebar'
 import styles from '@/styles/Friends.module.css'
 import { useFriendService } from '@/services/friendService'
+import { usePostService } from '@/services/postService'
+import { showToast } from '@/components/ui/ToastContainer'
 
 
 export default function FriendsPage() {
+  const { followUser } = usePostService();
 
   const { friendRequests, SuggestedUsers, acceptFriendRequest, declineFriendRequest } = useFriendService()
   const [activeTab, setActiveTab] = useState('requests');
@@ -33,14 +36,9 @@ export default function FriendsPage() {
     }
   };
 
-  const handleSendRequestOrFollow = (user) => {
-    if (user.isPublic) {
-      // Follow for public profiles
-      console.log(`Following ${user.name} (ID: ${user.SuggestedID})`);
-    } else {
-      // Send friend request for private profiles
-      console.log(`Sending friend request to ${user.name} (ID: ${user.SuggestedID})`);
-    }
+  const handleSendRequestOrFollow = async (user) => {
+    await followUser(user.SuggestedID, user.name)
+    router.push("/friends")
   };
 
   return (
