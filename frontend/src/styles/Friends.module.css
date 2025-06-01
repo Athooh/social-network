@@ -15,6 +15,7 @@
   margin-bottom: var(--spacing-lg);
   background-color: none;
 }
+
 .tabButton::last-child {
   border-right: none;
   padding-left: 0;
@@ -64,7 +65,8 @@
 
 .mainContent {
   width: calc(1340px - 200px);
-  min-width: 0; /* Prevent flex item from overflowing */
+  min-width: 0;
+  /* Prevent flex item from overflowing */
   margin-bottom: 20px;
 }
 
@@ -126,7 +128,19 @@
   width: 100%;
 }
 
-.confirmButton, .deleteButton {
+.onlineIndicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.confirmButton,
+.declineButton {
   flex: 1;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius);
@@ -145,13 +159,13 @@
   background-color: #218838;
 }
 
-.deleteButton {
+.declineButton {
   background-color: #dc3545;
   color: white;
   border: 1px solid var(--border-color);
 }
 
-.deleteButton:hover {
+.declineButton:hover {
   background-color: #e4e6eb;
   color: #c82333;
   border-color: var(--danger-color);

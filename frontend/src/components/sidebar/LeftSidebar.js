@@ -141,7 +141,7 @@ export default function LeftSidebar() {
           alt="Profile"
           className={styles.profilePic}
         />
-        <h2 className={styles.userName}>{person.firstName}</h2>
+        <h2 className={styles.userName}>{person.fullName}</h2>
         <p className={styles.userProfession}>{person.aboutMe}</p>
 
         <div className={styles.statsGrid}>

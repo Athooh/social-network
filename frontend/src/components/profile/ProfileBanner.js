@@ -20,8 +20,8 @@ const ProfileBanner = ({
     onNavClick(section);
   };
 
-  // Create fullName from userData
   const fullName = userData.fullName || "";
+  const nickname = userData.nickname || "";
 
   // Use bannerImage or default for banner
   const bannerUrl = userData.bannerImage
@@ -61,7 +61,7 @@ const ProfileBanner = ({
             </div>
 
             <div className={styles.userInfo}>
-              <h2>{fullName}</h2>
+              <h2>{fullName} {nickname && `(${nickname})`}</h2>
               <div className={styles.privacyBadge}>
                 {isPrivate ? (
                   <span className={`${styles.badge} ${styles.private}`}>
@@ -147,13 +147,6 @@ const ProfileBanner = ({
               onClick={(e) => handleNavClick(e, "connections")}
             >
               Connections
-            </a>
-            <a
-              href="#"
-              className={activeSection === "events" ? styles.active : ""}
-              onClick={(e) => handleNavClick(e, "events")}
-            >
-              Events
             </a>
           </nav>
         </div>

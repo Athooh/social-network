@@ -271,6 +271,31 @@ func (h *Handler) IsFollowing(w http.ResponseWriter, r *http.Request) {
 	h.sendJSON(w, http.StatusOK, map[string]bool{"isFollowing": isFollowing})
 }
 
+func (h *Handler) GetSuggestedFriends(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.sendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	// Get suggested friends
+	suggestions, err := h.service.GetSuggestedFriends(userID)
+	if err != nil {
+		h.log.Error("Failed to get suggested friends: %v", err)
+		h.sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Return the suggestions
+	h.sendJSON(w, http.StatusOK, map[string]interface{}{
+		"suggestions": suggestions,
+		"count":       len(suggestions),
+	})
+}
+
 func (h *Handler) sendJSON(w http.ResponseWriter, status int, data interface{}) {
 	httputil.SendJSON(w, status, data)
 }
