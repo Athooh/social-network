@@ -7,6 +7,7 @@ import { BASE_URL } from "@/utils/constants";
 export const useFriendService = () => {
   const { authenticatedFetch } = useAuth();
   const [friendRequests, setFriendRequests] = useState([]);
+  const [SuggestedUsers, setSuggestedUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -24,8 +25,8 @@ export const useFriendService = () => {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.message ||
-            errorData.error ||
-            "Failed to fetch friend requests"
+          errorData.error ||
+          "Failed to fetch friend requests"
         );
       }
 
@@ -35,7 +36,7 @@ export const useFriendService = () => {
         // Transform the data to match our component's expected format
         const formattedRequests = data.map((request) => ({
           id: request.ID,
-          name: request.FollowerName         ,
+          name: request.FollowerName,
           image: request.FollowerAvatar
             ? `${BASE_URL}/uploads/${request.FollowerAvatar}`
             : "/avatar.png",
@@ -45,6 +46,49 @@ export const useFriendService = () => {
         setFriendRequests(formattedRequests);
 
         return formattedRequests;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching friend requests:", error);
+      return [];
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
+  const fetchSuggestedUsers = async () => {
+    setIsLoadingRequests(true);
+    try {
+      const response = await authenticatedFetch("follow/suggested-friends", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message ||
+          errorData.error ||
+          "Failed to fetch friend requests"
+        );
+      }
+
+      const data = await response.json();
+
+      if (data) {
+        // Transform the data to match our component's expected format
+        const formattedSuggested = data.suggestions.map((Suggested) => ({
+          SuggestedID: Suggested.id,
+          name: `${Suggested.firstName} ${Suggested.lastName} (${Suggested.nickname})`,
+          image: Suggested.avatar
+            ? `${BASE_URL}/uploads/${Suggested.avatar}`
+            : "/avatar.png",
+          mutualFriends: Suggested.mutualFriends || 0,
+          isPublic: Suggested.isPublic,
+          isOnline: Suggested.isOnline,
+        }));
+        setSuggestedUsers(formattedSuggested);
+
+        return formattedSuggested;
       }
       return [];
     } catch (error) {
@@ -109,8 +153,8 @@ export const useFriendService = () => {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.message ||
-            errorData.error ||
-            "Failed to accept friend request"
+          errorData.error ||
+          "Failed to accept friend request"
         );
       }
 
@@ -147,14 +191,14 @@ export const useFriendService = () => {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.message ||
-            errorData.error ||
-            "Failed to decline friend request"
+          errorData.error ||
+          "Failed to decline friend request"
         );
       }
 
       const data = await response.json();
 
-      
+
 
       if (data.success) {
         showToast("Friend request declined", "success");
@@ -209,6 +253,7 @@ export const useFriendService = () => {
   useEffect(() => {
     fetchFriendRequests();
     fetchContacts();
+    fetchSuggestedUsers();
   }, []);
 
   // Add this function to the useFriendService hook
@@ -250,8 +295,10 @@ export const useFriendService = () => {
 
   return {
     friendRequests,
+    SuggestedUsers,
     contacts,
     acceptFriendRequest,
+    fetchSuggestedUsers,
     declineFriendRequest,
     fetchFriendRequests,
     fetchContacts,
