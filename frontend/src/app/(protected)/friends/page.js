@@ -7,72 +7,19 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import LeftSidebar from '@/components/sidebar/LeftSidebar'
 import styles from '@/styles/Friends.module.css'
 import { useFriendService } from '@/services/friendService'
+import { usePostService } from '@/services/postService'
+import { showToast } from '@/components/ui/ToastContainer'
 
-const suggestedFriends = [
-  {
-    id: 7,
-    name: 'Emily Rodriguez',
-    image: '/avatar4.png',
-    mutualFriends: {
-      count: 7,
-      previews: ['/avatar1.png', '/avatar2.png', '/avatar3.png']
-    }
-  },
-  {
-    id: 8,
-    name: 'Daniel Lee',
-    image: '/avatar3.png',
-    mutualFriends: {
-      count: 2,
-      previews: ['/avatar4.png', '/avatar5.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 9,
-    name: 'Olivia Garcia',
-    image: '/avatar5.png',
-    mutualFriends: {
-      count: 9,
-      previews: ['/avatar1.png', '/avatar3.png', '/avatar5.png']
-    }
-  },
-  {
-    id: 10,
-    name: 'William Martinez',
-    image: '/avatar6.png',
-    mutualFriends: {
-      count: 11,
-      previews: ['/avatar2.png', '/avatar4.png', '/avatar6.png']
-    }
-  },
-  {
-    id: 11,
-    name: 'Ava Thompson',
-    image: '/avatar4.png',
-    mutualFriends: {
-      count: 5,
-      previews: ['/avatar1.png', '/avatar3.png', '/avatar5.png']
-    }
-  },
-  {
-    id: 12,
-    name: 'Ethan Wilson',
-    image: '/avatar1.png',
-    mutualFriends: {
-      count: 14,
-      previews: ['/avatar2.png', '/avatar4.png', '/avatar6.png']
-    }
-  }
-];
 
 export default function FriendsPage() {
+  const { followUser } = usePostService();
 
-  const { friendRequests, acceptFriendRequest, declineFriendRequest } = useFriendService()
+  const { friendRequests, SuggestedUsers, acceptFriendRequest, declineFriendRequest } = useFriendService()
   const [activeTab, setActiveTab] = useState('requests');
   const router = useRouter();
 
-  const handleCardClick = (followerId) => {
-    router.push(`/profile/${followerId}`);
+  const handleCardClick = (userId) => {
+    router.push(`/profile/${userId}`);
   };
 
   const handleConfirm = async (friend) => {
@@ -89,14 +36,9 @@ export default function FriendsPage() {
     }
   };
 
-  const handleAddFriend = (friendId) => {
-    // Add your add friend logic here
-    console.log(`Added friend with ID: ${friendId}`);
-  };
-
-  const handleRemove = (friendId) => {
-    // Add your remove suggestion logic here
-    console.log(`Removed suggestion with ID: ${friendId}`);
+  const handleSendRequestOrFollow = async (user) => {
+    await followUser(user.SuggestedID, user.name)
+    router.push("/friends")
   };
 
   return (
@@ -120,7 +62,7 @@ export default function FriendsPage() {
                 className={`${styles.tabButton} ${activeTab === 'suggestions' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('suggestions')}
               >
-                People You May Know
+                People You May Know <span className={styles.requestCount}>{SuggestedUsers.length}</span>
               </button>
             </div>
           </div>
@@ -174,40 +116,32 @@ export default function FriendsPage() {
             <>
               <h2 className={styles.sectionTitle}>People You May Know</h2>
               <div className={styles.friendsGrid}>
-                {suggestedFriends.map(friend => (
-                  <div key={friend.id} className={styles.friendCard}>
+                {SuggestedUsers.map(user => (
+                  <div
+                    key={user.SuggestedID}
+                    className={styles.friendCard}
+                    onClick={() => handleCardClick(user.SuggestedID)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <img
-                      src={friend.image}
-                      alt={friend.name}
+                      src={user.image}
+                      alt={user.name}
                       className={styles.profileImage}
                     />
-                    <h3 className={styles.friendName}>{friend.name}</h3>
+                    {user.isOnline && <div className={styles.onlineIndicator}></div>}
+                    <h3 className={styles.friendName}>{user.name}</h3>
                     <div className={styles.mutualFriends}>
-                      <div className={styles.mutualFriendsAvatars}>
-                        {friend.mutualFriends.previews.map((preview, index) => (
-                          <img
-                            key={index}
-                            src={preview}
-                            alt="Mutual friend"
-                            className={styles.mutualFriendAvatar}
-                            style={{ marginLeft: index > 0 ? '-8px' : '0' }}
-                          />
-                        ))}
-                      </div>
-                      <span>{friend.mutualFriends.count} mutual friends</span>
+                      <span>{user.mutualFriends} mutual friends</span>
                     </div>
                     <div className={styles.actions}>
                       <button
-                        onClick={() => handleAddFriend(friend.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendRequestOrFollow(user);
+                        }}
                         className={styles.confirmButton}
                       >
-                        Add Friend
-                      </button>
-                      <button
-                        onClick={() => handleRemove(friend.id)}
-                        className={styles.declineButton}
-                      >
-                        Remove
+                        {user.isPublic ? 'Follow' : 'Send Friend Request'}
                       </button>
                     </div>
                   </div>

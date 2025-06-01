@@ -28,6 +28,8 @@ type Service interface {
 	// Retrieval operations
 	GetFollowers(userID string) ([]*FollowerWithUser, error)
 	GetFollowing(userID string) ([]*FollowerWithUser, error)
+
+	GetSuggestedFriends(userID string) ([]*SuggestedFriend, error)
 }
 
 // FollowRequestWithUser extends FollowRequest with user information
@@ -354,4 +356,49 @@ func (s *FollowService) GetFollowing(userID string) ([]*FollowerWithUser, error)
 	}
 
 	return followingWithUser, nil
+}
+
+func (s *FollowService) GetSuggestedFriends(userID string) ([]*SuggestedFriend, error) {
+	// Get users not followed by current user
+	suggestions, err := s.repo.GetUsersNotFollowed(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var suggestedFriends []*SuggestedFriend
+	for _, suggestion := range suggestions {
+		// Get user info
+		user, err := s.userRepo.GetByID(suggestion.ID)
+		if err != nil {
+			s.log.Warn("Failed to get user info for suggestion %s: %v", suggestion.ID, err)
+			continue
+		}
+
+		// Get mutual friends count
+		mutualCount, err := s.repo.GetMutualFollowersCount(userID, suggestion.ID)
+		if err != nil {
+			s.log.Warn("Failed to get mutual followers count for user %s: %v", suggestion.ID, err)
+			mutualCount = 0
+		}
+
+		// Check if user is online
+		isOnline, err := s.statusRepo.GetUserStatus(suggestion.ID)
+		if err != nil {
+			s.log.Warn("Failed to get online status for user %s: %v", suggestion.ID, err)
+			// Continue with isOnline = false as default
+		}
+		suggestedFriend := &SuggestedFriend{
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Nickname:      user.Nickname,
+			Avatar:        user.Avatar,
+			IsPublic:      user.IsPublic,
+			MutualFriends: mutualCount,
+			IsOnline:      isOnline,
+		}
+
+		suggestedFriends = append(suggestedFriends, suggestedFriend)
+	}
+	return suggestedFriends, nil
 }

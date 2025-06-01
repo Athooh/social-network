@@ -152,27 +152,6 @@ const ProfileConnections = ({ userData }) => {
                         </span>
                       </div>
                     </div>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.menuButton}
-                        onClick={() => toggleDropdown(contact.ID)}
-                      >
-                        <i className="fas fa-ellipsis-h"></i>
-                      </button>
-                      {activeDropdown === contact.ID && (
-                        <div className={styles.dropdown}>
-                          <button>
-                            <i className="fas fa-user-minus"></i>
-                            {activeTab === "following"
-                              ? "Unfollow"
-                              : "Remove Follower"}
-                          </button>
-                          <button>
-                            <i className="fas fa-eye-slash"></i> Hide Contact
-                          </button>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 ))
               ) : (
