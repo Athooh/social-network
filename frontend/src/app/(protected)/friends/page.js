@@ -12,8 +12,6 @@ import { useFriendService } from '@/services/friendService'
 export default function FriendsPage() {
 
   const { friendRequests, SuggestedUsers, acceptFriendRequest, declineFriendRequest } = useFriendService()
-
-  console.log(SuggestedUsers)
   const [activeTab, setActiveTab] = useState('requests');
   const router = useRouter();
 
@@ -35,14 +33,14 @@ export default function FriendsPage() {
     }
   };
 
-  const handleAddFriend = (friendId) => {
-    // Add your add friend logic here
-    console.log(`Added friend with ID: ${friendId}`);
-  };
-
-  const handleRemove = (friendId) => {
-    // Add your remove suggestion logic here
-    console.log(`Removed suggestion with ID: ${friendId}`);
+  const handleSendRequestOrFollow = (user) => {
+    if (user.isPublic) {
+      // Follow for public profiles
+      console.log(`Following ${user.name} (ID: ${user.SuggestedID})`);
+    } else {
+      // Send friend request for private profiles
+      console.log(`Sending friend request to ${user.name} (ID: ${user.SuggestedID})`);
+    }
   };
 
   return (
@@ -66,7 +64,7 @@ export default function FriendsPage() {
                 className={`${styles.tabButton} ${activeTab === 'suggestions' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('suggestions')}
               >
-                People You May Know
+                People You May Know <span className={styles.requestCount}>{SuggestedUsers.length}</span>
               </button>
             </div>
           </div>
@@ -132,6 +130,7 @@ export default function FriendsPage() {
                       alt={user.name}
                       className={styles.profileImage}
                     />
+                    {user.isOnline && <div className={styles.onlineIndicator}></div>}
                     <h3 className={styles.friendName}>{user.name}</h3>
                     <div className={styles.mutualFriends}>
                       <span>{user.mutualFriends} mutual friends</span>
@@ -140,20 +139,11 @@ export default function FriendsPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAddFriend(user.SuggestedID);
+                          handleSendRequestOrFollow(user);
                         }}
                         className={styles.confirmButton}
                       >
-                        Add Friend
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemove(user.SuggestedID);
-                        }}
-                        className={styles.declineButton}
-                      >
-                        Remove
+                        {user.isPublic ? 'Follow' : 'Send Friend Request'}
                       </button>
                     </div>
                   </div>
