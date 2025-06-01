@@ -76,7 +76,7 @@ export const useFriendService = () => {
 
       if (data) {
         // Transform the data to match our component's expected format
-        const formattedSuggested = data.suggestions.map((Suggested) => ({
+        const formattedSuggested = (data.suggestions || []).map((Suggested) => ({
           SuggestedID: Suggested.id,
           name: `${Suggested.firstName} ${Suggested.lastName} (${Suggested.nickname})`,
           image: Suggested.avatar
