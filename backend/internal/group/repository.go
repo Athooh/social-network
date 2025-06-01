@@ -525,8 +525,8 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 				u.avatar
 			FROM group_members gm
 			JOIN users u ON gm.user_id = u.id
-	W		HERE gm.group_id = ?
-	O		RDER BY gm.created_at DESC
+	        WHERE gm.group_id = ?
+			ORDER BY gm.created_at DESC
 		`
 		args = []interface{}{groupID}
 	}
