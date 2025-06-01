@@ -39,7 +39,7 @@ const CreateGroupModal = ({ isOpen, onClose, onGroupCreated }) => {
     const formData = new FormData();
     formData.append('name', groupData.name);
     formData.append('description', groupData.description);
-    formData.append('privacy', groupData.privacy);
+    formData.append('privacy', 'private');
     if (groupData.banner) formData.append('banner', groupData.banner);
     if (groupData.profilePic) formData.append('profilePic', groupData.profilePic);
     createGroup(formData)
@@ -115,40 +115,6 @@ const CreateGroupModal = ({ isOpen, onClose, onGroupCreated }) => {
                 placeholder="What's your group about?"
                 rows="3"
               />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label>Privacy</label>
-              <div className={styles.privacyOptions}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="public"
-                    checked={groupData.privacy === 'public'}
-                    onChange={(e) => setGroupData(prev => ({ ...prev, privacy: e.target.value }))}
-                  />
-                  <i className="fas fa-globe"></i>
-                  <div>
-                    <span>Public</span>
-                    <small>Anyone can see who's in the group and what they post.</small>
-                  </div>
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="private"
-                    checked={groupData.privacy === 'private'}
-                    onChange={(e) => setGroupData(prev => ({ ...prev, privacy: e.target.value }))}
-                  />
-                  <i className="fas fa-lock"></i>
-                  <div>
-                    <span>Private</span>
-                    <small>Only members can see who's in the group and what they post.</small>
-                  </div>
-                </label>
-              </div>
             </div>
           </div>
 
