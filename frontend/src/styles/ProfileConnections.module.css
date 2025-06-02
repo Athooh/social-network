@@ -196,10 +196,24 @@
 
 @media (max-width: 768px) {
   .connectionsContainer {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   
   .sidebar {
+    display: none;
+  }
+
+  .stats {
+    font-family: .8rem;
+  }
+
+  .connectionsStatsSearch {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .searchBar {
     width: 100%;
   }
 } 

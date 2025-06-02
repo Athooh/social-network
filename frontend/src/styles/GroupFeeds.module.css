@@ -1,16 +1,18 @@
 .groupSection {
   border-radius: 8px;
   overflow: hidden;
+  width: calc(1370px - 600px);
 }
 
 .groupHeader {
   background: var(--fb-white);
-  padding: 1.5rem;
+  padding: .8rem;
   border-bottom: 1px solid var(--border-color);
 }
 
 .groupInfo {
   display: flex;
+  /* justify-content: space-between; */
   gap: 1.5rem;
   margin-bottom: 1rem;
 }
@@ -22,6 +24,12 @@
   border-radius: 8px;
 }
 
+.groupDetails {
+  flex: 1;
+  max-width: calc(100% - 120px); /* Account for image width + gap */
+  overflow: hidden;
+}
+
 .groupDetails h2 {
   margin: 0 0 0.5rem;
   color: var(--text-primary);
@@ -31,6 +39,10 @@
   color: var(--text-secondary);
   margin: 0 0 0.5rem;
   font-size: 0.9rem;
+  padding: .3rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .groupMeta {
@@ -67,4 +79,18 @@
   border: 1px solid var(--border-color);
   border-radius: 6px;
   cursor: pointer;
+}
+
+@media  screen and (max-width: 840px) {
+  .groupHeader {
+    margin-bottom: 10px;
+  }
+
+  .groupSection {
+    width: 100%;
+  }
+
+  .leftSidebar, .rightSidebar {
+    display: none;
+  }
 }

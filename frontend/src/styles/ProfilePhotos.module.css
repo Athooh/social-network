@@ -50,24 +50,21 @@
 
 @media (max-width: 768px) {
   .photosContainer {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   
+  .photoGrid {
+    grid-template-columns: repeat(2, 1fr); /* Changed to show 2 photos per row */
+    gap: 0.5rem; /* Reduced gap for smaller screens */
+  }
+
   .sidebar {
-    width: 100%;
+    display: none;
   }
 
-  .prevButton {
-    left: 10px;
-  }
-
-  .nextButton {
-    right: 10px;
-  }
-
-  .navButton {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 0.5rem;
+  .photoItem img {
+    width: 100%; /* Changed from 45% to fill the container */
+    height: 100%;
   }
 }
 
@@ -157,4 +154,4 @@
   background: rgba(0, 0, 0, 0.5);
   padding: 0.5rem 1rem;
   border-radius: 20px;
-} 
+}

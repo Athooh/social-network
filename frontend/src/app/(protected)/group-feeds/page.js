@@ -144,9 +144,9 @@ export default function GroupFeeds() {
                       Join Group
                     </button>
                   )}
-                  <button className={groupFeeds.moreButton}>
+                  {/* <button className={groupFeeds.moreButton}>
                     •••
-                  </button>
+                  </button> */}
                 </div>
               </div>
 
