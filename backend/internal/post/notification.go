@@ -68,9 +68,9 @@ func (s *NotificationService) NotifyPostCreatedToSpecificUsers(post *models.Post
 	// Send to each specific recipient
 	for _, recipientID := range recipientIDs {
 		// Don't notify the post creator
-		// if recipientID == userID {
-		// 	continue
-		// }
+		if recipientID == userID {
+			continue
+		}
 
 		s.hub.BroadcastToUser(recipientID, event)
 	}
