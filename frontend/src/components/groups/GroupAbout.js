@@ -55,6 +55,15 @@ const GroupAbout = ({ group }) => {
     }
   };
 
+  console.log("GroupAbout component rendered with group:", group);
+  if (group === null || group === undefined || group.length === 0) {
+    return (
+      <div className={styles.loadingContainer}>
+        <p>Can not show group info</p>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.aboutContainer}>
       <div className={styles.mainInfo}>
