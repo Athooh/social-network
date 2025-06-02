@@ -66,8 +66,18 @@ export default function Register() {
     if (!trimmedData.lastName) newErrors.lastName = "Last name is required";
     if (!trimmedData.email) newErrors.email = "Email is required";
     if (!trimmedData.password) newErrors.password = "Password is required";
-    if (!trimmedData.dateOfBirth)
+    if (!trimmedData.dateOfBirth) {
       newErrors.dateOfBirth = "Date of Birth is required";
+    } else {
+      const selectedDate = new Date(trimmedData.dateOfBirth);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize time for accuracy
+    
+      if (selectedDate > today) {
+        newErrors.dateOfBirth = "Date of Birth cannot be in the future";
+      }
+    }
+    
     setFormErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -161,8 +171,10 @@ export default function Register() {
               placeholder="Date of Birth"
               value={formData.dateOfBirth}
               onChange={handleChange}
+              max={new Date().toISOString().split("T")[0]}
               required
             />
+
 
             {formErrors.dateOfBirth && (
               <span className={styles.fieldError}>
