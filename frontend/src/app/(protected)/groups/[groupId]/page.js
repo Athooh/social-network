@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { showToast } from "@/components/ui/ToastContainer";
 // Add new imports for components
 import GroupAbout from '@/components/groups/GroupAbout';
 import GroupPhotos from '@/components/groups/GroupPhotos';
@@ -32,7 +34,8 @@ try {
 export default function GroupPostPage() {
   const params = useParams();
   const { groupId } = params;
-  const { getgroup, getgroupposts } = useGroupService();
+   const router = useRouter();
+  const { getgroup, getgroupposts, joinGroup } = useGroupService();
   const [group, setGroup] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,12 +70,12 @@ export default function GroupPostPage() {
       case 'GroupPost':
         return (
           <>
-            <GroupCreatePost groupId={groupId} groupName={group.Name} oncreatePost={fetchGroups}/>
+            <GroupCreatePost groupId={groupId} groupName={group.Name} oncreatePost={fetchGroups} />
             {/* <GroupPost post={post} onPostUpdated={() => { }} /> */}
             {posts !== null && posts.map(post => (
               <div key={post.ID}>
                 <GroupPost
-                  currentuser= {userdata}
+                  currentuser={userdata}
                   post={post}
                   onPostUpdated={fetchGroups}
                 />
@@ -85,7 +88,11 @@ export default function GroupPostPage() {
       case 'photos':
         return <GroupPhotos posts={posts} />;
       case 'GroupMembers':
-        return <GroupMembers group={group} />;
+        let role = 'member'
+        if (userdata.id === group.CreatorID) {
+          role = 'admin';
+        }
+        return <GroupMembers group={group} currentUserRole={role} onMemberUpdate={fetchGroups} />;
       case 'GroupEvents':
         return <GroupEvents groupId={groupId} />;
       case 'GroupChat':
@@ -97,6 +104,54 @@ export default function GroupPostPage() {
 
   if (loading || !group) {
     return <LoadingSpinner size="large" fullPage={true} />;
+  }
+
+  const handleJoinRequest = async () => {
+    try {
+      await joinGroup(groupId);
+      showToast("Join request sent successfully", "success");
+      fetchGroups(); // Refresh group data
+    } catch (error) {
+      console.error("Error sending join request:", error);
+      showToast("Failed to send join request", "error");
+    }
+  };
+
+  if (!group || group.length === 0) {
+    return (
+      <>
+        <Header />
+        <div className={styles.container}>
+          <aside className={styles.leftSidebar}>
+            <LeftSidebar />
+          </aside>
+          <main className={`${styles.mainContent} ${groupStyles.emptyGroupContainer}`}>
+            <div className={groupStyles.emptyGroup}>
+              <i className="fas fa-users-slash"></i>
+              <h2>Group Not Found</h2>
+              <p>This group might be private or no longer exists.</p>
+              <div className={groupStyles.emptyGroupActions}>
+                <button 
+                  className={groupStyles.joinButton}
+                  onClick={handleJoinRequest}
+                >
+                  Request to Join
+                </button>
+                <button 
+                  className={groupStyles.backButton}
+                  onClick={() => router.push('/groups')}
+                >
+                  Back to Groups
+                </button>
+              </div>
+            </div>
+          </main>
+          <aside className={styles.rightSidebar}>
+            <RightSidebar />
+          </aside>
+        </div>
+      </>
+    );
   }
 
   return (
