@@ -54,8 +54,7 @@ const GroupAbout = ({ group }) => {
       showToast("Failed to leave group", "error");
     }
   };
-
-  console.log("GroupAbout component rendered with group:", group);
+  
   if (group === null || group === undefined || group.length === 0) {
     return (
       <div className={styles.loadingContainer}>
