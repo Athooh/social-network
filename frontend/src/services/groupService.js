@@ -444,6 +444,28 @@ export const useGroupService = () => {
         }
     };
 
+    const inviteToGroup = async (groupId, userId) => {
+        try {
+            const response = await authenticatedFetch('groups/invite', {
+                method: 'POST',
+                body: JSON.stringify({
+                    groupId,
+                    inviteeId: userId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to invite user');
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Error inviting user:', error);
+            throw error;
+        }
+    };
+
     return {
         createGroup,
         getgroup,
@@ -461,5 +483,6 @@ export const useGroupService = () => {
         getEventResponses,
         acceptJoinRequest,
         rejectJoinRequest,
+        inviteToGroup,
     };
 };

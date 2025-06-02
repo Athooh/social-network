@@ -23,31 +23,37 @@ import { useGroupService } from "@/services/groupService";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
-let userdata = null;
-try {
-  const raw = localStorage.getItem("userData");
-  if (raw) userdata = JSON.parse(raw);
-} catch (e) {
-  console.error("Invalid userData in localStorage:", e);
-}
 
 export default function GroupPostPage() {
   const params = useParams();
   const { groupId } = params;
-   const router = useRouter();
+  const router = useRouter();
   const { getgroup, getgroupposts, joinGroup } = useGroupService();
   const [group, setGroup] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Add activeSection state
   const [activeSection, setActiveSection] = useState('GroupPost');
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [userData, setUserData] = useState(null);
 
-  // Add handleNavClick function
+   // Add handleNavClick function
   const handleNavClick = (e, section) => {
     e.preventDefault();
     setActiveSection(section);
   };
+  
+  // Move localStorage check into useEffect
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("userData");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUserData(parsed);
+      }
+    } catch (e) {
+      console.error("Invalid userData in localStorage:", e);
+    }
+  }, []);
 
   const fetchGroups = async () => {
     try {
@@ -65,6 +71,7 @@ export default function GroupPostPage() {
     fetchGroups();
   }, []);
 
+  // Update the renderContent function to use userData instead of userdata
   const renderContent = () => {
     switch (activeSection) {
       case 'GroupPost':
@@ -75,7 +82,7 @@ export default function GroupPostPage() {
             {posts !== null && posts.map(post => (
               <div key={post.ID}>
                 <GroupPost
-                  currentuser={userdata}
+                  currentuser={userData}
                   post={post}
                   onPostUpdated={fetchGroups}
                 />
@@ -89,7 +96,7 @@ export default function GroupPostPage() {
         return <GroupPhotos posts={posts} />;
       case 'GroupMembers':
         let role = 'member'
-        if (userdata.id === group.CreatorID) {
+        if (userData?.id === group.CreatorID) {
           role = 'admin';
         }
         return <GroupMembers group={group} currentUserRole={role} onMemberUpdate={fetchGroups} />;

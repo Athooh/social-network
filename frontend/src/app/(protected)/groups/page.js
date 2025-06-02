@@ -10,6 +10,7 @@ import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import { useState, useEffect } from 'react';
 import { useGroupService } from "@/services/groupService";
 import { showToast } from "@/components/ui/ToastContainer";
+import InviteModal from '@/components/groups/InviteModal';
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", "");
@@ -17,6 +18,7 @@ const BASE_URL = API_URL.replace("/api", "");
 export default function Groups() {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [allGroups, setAllGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState(null);
@@ -61,7 +63,7 @@ export default function Groups() {
     const handleGroupAction = async (group, action) => {
         try {
             let success = false;
-            
+
             switch (action) {
                 case 'delete':
                     success = await deleteGroup(group.ID);
@@ -123,18 +125,18 @@ export default function Groups() {
                         )}
 
                         {allGroups != null && allGroups.map(group => (
-                            <div 
-                                key={group.ID} 
+                            <div
+                                key={group.ID}
                                 className={styles.groupCard}
                                 onClick={() => handleGroupClick(group.ID)}
                             >
                                 <div className={styles.groupBanner}>
-                                    <img 
-                                        src={group.BannerPath?.String ? 
-                                            `${BASE_URL}/uploads/${group.BannerPath.String}` : 
-                                            "/banner5.jpg"} 
-                                        alt="" 
-                                        className={styles.bannerImg} 
+                                    <img
+                                        src={group.BannerPath?.String ?
+                                            `${BASE_URL}/uploads/${group.BannerPath.String}` :
+                                            "/banner5.jpg"}
+                                        alt=""
+                                        className={styles.bannerImg}
                                     />
                                 </div>
                                 <div className={styles.groupInfo}>
@@ -158,29 +160,29 @@ export default function Groups() {
                                             ))}
                                         </div>
                                         <span className={styles.memberCount}>
-                                          {group.MemberCount.toLocaleString()} members
+                                            {group.MemberCount.toLocaleString()} members
                                         </span>
-                                      </div>
+                                    </div>
 
                                     <hr className={styles.divider} />
 
                                     <div className={styles.groupActions} onClick={e => e.stopPropagation()}>
                                         {group.IsMember && (
-                                            <button className={styles.inviteBtn}>
+                                            <button className={styles.inviteBtn} onClick={() => setShowInviteModal(true)} >
                                                 <i className="fas fa-user-plus"></i> Invite
                                             </button>
                                         )}
 
                                         {group.IsMember ? (
                                             userData?.id === group.Creator?.id ? (
-                                                <button 
+                                                <button
                                                     className={styles.leaveBtn}
                                                     onClick={() => handleGroupAction(group, 'delete')}
                                                 >
                                                     Delete Group
                                                 </button>
                                             ) : (
-                                                <button 
+                                                <button
                                                     className={styles.leaveBtn}
                                                     onClick={() => handleGroupAction(group, 'leave')}
                                                 >
@@ -188,7 +190,7 @@ export default function Groups() {
                                                 </button>
                                             )
                                         ) : (
-                                            <button 
+                                            <button
                                                 className={styles.inviteBtn}
                                                 onClick={() => handleGroupAction(group, 'join')}
                                             >
@@ -197,6 +199,11 @@ export default function Groups() {
                                         )}
                                     </div>
                                 </div>
+                                <InviteModal
+                                    group={group}
+                                    isOpen={showInviteModal}
+                                    onClose={() => setShowInviteModal(false)}
+                                />
                             </div>
                         ))}
                     </div>

@@ -3,6 +3,7 @@ import styles from '@/styles/GroupAbout.module.css';
 import { formatRelativeTime } from '@/utils/dateUtils';
 import { useGroupService } from '@/services/groupService';
 import { showToast } from "@/components/ui/ToastContainer";
+import InviteModal from '@/components/groups/InviteModal';
 
 let userdata = null;
 try {
@@ -15,6 +16,7 @@ try {
 const GroupAbout = ({ group }) => {
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const { leaveGroup, deleteGroup, joinGroup } = useGroupService();
 
   const handleLeaveGroup = async () => {
@@ -96,13 +98,14 @@ const GroupAbout = ({ group }) => {
         </div>
 
         <div className={styles.actions}>
-          {group.IsMember ? (
-            <button className={styles.inviteButton}>
+          {group.IsMember && (
+            <button
+              className={styles.inviteButton}
+              onClick={() => setShowInviteModal(true)}
+            >
               <i className="fas fa-user-plus"></i>
               Invite Members
             </button>
-          ) : (
-            ""
           )}
           {group.IsMember ? (
             userdata.id === group.Creator.id ? (
@@ -178,6 +181,12 @@ const GroupAbout = ({ group }) => {
           </div>
         </div>
       )}
+
+      <InviteModal
+        group={group}
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+      />
     </div>
   );
 };
