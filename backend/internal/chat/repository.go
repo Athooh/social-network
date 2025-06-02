@@ -147,11 +147,26 @@ func (r *SQLiteRepository) MarkMessagesAsRead(senderID, receiverID string) error
 	return err
 }
 
-// GetChatContacts gets all users that the current user can chat with
+// IsFollowing checks if a user is following another user
+func (r *SQLiteRepository) IsFollowing(followerID, followingID string) (bool, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM followers
+		WHERE follower_id = ? AND following_id = ?
+	`
+
+	var count int
+	err := r.db.QueryRow(query, followerID, followingID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact, error) {
 	query := `
-		WITH chat_users AS (
-			-- Users who have sent messages to or received messages from the current user
+		WITH chat_candidates AS (
 			SELECT DISTINCT
 				CASE
 					WHEN sender_id = ? THEN receiver_id
@@ -162,7 +177,6 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 			
 			UNION
 			
-			-- Users who the current user follows or who follow the current user
 			SELECT DISTINCT
 				CASE
 					WHEN follower_id = ? THEN following_id
@@ -170,6 +184,16 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 				END AS contact_id
 			FROM followers
 			WHERE follower_id = ? OR following_id = ?
+		),
+		chat_users AS (
+			SELECT cc.contact_id
+			FROM chat_candidates cc
+			WHERE EXISTS (
+				SELECT 1 FROM followers f
+				WHERE 
+					(f.follower_id = cc.contact_id AND f.following_id = ?) OR
+					(f.follower_id = ? AND f.following_id = cc.contact_id)
+			)
 		)
 		SELECT 
 			u.id,
@@ -211,9 +235,13 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 
 	rows, err := r.db.Query(
 		query,
-		userID, userID, userID,
-		userID, userID, userID,
-		userID, userID, userID, userID, userID, userID, userID,
+		userID, userID, userID, // for private_messages
+		userID, userID, userID, // for followers union
+		userID, userID,         // for follow-check condition
+		userID, userID,         // for last_message
+		userID, userID,         // for last_message_sender_id
+		userID, userID,         // for last_sent
+		userID,                 // for unread_count
 	)
 	if err != nil {
 		return nil, err
@@ -245,11 +273,9 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 		if lastMessage.Valid {
 			contact.LastMessage = lastMessage.String
 		}
-
 		if lastMessageSenderID.Valid {
 			contact.LastMessageSenderID = lastMessageSenderID.String
 		}
-
 		if lastSent.Valid {
 			contact.LastSent = lastSent.Time
 		}
