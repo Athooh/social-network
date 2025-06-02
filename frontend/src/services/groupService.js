@@ -76,6 +76,37 @@ export const useGroupService = () => {
         }
     }
 
+    const getgrouponly = async () => {
+        try {
+            const response = await authenticatedFetch("groups", {
+                method: "GET",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData.message || errorData.error || "Failed to fetch groups"
+                );
+            }
+
+            const groups = await response.json();
+
+            if (!groups) {
+                return [];
+            }
+
+            if (!Array.isArray(groups)) {
+                throw new Error("Invalid response format");
+            }
+
+            return groups;
+        } catch (error) {
+            console.error("Error fetching groups:", error);
+            showToast(error.message || "Error fetching groups", "error");
+            return [];
+        }
+    }
+
     const getallgroups = async () => {
         try {
             // First fetch all groups
@@ -367,9 +398,56 @@ export const useGroupService = () => {
         }
     };
 
+    const acceptJoinRequest = async (groupId, userId) => {
+        try {
+            const response = await authenticatedFetch("groups/accept-request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupId, userId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to accept request");
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error accepting request:", error);
+            showToast(error.message || "Error accepting request", "error");
+            return false;
+        }
+    };
+
+    const rejectJoinRequest = async (groupId, userId) => {
+        try {
+            const response = await authenticatedFetch("groups/reject-request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupId, userId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to reject request");
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error rejecting request:", error);
+            showToast(error.message || "Error rejecting request", "error");
+            return false;
+        }
+    };
+
     return {
         createGroup,
         getgroup,
+        getgrouponly,
         createPost,
         getusergroups,
         getallgroups,
@@ -381,5 +459,7 @@ export const useGroupService = () => {
         getGroupEvents,
         respondToEvent,
         getEventResponses,
+        acceptJoinRequest,
+        rejectJoinRequest,
     };
 };

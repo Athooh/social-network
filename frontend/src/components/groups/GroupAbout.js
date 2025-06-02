@@ -54,6 +54,14 @@ const GroupAbout = ({ group }) => {
       showToast("Failed to leave group", "error");
     }
   };
+  
+  if (group === null || group === undefined || group.length === 0) {
+    return (
+      <div className={styles.loadingContainer}>
+        <p>Can not show group info</p>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.aboutContainer}>

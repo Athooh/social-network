@@ -322,9 +322,6 @@ func (s *GroupService) JoinGroup(groupID, userID string) error {
 
 	// If group is public, automatically accept
 	status := "pending"
-	if group.IsPublic {
-		status = "accepted"
-	}
 
 	// Create member
 	member := &models.GroupMember{

@@ -162,7 +162,7 @@ func (r *SQLiteRepository) GetGroupByID(id string) (*models.Group, error) {
 	}
 	group.Creator = creator
 
-	members, err := r.GetGroupMembers(group.ID, "accepted")
+	members, err := r.GetGroupMembers(group.ID, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get group members: %w", err)
 	}
@@ -525,8 +525,8 @@ func (r *SQLiteRepository) GetGroupMembers(groupID string, status string) ([]*mo
 				u.avatar
 			FROM group_members gm
 			JOIN users u ON gm.user_id = u.id
-	W		HERE gm.group_id = ?
-	O		RDER BY gm.created_at DESC
+	        WHERE gm.group_id = ?
+			ORDER BY gm.created_at DESC
 		`
 		args = []interface{}{groupID}
 	}
@@ -625,6 +625,11 @@ func (r *SQLiteRepository) UpdateMemberStatus(groupID, userID, status string) er
 		return fmt.Errorf("failed to update member status: %w", err)
 	}
 
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	// Update user's group count if status changed to/from accepted
 	if member.Status != "accepted" && status == "accepted" {
 		// Increment group count
@@ -640,11 +645,6 @@ func (r *SQLiteRepository) UpdateMemberStatus(groupID, userID, status string) er
 			tx.Rollback()
 			return fmt.Errorf("failed to decrement user group count: %w", err)
 		}
-	}
-
-	// Commit the transaction
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil

@@ -16,20 +16,26 @@ import { showToast } from "@/components/ui/ToastContainer";
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", "");
 
-let userdata = null;
-try {
-  const raw = localStorage.getItem("userData");
-  if (raw) userdata = JSON.parse(raw);
-} catch (e) {
-  console.error("Invalid userData in localStorage:", e);
-}
-
 export default function GroupFeeds() {
   const router = useRouter();
   const { getallgroups, deleteGroup, joinGroup, leaveGroup } = useGroupService();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
+
+  // Handle user data
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("userData");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUserData(parsed);
+      }
+    } catch (e) {
+      console.error("Invalid userData in localStorage:", e);
+    }
+  }, []);
 
   const fetchGroups = async () => {
     try {
@@ -37,6 +43,7 @@ export default function GroupFeeds() {
       setGroups(fetchedGroups);
     } catch (error) {
       console.error('Error fetching groups:', error);
+      showToast("Failed to fetch groups", "error");
     } finally {
       setLoading(false);
     }
@@ -130,7 +137,7 @@ export default function GroupFeeds() {
                 </div>
                 <div className={groupFeeds.groupActions}>
                   {group.IsMember ? (
-                    userdata.id === group.Creator.id ? (
+                    userData.id === group.Creator.id ? (
                       <button className={groupFeeds.Join} onClick={() => handleGroupAction(group, 'delete')}>
                         Delete Group
                       </button>

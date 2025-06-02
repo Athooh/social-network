@@ -104,7 +104,7 @@ export default function RightSidebar() {
     isLoadingRequests,
     isLoadingContacts,
   } = useFriendService();
-  const { getallgroups, joinGroup } = useGroupService();
+  const { getgrouponly, joinGroup } = useGroupService();
   const router = useRouter();
 
   // Limit contacts to display (to avoid cluttering the sidebar)
@@ -116,7 +116,7 @@ export default function RightSidebar() {
 
   const fetchGroups = async () => {
     try {
-      const fetchedGroups = await getallgroups();
+      const fetchedGroups = await getgrouponly();
       setGroups(fetchedGroups);
     } catch (error) {
       console.error("Error fetching groups:", error);

@@ -12,21 +12,41 @@ import { useGroupService } from "@/services/groupService";
 import { showToast } from "@/components/ui/ToastContainer";
 
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
-const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
-let userdata = null;
-try {
-  const raw = localStorage.getItem("userData");
-  if (raw) userdata = JSON.parse(raw);
-} catch (e) {
-  console.error("Invalid userData in localStorage:", e);
-}
-
+const BASE_URL = API_URL.replace("/api", "");
 
 export default function Groups() {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [allGroups, setAllGroups] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState(null);
     const { getallgroups, deleteGroup, leaveGroup, joinGroup } = useGroupService();
+
+    // Handle user data
+    useEffect(() => {
+        const getUserData = () => {
+            try {
+                const raw = localStorage.getItem("userData");
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    setUserData(parsed);
+                }
+            } catch (e) {
+                console.error("Invalid userData in localStorage:", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        getUserData();
+    }, []);
+
+    // Fetch groups data
+    useEffect(() => {
+        if (!loading) {
+            fetchGroups();
+        }
+    }, [loading]);
 
     const fetchGroups = async () => {
         try {
@@ -34,12 +54,9 @@ export default function Groups() {
             setAllGroups(result);
         } catch (error) {
             console.error("Error fetching groups:", error);
+            showToast("Failed to fetch groups", "error");
         }
     };
-
-    useEffect(() => {
-        fetchGroups();
-    }, []);
 
     const handleGroupAction = async (group, action) => {
         try {
@@ -155,7 +172,7 @@ export default function Groups() {
                                         )}
 
                                         {group.IsMember ? (
-                                            userdata?.id === group.Creator?.id ? (
+                                            userData?.id === group.Creator?.id ? (
                                                 <button 
                                                     className={styles.leaveBtn}
                                                     onClick={() => handleGroupAction(group, 'delete')}

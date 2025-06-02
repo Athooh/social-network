@@ -107,3 +107,72 @@
 .groupNav a:hover {
   color: #1877f2;
 }
+
+.emptyGroupContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.emptyGroup {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--background-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  max-width: 400px;
+  width: 100%;
+}
+
+.emptyGroup i {
+  font-size: 48px;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.emptyGroup h2 {
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.emptyGroup p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.emptyGroupActions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+.joinButton,
+.backButton {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.joinButton {
+  background: var(--primary-color);
+  color: white;
+}
+
+.joinButton:hover {
+  background: var(--primary-color-dark);
+}
+
+.backButton {
+  background: var(--background-main);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.backButton:hover {
+  background: var(--background-hover);
+}
