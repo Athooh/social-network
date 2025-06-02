@@ -145,7 +145,7 @@ export default function Messages() {
 
   const handleEmojiSelect = (emoji) => {
     if (emoji) {
-      setNewMessage((prev) => prev + emoji);
+      setNewMessageText((prev) => prev + emoji);
     }
     setShowEmojiPicker(false);
   };
@@ -221,13 +221,13 @@ export default function Messages() {
         <aside className={styles.conversationsList}>
           <div className={styles.conversationsHeader}>
             <h2>Messages</h2>
-            <button
+            {/* <button
               className={styles.newMessageButton}
               onClick={() => setShowNewMessageModal(true)}
             >
               <i className="fas fa-edit"></i>
               <span>New Message</span>
-            </button>
+            </button> */}
           </div>
           <div className={styles.searchContainer}>
             <input
@@ -468,12 +468,12 @@ export default function Messages() {
                 <p>
                   Choose from your existing conversations or start a new one
                 </p>
-                <button
+                {/* <button
                   className={styles.newChatButton}
                   onClick={() => setShowNewMessageModal(true)}
                 >
                   New Message
-                </button>
+                </button> */}
               </div>
             </div>
           )}
