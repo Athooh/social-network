@@ -316,7 +316,7 @@ func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*mo
 		if err != nil {
 			return nil, fmt.Errorf("failed to get member info: %w", err)
 		}
-		if member != nil {
+		if member != nil && member.Status == "accepted" {
 			group.IsMember = true
 		}
 
