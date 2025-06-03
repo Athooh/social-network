@@ -22,7 +22,7 @@ export default function Groups() {
     const [allGroups, setAllGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState(null);
-    const { getallgroups, deleteGroup, leaveGroup, joinGroup } = useGroupService();
+    const { getgrouponly, deleteGroup, leaveGroup, joinGroup } = useGroupService();
 
     // Handle user data
     useEffect(() => {
@@ -52,7 +52,7 @@ export default function Groups() {
 
     const fetchGroups = async () => {
         try {
-            const result = await getallgroups();
+            const result = await getgrouponly();
             setAllGroups(result);
         } catch (error) {
             console.error("Error fetching groups:", error);
@@ -142,10 +142,6 @@ export default function Groups() {
                                 <div className={styles.groupInfo}>
                                     <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
                                     <h3 className={styles.groupName}>{group.Name}</h3>
-                                    <span className={styles.groupPrivacy}>
-                                        <i className={`fas ${group.IsPublic ? 'fa-globe' : 'fa-lock'}`}></i>
-                                        {group.IsPublic ? 'Public Group' : 'Private Group'}
-                                    </span>
 
                                     <div className={styles.memberInfo}>
                                         <div className={styles.memberAvatars}>
