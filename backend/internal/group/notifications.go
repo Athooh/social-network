@@ -1,6 +1,9 @@
 package group
 
 import (
+	"time"
+
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/pkg/logger"
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
 	"github.com/Athooh/social-network/pkg/websocket"
@@ -9,17 +12,19 @@ import (
 
 // Notifications handles all websocket notifications for group operations
 type Notifications struct {
-	repo  Repository
-	wsHub *websocket.Hub
-	log   *logger.Logger
+	repo             Repository
+	wsHub            *websocket.Hub
+	log              *logger.Logger
+	notificationRepo notifications.Service
 }
 
 // NewNotifications creates a new notifications handler
-func NewNotifications(repo Repository, wsHub *websocket.Hub, log *logger.Logger) *Notifications {
+func NewNotifications(repo Repository, wsHub *websocket.Hub, log *logger.Logger, notifications notifications.Service) *Notifications {
 	return &Notifications{
-		repo:  repo,
-		wsHub: wsHub,
-		log:   log,
+		repo:             repo,
+		wsHub:            wsHub,
+		log:              log,
+		notificationRepo: notifications,
 	}
 }
 
@@ -71,17 +76,42 @@ func (n *Notifications) NotifyGroupDeleted(group *models.Group, userID string) {
 }
 
 // NotifyGroupInvitation notifies about group invitation
-func (n *Notifications) NotifyGroupInvitation(group *models.Group, inviterID, inviteeID string) {
-	inviter, _ := n.repo.GetUserBasicByID(inviterID)
+func (n *Notifications) NotifyGroupInvitation(group *models.Group, inviterID, inviteeID string, newNote *notifications.NewNotification, inviterInfo *models.UserBasic) {
+	if n.wsHub == nil {
+		n.log.Warn("WebSocket hub is nil, cannot send follow request notification")
+		return
+	}
 
+	// Create notification in database
+	if err := n.notificationRepo.CreateNotification(newNote); err != nil {
+		n.log.Error("Failed to create follow request notification: %v", err)
+		return
+	}
+
+	// Retrieve the newly created notification to get its ID and CreatedAt
+	notifications, err := n.notificationRepo.GetNotifications(inviteeID, 1, 0)
+	if err != nil || len(notifications) == 0 {
+		n.log.Error("Failed to retrieve newly created notification: %v", err)
+		return
+	}
+	dbNotification := notifications[0]
+
+	// Create WebSocket event
 	event := events.Event{
-		Type: "group_invitation",
+		Type: events.HeaderNotificationUpdate,
 		Payload: map[string]interface{}{
-			"group":   group,
-			"inviter": inviter,
+			"id":           dbNotification.ID,
+			"type":         newNote.NotficationType,
+			"senderId":     inviterID,
+			"senderName":   inviterInfo.FirstName + " " + inviterInfo.LastName,
+			"senderAvatar": inviterInfo.Avatar,
+			"message":      newNote.Message,
+			"createdAt":    dbNotification.CreatedAt.Format(time.RFC3339),
+			"isRead":       dbNotification.IsRead,
 		},
 	}
 
+	// Send to the user receiving the follow request
 	n.wsHub.BroadcastToUser(inviteeID, event)
 }
 
