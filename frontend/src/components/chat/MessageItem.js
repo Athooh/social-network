@@ -17,7 +17,11 @@ export default function MessageItem({ message, isOwnMessage, avatar }) {
     >
       {!isOwnMessage && (
         <img
-          src={avatar || "/avatar.png"}
+          src={
+                avatar
+                ? `${BASE_URL}/uploads/${avatar}`
+                : "/avatar.png"
+            }
           alt={message.sender?.firstName || "User"}
           className={styles.messageAvatar}
         />
