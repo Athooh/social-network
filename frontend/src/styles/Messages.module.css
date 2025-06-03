@@ -1,5 +1,4 @@
 .messagesContainer {
-    background-color: #fff;
     padding-top: 0;
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr;
@@ -14,6 +13,7 @@
   }
   
   .conversationsList {
+    background-color: #fff;
     width: 350px;
     border-right: 1px solid #e5e7eb;
     display: flex;
@@ -590,3 +590,73 @@
   .boldTimestamp {
     color: #0078ff;
   }
+
+@media screen and (max-width: 840px) {
+  .messagesContainer {
+    position: relative;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+    margin: 80px auto 0;
+  }
+  .conversationsList {
+    width: 280px;
+}
+}
+  
+  /* Mobile Styles */
+@media (max-width: 768px) {
+  .messagesContainer {
+    position: relative;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+    margin: 80px auto 0;
+  }
+
+  .conversationsList,
+  .chatArea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s ease-in-out;
+    background: var(--bg-primary);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .backButton {
+    padding: 8px;
+    margin-right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 1.2rem;
+  }
+
+  .messageInput {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .chatHeader {
+    padding: 8px;
+  }
+
+  .chatActions {
+    gap: 8px;
+  }
+
+  .actionButton {
+    padding: 6px;
+  }
+}
+
+@media screen and (max-width: 540px) {
+  .messagesContainer {
+    margin: 140px auto 0;
+    height: calc(100vh - 150px);
+  }
+}

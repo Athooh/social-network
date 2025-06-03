@@ -38,9 +38,24 @@ export default function Messages() {
   const [searchQuery, setSearchQuery] = useState("");
   const [localLoading, setLocalLoading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Detect mobile view
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Initial check
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   // Load contacts only when the page is loaded
   useEffect(() => {
@@ -69,6 +84,7 @@ export default function Messages() {
           await loadMessages(selectedChat.userId);
           // Mark messages as read when opening a chat
           await markMessagesAsRead(selectedChat.userId);
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         } catch (error) {
           console.error("Error loading messages:", error);
           showToast("Failed to load messages", "error");
@@ -81,7 +97,9 @@ export default function Messages() {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (selectedChat && selectedChat.userId) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, selectedChat]);
 
   // Focus input when chat is selected
@@ -92,28 +110,33 @@ export default function Messages() {
   }, [selectedChat]);
 
   // Handle typing indicator
-  const handleTyping = () => {
-    if (!selectedChat || !selectedChat.userId) return;
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+  useEffect(() => {
+    if (selectedChat) {
+      // Send typing indicator
+      sendTypingIndicator(selectedChat.userId);
     }
+  }, [selectedChat]);
 
-    // Send typing indicator
-    sendTypingIndicator(selectedChat.userId);
-
-    // Set new timeout
+  // Handle typing indication timeout
+  const handleTyping = () => {
     typingTimeoutRef.current = setTimeout(() => {
       typingTimeoutRef.current = null;
     }, 3000);
+    if (!selectedChat || !selectedChat.userId) return;
   };
+
+  // Clear existing timeout
+  if (typingTimeoutRef.current) {
+    clearTimeout(typingTimeoutRef.current);
+  }
 
   // Handle sending a message
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
     if (!newMessageText.trim() || !selectedChat || !selectedChat.userId) return;
+    // Send typing indicator
+    sendTypingIndicator(selectedChat.userId);
 
     try {
       await sendMessage(selectedChat.userId, newMessageText);
@@ -130,19 +153,18 @@ export default function Messages() {
       console.error("Invalid contact selected:", contact);
       return;
     }
-
-    setSelectedChat(contact);
-
-    // Mark messages as read when selecting a chat
-    if (unreadCounts[contact.userId] > 0) {
-      try {
+    try {
+      setSelectedChat(contact);
+      // Mark messages as read when selecting a chat
+      if (unreadCounts[contact.userId] > 0) {
         await markMessagesAsRead(contact.userId);
-      } catch (error) {
-        console.error("Error marking messages as read:", error);
       }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
     }
   };
 
+  // Handle emoji selection
   const handleEmojiSelect = (emoji) => {
     if (emoji) {
       setNewMessageText((prev) => prev + emoji);
@@ -150,30 +172,26 @@ export default function Messages() {
     setShowEmojiPicker(false);
   };
 
+  // Close emoji picker
   const handleCloseEmojiPicker = () => {
     setShowEmojiPicker(false);
   };
 
   // Filter contacts based on search query
-  const filteredContacts =
-    contacts?.filter(
-      (contact) =>
-        contact &&
-        contact.userId && // Ensure userId exists
-        ((contact.firstName &&
-          contact.firstName
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())) ||
-          (contact.lastName &&
-            contact.lastName
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())) ||
-          (contact.name &&
-            contact.name.toLowerCase().includes(searchQuery.toLowerCase())))
-    ) || [];
+  const filteredContacts = contacts?.filter(
+    (contact) =>
+      contact &&
+      contact.userId && // Ensure userId exists
+      ((contact.firstName && contact.firstName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (contact.lastName && contact.lastName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (contact.name && contact.name.toLowerCase().includes(searchQuery.toLowerCase())))
+  ) || [];
 
   // Sort contacts by most recent message timestamp, then alphabetically
   const sortedContacts = [...filteredContacts].sort((a, b) => {
+    const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim();
+    const bName = `${b.firstName || ""} ${b.lastName || ""}`.trim();
+
     // Use the lastSent field from the backend data
     if (a.lastSent && b.lastSent) {
       const aTime = new Date(a.lastSent).getTime();
@@ -185,8 +203,6 @@ export default function Messages() {
     else if (b.lastSent) return 1;
 
     // Fallback to alphabetical order by name
-    const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim();
-    const bName = `${b.firstName || ""} ${b.lastName || ""}`.trim();
     return aName.localeCompare(bName);
   });
 
@@ -200,34 +216,20 @@ export default function Messages() {
   const isTyping =
     selectedChat && selectedChat.userId && typingUsers[selectedChat.userId];
 
-  // Add this effect to ensure status updates are reflected
+  // Initialize online statuses from API data
   useEffect(() => {
     if (contacts && contacts.length > 0) {
-      // Initialize online statuses from API data
       initializeStatuses(contacts);
     }
   }, [contacts, initializeStatuses]);
-
-  // Add this effect to update the UI when contacts change
-  useEffect(() => {
-    // This will re-render the component when contacts are updated
-    // via WebSocket events (new messages, read status changes)
-  }, [contacts, unreadCounts]);
 
   return (
     <ProtectedRoute>
       <Header />
       <div className={styles.messagesContainer}>
-        <aside className={styles.conversationsList}>
+        <aside className={`${styles.conversationsList} ${selectedChat && isMobile ? styles.hidden : ''}`}>
           <div className={styles.conversationsHeader}>
-            <h2>Messages</h2>
-            {/* <button
-              className={styles.newMessageButton}
-              onClick={() => setShowNewMessageModal(true)}
-            >
-              <i className="fas fa-edit"></i>
-              <span>New Message</span>
-            </button> */}
+            <h2>{isMobile ? 'Chats' : 'Messages'}</h2>
           </div>
           <div className={styles.searchContainer}>
             <input
@@ -251,11 +253,7 @@ export default function Messages() {
                 return (
                   <div
                     key={contact.userId}
-                    className={`${styles.conversationItem} ${
-                      selectedChat?.userId === contact.userId
-                        ? styles.selected
-                        : ""
-                    } ${contact.unreadCount > 0 ? styles.unread : ""}`}
+                    className={`${styles.conversationItem} ${selectedChat?.userId === contact.userId ? styles.selected : ""} ${contact.unreadCount > 0 ? styles.unread : ""}`}
                     onClick={() => handleSelectChat(contact)}
                   >
                     <div className={styles.avatarContainer}>
@@ -269,28 +267,14 @@ export default function Messages() {
                         className={styles.avatar}
                       />
                       <span
-                        className={`${styles.statusIndicator} ${
-                          isUserOnline(contact.userId, contact.isOnline)
-                            ? styles.online
-                            : styles.offline
-                        }`}
+                        className={`${styles.statusIndicator} ${isUserOnline(contact.userId, contact.isOnline) ? styles.online : styles.offline}`}
                       ></span>
                     </div>
                     <div className={styles.previewContent}>
-                      <h4
-                        className={
-                          contact.unreadCount > 0 ? styles.boldName : ""
-                        }
-                      >
+                      <h4 className={contact.unreadCount > 0 ? styles.boldName : ""}>
                         {contact.firstName} {contact.lastName}
                       </h4>
-                      <p
-                        className={
-                          contact.unreadCount > 0
-                            ? styles.boldPreview
-                            : styles.messagePreview
-                        }
-                      >
+                      <p className={contact.unreadCount > 0 ? styles.boldPreview : styles.messagePreview}>
                         {contact.lastMessage ? (
                           contact.lastMessageSenderId === currentUser?.id ? (
                             <span>
@@ -300,11 +284,7 @@ export default function Messages() {
                                 : contact.lastMessage}
                             </span>
                           ) : (
-                            <span>
-                              {contact.lastMessage.length > 30
-                                ? `${contact.lastMessage.substring(0, 30)}...`
-                                : contact.lastMessage}
-                            </span>
+                            contact.lastMessage
                           )
                         ) : (
                           "Start a conversation"
@@ -312,13 +292,8 @@ export default function Messages() {
                       </p>
                     </div>
                     <div className={styles.conversationMeta}>
-                      <span
-                        className={`${styles.timestamp} ${
-                          contact.unreadCount > 0 ? styles.boldTimestamp : ""
-                        }`}
-                      >
-                        {contact.lastSent &&
-                        contact.lastSent !== "0001-01-01T00:00:00Z"
+                      <span className={`${styles.timestamp} ${contact.unreadCount > 0 ? styles.boldTimestamp : ""}`}>
+                        {contact.lastSent && contact.lastSent !== "0001-01-01T00:00:00Z"
                           ? formatRelativeTime(new Date(contact.lastSent))
                           : ""}
                       </span>
@@ -339,45 +314,39 @@ export default function Messages() {
           </div>
         </aside>
 
-        <main className={styles.chatArea}>
+        <main className={`${styles.chatArea} ${!selectedChat && isMobile ? styles.hidden : ''}`}>
           {selectedChat && selectedChat.userId ? (
             <>
               <div className={styles.chatHeader}>
-                <div className={styles.chatUserInfo}>
-                  <div className={styles.avatarContainer}>
-                    <img
-                      src={
-                        selectedChat.avatar
-                          ? `${BASE_URL}/uploads/${selectedChat.avatar}`
-                          : "/avatar.png"
-                      }
-                      alt={`${selectedChat.firstName} ${selectedChat.lastName}`}
-                      className={styles.avatar}
-                    />
-                    <span
-                      className={`${styles.statusIndicator} ${
-                        isUserOnline(selectedChat.userId, selectedChat.isOnline)
-                          ? styles.online
-                          : styles.offline
-                      }`}
-                    ></span>
-                  </div>
-                  <div className={styles.userDetails}>
-                    <h2>
-                      {selectedChat.firstName} {selectedChat.lastName}
-                    </h2>
-                    <span className={styles.userStatus}>
-                      {isUserOnline(selectedChat.userId, selectedChat.isOnline)
-                        ? "Online"
-                        : "Offline"}
-                      {isTyping && (
-                        <span className={styles.typingIndicator}>
-                          {" "}
-                          • Typing...
-                        </span>
-                      )}
-                    </span>
-                  </div>
+                {isMobile && (
+                  <button
+                    className={styles.backButton}
+                    onClick={() => setSelectedChat(null)}
+                  >
+                    <i className="fas fa-arrow-left"></i>
+                  </button>
+                )}
+                <div className={styles.avatarContainer}>
+                  <img
+                    src={
+                      selectedChat.avatar
+                        ? `${BASE_URL}/uploads/${selectedChat.avatar}`
+                        : "/avatar.png"
+                    }
+                    alt={`${selectedChat.firstName} ${selectedChat.lastName}`}
+                    className={styles.avatar}
+                  />
+                  <span
+                    className={`${styles.statusIndicator} ${isUserOnline(selectedChat.userId, selectedChat.isOnline) ? styles.online : styles.offline}`}
+                  ></span>
+                </div>
+                <div className={styles.userDetails}>
+                  <h2>
+                    {selectedChat.firstName} {selectedChat.lastName}
+                  </h2>
+                  <span className={styles.userStatus}>
+                    {isUserOnline(selectedChat.userId, selectedChat.isOnline) ? "Online" : "Offline"}
+                  </span>
                 </div>
                 <div className={styles.chatActions}>
                   <button className={styles.actionButton}>
@@ -402,11 +371,7 @@ export default function Messages() {
                       avatar={
                         message.senderId === currentUser?.id
                           ? currentUser?.avatar
-                            ? `${BASE_URL}/uploads/${currentUser.avatar}`
-                            : "/avatar.png"
                           : selectedChat?.avatar
-                          ? `${BASE_URL}/uploads/${selectedChat?.avatar}`
-                          : "/avatar.png"
                       }
                     />
                   ))
@@ -415,32 +380,33 @@ export default function Messages() {
                     <p>No messages yet. Start a conversation!</p>
                   </div>
                 )}
-                {isTyping && (
-                  <div className={styles.typingIndicatorContainer}>
-                    <div className={styles.typingDot}></div>
-                    <div className={styles.typingDot}></div>
-                    <div className={styles.typingDot}></div>
-                  </div>
-                )}
                 <div ref={messagesEndRef} />
               </div>
 
+              {isTyping && (
+                <div className={styles.typingIndicatorContainer}>
+                  <div className={styles.typingDot}></div>
+                  <div className={styles.typingDot}></div>
+                  <div className={styles.typingDot}></div>
+                </div>
+              )}
+
               <form
-                onSubmit={handleSendMessage}
                 className={styles.messageInputContainer}
+                onSubmit={handleSendMessage}
               >
                 <button
-                      type="button"
-                      className={styles.emojiButton}
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    >
-                      😊
-                    </button>
-                    {showEmojiPicker && (
-                      <EmojiPicker
-                        onEmojiSelect={handleEmojiSelect}
-                        onClose={handleCloseEmojiPicker}
-                      />
+                  type="button"
+                  className={styles.emojiButton}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                >
+                  😊
+                </button>
+                {showEmojiPicker && (
+                  <EmojiPicker
+                    onEmojiSelect={handleEmojiSelect}
+                    onClose={handleCloseEmojiPicker}
+                  />
                 )}
                 <input
                   type="text"
@@ -468,12 +434,6 @@ export default function Messages() {
                 <p>
                   Choose from your existing conversations or start a new one
                 </p>
-                {/* <button
-                  className={styles.newChatButton}
-                  onClick={() => setShowNewMessageModal(true)}
-                >
-                  New Message
-                </button> */}
               </div>
             </div>
           )}
