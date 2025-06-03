@@ -307,7 +307,7 @@ func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*mo
 		}
 		group.Creator = creator
 
-		members, err := r.GetGroupMembers(group.ID, "accepted")
+		members, err := r.GetGroupMembers(group.ID, "")
 		if err != nil {
 			return nil, fmt.Errorf("failed to get group members: %w", err)
 		}
