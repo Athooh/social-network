@@ -73,7 +73,7 @@ export default function GroupFeeds() {
         case 'join':
           success = await joinGroup(group.ID);
           if (success) {
-            showToast("Joined group successfully", "success");
+            showToast("Join Request sent successfully", "success");
           }
           break;
       }
@@ -143,7 +143,7 @@ export default function GroupFeeds() {
                     )
                   ) : (
                     <button className={groupFeeds.Join} onClick={() => handleGroupAction(group, 'join')}>
-                      Join Group
+                      Request to Join Group
                     </button>
                   )}
                   {/* <button className={groupFeeds.moreButton}>

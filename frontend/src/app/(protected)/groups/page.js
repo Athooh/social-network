@@ -264,7 +264,7 @@ export default function Groups() {
                                                             className={styles.joinBtn}
                                                             onClick={() => handleGroupAction(group, 'join')}
                                                         >
-                                                            Join Group
+                                                            Request to Join
                                                         </button>
                                                     );
                                             }
