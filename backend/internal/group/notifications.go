@@ -100,14 +100,15 @@ func (n *Notifications) NotifyGroupInvitation(group *models.Group, inviterID, in
 	event := events.Event{
 		Type: events.HeaderNotificationUpdate,
 		Payload: map[string]interface{}{
-			"id":           dbNotification.ID,
-			"type":         newNote.NotficationType,
-			"senderId":     inviterID,
-			"senderName":   inviterInfo.FirstName + " " + inviterInfo.LastName,
-			"senderAvatar": inviterInfo.Avatar,
-			"message":      newNote.Message,
-			"createdAt":    dbNotification.CreatedAt.Format(time.RFC3339),
-			"isRead":       dbNotification.IsRead,
+			"id":            dbNotification.ID,
+			"type":          newNote.NotficationType,
+			"senderId":      inviterID,
+			"targetGroupId": group.ID,
+			"senderName":    inviterInfo.FirstName + " " + inviterInfo.LastName,
+			"senderAvatar":  inviterInfo.Avatar,
+			"message":       newNote.Message,
+			"createdAt":     dbNotification.CreatedAt.Format(time.RFC3339),
+			"isRead":        dbNotification.IsRead,
 		},
 	}
 
