@@ -125,7 +125,7 @@ func main() {
 	postService := post.NewService(postRepo, fileStore, log, postNotificationSvc)
 	statusService := userHandler.NewStatusService(statusRepo, sessionRepo, wsHub, log)
 	eventService := event.NewService(eventRepo, fileStore, log, notificationsService, wsHub)
-	groupService := group.NewService(groupRepo, fileStore, log, wsHub)
+	groupService := group.NewService(groupRepo, fileStore, log, wsHub, notificationsService)
 	chatService := chat.NewService(chatRepo, log, wsHub)
 	followService := follow.NewService(followRepo, userRepo, statusRepo, notificationsService, log, wsHub)
 	profileService := profile.NewService(profileRepo, "./data/uploads")

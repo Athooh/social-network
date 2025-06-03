@@ -1,11 +1,13 @@
 package group
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"mime/multipart"
 	"time"
 
+	notifications "github.com/Athooh/social-network/internal/notifcations"
 	"github.com/Athooh/social-network/pkg/filestore"
 	"github.com/Athooh/social-network/pkg/logger"
 	models "github.com/Athooh/social-network/pkg/models/dbTables"
@@ -55,8 +57,8 @@ type GroupService struct {
 }
 
 // NewService creates a new group service
-func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, wsHub *websocket.Hub) *GroupService {
-	notifications := NewNotifications(repo, wsHub, log)
+func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Logger, wsHub *websocket.Hub, notificationRepo notifications.Service) *GroupService {
+	notifications := NewNotifications(repo, wsHub, log, notificationRepo)
 
 	return &GroupService{
 		repo:          repo,
@@ -289,9 +291,19 @@ func (s *GroupService) InviteToGroup(groupID, inviterID, inviteeID string) error
 	if err != nil {
 		return err
 	}
-
+	newNotification := &notifications.NewNotification{
+		UserId:          inviteeID,
+		SenderId:        sql.NullString{String: inviterID, Valid: true},
+		NotficationType: "invitation",
+		Message:         fmt.Sprintf("Invite to group %s", group.Name),
+		TargetGroupID:   sql.NullString{String: groupID, Valid: true},
+	}
+	inviterInfo, err := s.repo.GetUserBasicByID(inviterID)
+	if err != nil {
+		return err
+	}
 	// Notify invitee
-	s.notifyGroupInvitation(group, inviterID, inviteeID)
+	s.notifications.NotifyGroupInvitation(group, inviterID, inviteeID, newNotification, inviterInfo)
 
 	return nil
 }
@@ -857,11 +869,6 @@ func (s *GroupService) notifyGroupUpdated(group *models.Group, userID string) {
 // notifyGroupDeleted notifies about group deletion
 func (s *GroupService) notifyGroupDeleted(group *models.Group, userID string) {
 	s.notifications.NotifyGroupDeleted(group, userID)
-}
-
-// notifyGroupInvitation notifies about group invitation
-func (s *GroupService) notifyGroupInvitation(group *models.Group, inviterID, inviteeID string) {
-	s.notifications.NotifyGroupInvitation(group, inviterID, inviteeID)
 }
 
 // notifyGroupInvitationAccepted notifies about group invitation acceptance

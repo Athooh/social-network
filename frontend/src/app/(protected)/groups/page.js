@@ -22,7 +22,7 @@ export default function Groups() {
     const [allGroups, setAllGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState(null);
-    const { getallgroups, deleteGroup, leaveGroup, joinGroup } = useGroupService();
+    const { getgrouponly, deleteGroup, leaveGroup, joinGroup, acceptInvitation, rejectInvitation } = useGroupService();
 
     // Handle user data
     useEffect(() => {
@@ -52,7 +52,7 @@ export default function Groups() {
 
     const fetchGroups = async () => {
         try {
-            const result = await getallgroups();
+            const result = await getgrouponly();
             setAllGroups(result);
         } catch (error) {
             console.error("Error fetching groups:", error);
@@ -80,7 +80,19 @@ export default function Groups() {
                 case 'join':
                     success = await joinGroup(group.ID);
                     if (success) {
-                        showToast("Joined group successfully", "success");
+                        showToast("Join request sent successfully", "success");
+                    }
+                    break;
+                case 'accept':
+                    success = await acceptInvitation(group.ID, userData?.id);
+                    if (success) {
+                        showToast("Invitation accepted successfully", "success");
+                    }
+                    break;
+                case 'reject':
+                    success = await rejectInvitation(group.ID, userData?.id);
+                    if (success) {
+                        showToast("Invitation rejected successfully", "success");
                     }
                     break;
             }
@@ -91,11 +103,32 @@ export default function Groups() {
             }
         } catch (error) {
             console.error(`Error during ${action} action:`, error);
+            showToast(`Failed to ${action} group`, "error");
         }
     };
 
     const handleGroupClick = (groupId) => {
         router.push(`/groups/${groupId}`);
+    };
+
+    // Add this helper function at the top of your component
+    const getMembershipStatus = (group, userId) => {
+        if (!group || !userId) return 'not_member';
+        
+        const member = group.Members.find(m => m.UserID === userId);
+        if (!member) {
+            return 'not_member';
+        }
+
+        // If status is pending, check InvitedBy
+        if (member.Status === 'pending') {
+            // If InvitedBy is not empty, user was invited
+            // If InvitedBy is empty, user requested to join
+            return member.InvitedBy ? 'invited' : 'pending';
+        }
+
+        // Status is 'accepted'
+        return 'accepted';
     };
 
     return (
@@ -125,6 +158,7 @@ export default function Groups() {
                         )}
 
                         {allGroups != null && allGroups.map(group => (
+                            console.log("Group:", group), // Debugging line to check group data
                             <div
                                 key={group.ID}
                                 className={styles.groupCard}
@@ -142,22 +176,22 @@ export default function Groups() {
                                 <div className={styles.groupInfo}>
                                     <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
                                     <h3 className={styles.groupName}>{group.Name}</h3>
-                                    <span className={styles.groupPrivacy}>
-                                        <i className={`fas ${group.IsPublic ? 'fa-globe' : 'fa-lock'}`}></i>
-                                        {group.IsPublic ? 'Public Group' : 'Private Group'}
-                                    </span>
 
                                     <div className={styles.memberInfo}>
                                         <div className={styles.memberAvatars}>
-                                            {group.Members.slice(0, 3).map((member, index) => (
-                                                <img
-                                                    key={member.ID || member.id || `member-${index}`} // Handle both ID and id cases with fallback
-                                                    src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
-                                                    alt={`Member ${index + 1}`}
-                                                    className={styles.memberAvatar}
-                                                    style={{ zIndex: 3 - index }}
-                                                />
-                                            ))}
+                                            {group.Members
+                                                .filter(member => member.Status === 'accepted')
+                                                .slice(0, 3)
+                                                .map((member, index) => (
+                                                    <img
+                                                        key={member.ID || member.id || `member-${index}`}
+                                                        src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                                                        alt={`Member ${index + 1}`}
+                                                        className={styles.memberAvatar}
+                                                        style={{ zIndex: 3 - index }}
+                                                    />
+                                                ))
+                                            }
                                         </div>
                                         <span className={styles.memberCount}>
                                             {group.MemberCount.toLocaleString()} members
@@ -167,36 +201,74 @@ export default function Groups() {
                                     <hr className={styles.divider} />
 
                                     <div className={styles.groupActions} onClick={e => e.stopPropagation()}>
-                                        {group.IsMember && (
-                                            <button className={styles.inviteBtn} onClick={() => setShowInviteModal(true)} >
-                                                <i className="fas fa-user-plus"></i> Invite
-                                            </button>
-                                        )}
+                                        {(() => {
+                                            const membershipStatus = getMembershipStatus(group, userData?.id);
+                                            console.log("Member Status:", membershipStatus); // Debugging
 
-                                        {group.IsMember ? (
-                                            userData?.id === group.Creator?.id ? (
-                                                <button
-                                                    className={styles.leaveBtn}
-                                                    onClick={() => handleGroupAction(group, 'delete')}
-                                                >
-                                                    Delete Group
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    className={styles.leaveBtn}
-                                                    onClick={() => handleGroupAction(group, 'leave')}
-                                                >
-                                                    Leave Group
-                                                </button>
-                                            )
-                                        ) : (
-                                            <button
-                                                className={styles.inviteBtn}
-                                                onClick={() => handleGroupAction(group, 'join')}
-                                            >
-                                                Join Group
-                                            </button>
-                                        )}
+                                            switch (membershipStatus) {
+                                                case 'accepted':
+                                                    return (
+                                                        <>
+                                                            <button 
+                                                                className={styles.inviteBtn} 
+                                                                onClick={() => setShowInviteModal(true)}
+                                                            >
+                                                                <i className="fas fa-user-plus"></i> Invite
+                                                            </button>
+                                                            {userData?.id === group.Creator?.id ? (
+                                                                <button
+                                                                    className={styles.leaveBtn}
+                                                                    onClick={() => handleGroupAction(group, 'delete')}
+                                                                >
+                                                                    Delete Group
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    className={styles.leaveBtn}
+                                                                    onClick={() => handleGroupAction(group, 'leave')}
+                                                                >
+                                                                    Leave Group
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    );
+                                                    
+                                                case 'invited':
+                                                    return (
+                                                        <div className={styles.invitationActions}>
+                                                            <button
+                                                                className={styles.acceptBtn}
+                                                                onClick={() => handleGroupAction(group, 'accept')}
+                                                            >
+                                                                Accept Invitation
+                                                            </button>
+                                                            <button
+                                                                className={styles.rejectBtn}
+                                                                onClick={() => handleGroupAction(group, 'reject')}
+                                                            >
+                                                                Reject Invitation
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                    
+                                                case 'pending':
+                                                    return (
+                                                        <button className={styles.pendingBtn} disabled>
+                                                            Request Pending
+                                                        </button>
+                                                    );
+                                                    
+                                                default:
+                                                    return (
+                                                        <button
+                                                            className={styles.joinBtn}
+                                                            onClick={() => handleGroupAction(group, 'join')}
+                                                        >
+                                                            Request to Join
+                                                        </button>
+                                                    );
+                                            }
+                                        })()}
                                     </div>
                                 </div>
                                 <InviteModal
