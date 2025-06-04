@@ -466,6 +466,54 @@ export const useGroupService = () => {
         }
     };
 
+    const acceptInvitation = async (groupId, userId) => {
+        try {
+            const response = await authenticatedFetch("groups/accept-invitation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to accept invitation");
+            }
+
+            showToast("Invitation accepted successfully", "success");
+            return true;
+        } catch (error) {
+            console.error("Error accepting invitation:", error);
+            showToast(error.message || "Error accepting invitation", "error");
+            return false;
+        }
+    };
+
+    const rejectInvitation = async (groupId, userId) => {
+        try {
+            const response = await authenticatedFetch("groups/reject-invitation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to reject invitation");
+            }
+
+            showToast("Invitation rejected successfully", "success");
+            return true;
+        } catch (error) {
+            console.error("Error rejecting invitation:", error);
+            showToast(error.message || "Error rejecting invitation", "error");
+            return false;
+        }
+    };
+
     return {
         createGroup,
         getgroup,
@@ -484,5 +532,7 @@ export const useGroupService = () => {
         acceptJoinRequest,
         rejectJoinRequest,
         inviteToGroup,
+        acceptInvitation,
+        rejectInvitation,
     };
 };

@@ -45,6 +45,7 @@ export const useNotificationService = () => {
             : "/avatar.png",
           timestamp: notification.createdAt,
           read: notification.isRead,
+          target: notification.targetGroupId,
           action: notification.type === "reaction" ? notification.message.split(" ")[0] : undefined,
           contentType:
             notification.type === "reaction" || notification.type === "comment"
@@ -258,5 +259,6 @@ export const useNotificationService = () => {
     markAllNotificationsAsRead,
     clearAllNotifications,
     handleFriendRequest,
+    DeleteNotification,
   };
 };

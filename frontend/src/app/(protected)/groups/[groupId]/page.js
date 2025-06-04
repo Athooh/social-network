@@ -181,12 +181,7 @@ export default function GroupPostPage() {
               <h1>{group.Name}</h1>
               <p>{group.Description}</p>
               <div className={groupStyles.groupMeta}>
-                <span>
-                  <i className={`fas ${group.IsPublic === 'private' ? 'fa-lock' : 'fa-globe'}`}></i>
-                  {group.IsPublic === 'private' ? 'Private Group' : 'Public Group'}
-                </span>
-                <span>•</span>
-                {/* <span>{group.MemberCount.toLocaleString()} members</span> */}
+                <span>{group.MemberCount.toLocaleString()} members</span>
               </div>
             </div>
             <div className={groupStyles.groupNav}>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import styles from "@/styles/NotificationDropdown.module.css";
 import { formatDistanceToNow } from "date-fns";
 import { useNotificationService } from "@/services/notificationService";
+import { useGroupService } from "@/services/groupService";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +17,9 @@ export default function NotificationDropdown() {
     markAllNotificationsAsRead,
     clearAllNotifications,
     handleFriendRequest,
+    DeleteNotification,
   } = useNotificationService();
+  const { acceptInvitation, rejectInvitation } = useGroupService();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,6 +52,35 @@ export default function NotificationDropdown() {
   const handleMarkSingleAsRead = async (notificationId) => {
     await markNotificationAsRead(notificationId);
     fetchNotifications();
+  };
+
+  const handleGroupNotificationResponse = async (groupId, notificationId, action) => {
+    try {
+      // Get user data from localStorage
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (!userData) {
+        showToast("User data not found", "error");
+        return;
+      }
+
+      let success;
+      if (action === "accepted") {
+        success = await acceptInvitation(groupId, userData.id);
+      } else if (action === "rejected") {
+        success = await rejectInvitation(groupId, userData.id);
+      }
+
+      if (!success) {
+        throw new Error(`Failed to ${action} invitation`);
+      }
+
+      // Delete the notification after handling
+      await DeleteNotification(notificationId);
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+    } catch (error) {
+      console.error(`Error ${action}ing invitation:`, error);
+      showToast(`Failed to ${action} invitation`, "error");
+    }
   };
 
   const renderNotificationContent = (notification) => {
@@ -145,10 +177,34 @@ export default function NotificationDropdown() {
                 className={styles.avatar}
               />
             </div>
-            <span className={styles.text}>
-              You have been invited to {notification.contentType} by{" "}
-              <strong>{notification.sender}</strong>
-            </span>
+            <div className={styles.textBox}>
+              <span className={styles.text}>
+                You have been invited to <strong>{notification.contentType}</strong> by{" "}
+                <strong>{notification.sender}</strong>
+              </span>
+              <div className={styles.actions}>
+                <button
+                  onClick={() => handleGroupNotificationResponse(
+                    notification.target,
+                    notification.id,
+                    "accepted"
+                  )}
+                  className={styles.acceptButton}
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => handleGroupNotificationResponse(
+                    notification.target,
+                    notification.id,
+                    "rejected"
+                  )}
+                  className={styles.declineButton}
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
           </div>
         );
       case "groupEvent":
@@ -229,9 +285,8 @@ export default function NotificationDropdown() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`${styles.notificationItem} ${
-                    !notification.read ? styles.unread : ""
-                  }`}
+                  className={`${styles.notificationItem} ${!notification.read ? styles.unread : ""
+                    }`}
                 >
                   <div className={styles.notificationHeader}>
                     {renderNotificationContent(notification)}

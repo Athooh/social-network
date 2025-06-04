@@ -73,7 +73,7 @@ export default function GroupFeeds() {
         case 'join':
           success = await joinGroup(group.ID);
           if (success) {
-            showToast("Joined group successfully", "success");
+            showToast("Join Request sent successfully", "success");
           }
           break;
       }
@@ -126,11 +126,6 @@ export default function GroupFeeds() {
                     </h2>
                     <p>{group.Description}</p>
                     <div className={groupFeeds.groupMeta}>
-                      <span>
-                        <i className={`fas ${group.IsPublic === 'private' ? 'fa-lock' : 'fa-globe'}`}></i>
-                        {group.IsPublic === 'private' ? 'Private Group' : 'Public Group'}
-                      </span>
-                      <span>•</span>
                       <span>{group.MemberCount.toLocaleString()} members</span>
                     </div>
                   </div>
@@ -148,7 +143,7 @@ export default function GroupFeeds() {
                     )
                   ) : (
                     <button className={groupFeeds.Join} onClick={() => handleGroupAction(group, 'join')}>
-                      Join Group
+                      Request to Join Group
                     </button>
                   )}
                   {/* <button className={groupFeeds.moreButton}>
@@ -161,9 +156,7 @@ export default function GroupFeeds() {
                 <div key={post.ID}>
                   <GroupPost
                     post={post}
-                    onPostUpdated={() => {
-                      // Handle post update
-                    }}
+                    onPostUpdated={fetchGroups}
                   />
                 </div>
               ))}

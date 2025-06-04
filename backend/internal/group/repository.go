@@ -19,6 +19,7 @@ type Repository interface {
 	GetAllGroups(userid string, limit, offset int) ([]*models.Group, error)
 	UpdateGroup(group *models.Group) error
 	DeleteGroup(id string) error
+	DeleteMembers(groupID string) error
 	GetGroupMemberCount(groupID string) (int, error)
 
 	// Group membership operations
@@ -306,7 +307,7 @@ func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*mo
 		}
 		group.Creator = creator
 
-		members, err := r.GetGroupMembers(group.ID, "accepted")
+		members, err := r.GetGroupMembers(group.ID, "")
 		if err != nil {
 			return nil, fmt.Errorf("failed to get group members: %w", err)
 		}
@@ -316,7 +317,7 @@ func (r *SQLiteRepository) GetAllGroups(userid string, limit, offset int) ([]*mo
 		if err != nil {
 			return nil, fmt.Errorf("failed to get member info: %w", err)
 		}
-		if member != nil {
+		if member != nil && member.Status == "accepted" {
 			group.IsMember = true
 		}
 
@@ -358,7 +359,7 @@ func (r *SQLiteRepository) UpdateGroup(group *models.Group) error {
 	return nil
 }
 
-// DeleteGroup deletes a group
+// DeleteGroup deletes a group and all its members
 func (r *SQLiteRepository) DeleteGroup(id string) error {
 	// Get all members to update their group counts
 	members, err := r.GetGroupMembers(id, "accepted")
@@ -371,11 +372,11 @@ func (r *SQLiteRepository) DeleteGroup(id string) error {
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
+	defer tx.Rollback() // Rollback if there's an error
 
 	// Delete the group
 	_, err = tx.Exec("DELETE FROM groups WHERE id = ?", id)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to delete group: %w", err)
 	}
 
@@ -383,18 +384,42 @@ func (r *SQLiteRepository) DeleteGroup(id string) error {
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
+
+	// Delete all members from the group
+	err = r.DeleteMembers(id)
+	if err != nil {
+		return fmt.Errorf("failed to delete group members: %w", err)
+	}
+
 	// Update group counts for all members
 	for _, member := range members {
 		_, err = r.UpdateUserGroupCount(member.UserID, false)
 		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("failed to update user group count: %w", err)
+			return fmt.Errorf("failed to update user group count for user %s: %w", member.UserID, err)
 		}
 	}
 
 	return nil
 }
 
+func (r *SQLiteRepository) DeleteMembers(groupID string) error {
+	// Start a transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	// Delete all members from the group
+	_, err = tx.Exec("DELETE FROM group_members WHERE group_id = ?", groupID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete group members: %w", err)
+	}
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	return nil
+}
 // GetGroupMemberCount gets the count of accepted members in a group
 func (r *SQLiteRepository) GetGroupMemberCount(groupID string) (int, error) {
 	query := `
