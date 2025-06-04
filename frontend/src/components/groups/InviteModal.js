@@ -8,13 +8,13 @@ const InviteModal = ({ group, isOpen, onClose }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [friends, setFriends] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { fetchContacts } = useFriendService();
+    const { fetchUserFollowers } = useFriendService();
     const { inviteToGroup } = useGroupService();
 
     useEffect(() => {
         const loadFriends = async () => {
             try {
-                const contacts = await fetchContacts();
+                const contacts = await fetchUserFollowers();
                 setFriends(contacts);
             } catch (error) {
                 console.error('Error fetching friends:', error);

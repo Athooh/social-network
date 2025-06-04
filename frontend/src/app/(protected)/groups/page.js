@@ -174,7 +174,7 @@ export default function Groups() {
                                     />
                                 </div>
                                 <div className={styles.groupInfo}>
-                                    <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
+                                    <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar.jpg"} alt="" className={styles.profilePic} />
                                     <h3 className={styles.groupName}>{group.Name}</h3>
 
                                     <div className={styles.memberInfo}>
@@ -185,7 +185,7 @@ export default function Groups() {
                                                 .map((member, index) => (
                                                     <img
                                                         key={member.ID || member.id || `member-${index}`}
-                                                        src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                                                        src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar.jpg"}
                                                         alt={`Member ${index + 1}`}
                                                         className={styles.memberAvatar}
                                                         style={{ zIndex: 3 - index }}
@@ -285,7 +285,7 @@ export default function Groups() {
             <CreateGroupModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onGroupCreated={window.location.reload} // Refresh the page after creating a group
+                onGroupCreated={fetchGroups} // Refresh the page after creating a group
             />
         </ProtectedRoute>
     );

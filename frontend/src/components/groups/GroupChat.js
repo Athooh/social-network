@@ -48,7 +48,7 @@ const GroupChat = ({ groupId, groupName }) => {
         ? currentUser.avatar.startsWith("http")
           ? currentUser.avatar
           : `${BASE_URL}/uploads/${currentUser.avatar}`
-        : "/avatar4.png";
+        : "/avatar.png";
 
     const tempMessage = {
       id: Date.now(),
@@ -133,7 +133,7 @@ const GroupChat = ({ groupId, groupName }) => {
           >
             <div className={styles.message}>
               <img
-                src={message.User.avatar ? message.User.avatar.startsWith("http") ? message.User.avatar : `${BASE_URL}/uploads/${message.User.avatar}` : '/avatar4.png'}
+                src={message.User.avatar ? message.User.avatar.startsWith("http") ? message.User.avatar : `${BASE_URL}/uploads/${message.User.avatar}` : '/avatar.png'}
                 alt={message.User.firstName}
                 className={styles.senderAvatar}
               />

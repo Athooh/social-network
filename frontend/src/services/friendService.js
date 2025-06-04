@@ -276,6 +276,8 @@ export const useFriendService = () => {
         return [];
       }
 
+      console.log("Fetched followers:", data);
+
       // Transform the data to match our component's expected format
       const formattedFollowers = data.map((follower) => ({
         id: follower.FollowerID,
@@ -284,6 +286,7 @@ export const useFriendService = () => {
           ? `${BASE_URL}uploads/${follower.UserAvatar}`
           : "/avatar.png",
         isOnline: follower.IsOnline || false,
+        contactId: follower.FollowerID,
       }));
 
       return formattedFollowers;

@@ -173,7 +173,7 @@ export default function GroupPostPage() {
             <img
               src={group.BannerPath?.String ?
                 `${BASE_URL}/uploads/${group.BannerPath.String}` :
-                "/banner5.jpg"}
+                "/banner.jpg"}
               alt={group.Name}
               className={groupStyles.groupBanner}
             />
