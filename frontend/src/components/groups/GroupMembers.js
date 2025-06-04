@@ -19,7 +19,7 @@ const GroupMembers = ({ group, currentUserRole, onMemberUpdate }) => {
     name: `${member.User?.firstName || ''} ${member.User?.lastName || ''}`,
     avatar: member.Avatar
       ? `${BASE_URL}/uploads/${member.Avatar}`
-      : '/avatar5.jpg',
+      : '/avatar.jpg',
     role: member.Role?.toLowerCase() === 'admin' ? 'Admin' : 'Member',
     joinDate: member.CreatedAt,
     isOnline: false,
@@ -34,7 +34,7 @@ const GroupMembers = ({ group, currentUserRole, onMemberUpdate }) => {
       name: `${member.User?.firstName || ''} ${member.User?.lastName || ''}`,
       avatar: member.Avatar
         ? `${BASE_URL}/uploads/${member.Avatar}`
-        : '/avatar5.jpg',
+        : '/avatar.jpg',
       joinDate: member.CreatedAt
     }));
 

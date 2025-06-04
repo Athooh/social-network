@@ -113,7 +113,7 @@ export default function GroupFeeds() {
               <div className={groupFeeds.groupHeader}>
                 <div className={groupFeeds.groupInfo}>
                   <img
-                    src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"}
+                    src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar.jpg"}
                     alt={group.Name}
                     className={groupFeeds.groupBanner}
                   />

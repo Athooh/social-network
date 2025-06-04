@@ -55,7 +55,7 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
       : "Unknown User",
     authorImage: post.User?.avatar
       ? `${BASE_URL}/uploads/${post.User.avatar}`
-      : "/avatar5.jpg",
+      : "/avatar.jpg",
     content: post.Content,
     timestamp: formatRelativeTime(post.CreatedAt),
     likes: post.LikesCount || 0,
@@ -91,7 +91,7 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
             ? comment.userData.avatar.startsWith("http")
               ? comment.userData.avatar
               : `${BASE_URL}/uploads/${comment.userData.avatar}`
-            : "/avatar4.png",
+            : "/avatar.png",
           timestamp: formatRelativeTime(comment.createdAt)
         })));
       }
@@ -171,7 +171,7 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
       setComments(prev => [...prev, {
         ...newComment,
         authorName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "You",
-        authorImage: currentUser ? `${currentUser.avatar}` : "/avatar4.png",
+        authorImage: currentUser ? `${currentUser.avatar}` : "/avatar.png",
         timestamp: "just now"
       }]);
       setCommentText("");
@@ -311,7 +311,7 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
         <div className={styles.commentsSection}>
           <form onSubmit={handleComment} className={styles.commentForm}>
             <img
-              src={`${BASE_URL}uploads/${userdata.avatar}` || "/avatar4.png"}
+              src={`${BASE_URL}uploads/${userdata.avatar}` || "/avatar.png"}
               alt="Your avatar"
               className={styles.commentAvatar}
             />
@@ -371,13 +371,13 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
             return (
               <div key={`comment-${comment.id}`} className={styles.comment}>
                 <Image
-                  src={comment.authorImage ? `${comment.authorImage}` : "/avatar4.png"}
+                  src={comment.authorImage ? `${comment.authorImage}` : "/avatar.png"}
                   alt={`${comment.authorName}'s avatar`}
                   height={32}
                   width={32}
                   className={styles.commentAvatar}
                   onError={(e) => {
-                    e.target.src = "/avatar4.png";
+                    e.target.src = "/avatar.png";
                   }}
                 />
                 <div className={styles.commentContent}>
