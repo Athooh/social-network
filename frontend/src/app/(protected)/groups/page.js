@@ -285,7 +285,7 @@ export default function Groups() {
             <CreateGroupModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onGroupCreated={window.location.reload} // Refresh the page after creating a group
+                onGroupCreated={fetchGroups} // Refresh the page after creating a group
             />
         </ProtectedRoute>
     );
