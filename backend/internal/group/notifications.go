@@ -136,24 +136,44 @@ func (n *Notifications) NotifyGroupInvitationAccepted(group *models.Group, userI
 }
 
 // NotifyGroupJoinRequest notifies about group join request
-func (n *Notifications) NotifyGroupJoinRequest(group *models.Group, userID string) {
-	user, _ := n.repo.GetUserBasicByID(userID)
+func (n *Notifications) NotifyGroupJoinRequest(group *models.Group, inviterID, inviteeID string, newNote *notifications.NewNotification, inviterInfo *models.UserBasic) {
+	if n.wsHub == nil {
+		n.log.Warn("WebSocket hub is nil, cannot send follow request notification")
+		return
+	}
 
+	// Create notification in database
+	if err := n.notificationRepo.CreateNotification(newNote); err != nil {
+		n.log.Error("Failed to create follow request notification: %v", err)
+		return
+	}
+
+	// Retrieve the newly created notification to get its ID and CreatedAt
+	notifications, err := n.notificationRepo.GetNotifications(inviteeID, 1, 0)
+	if err != nil || len(notifications) == 0 {
+		n.log.Error("Failed to retrieve newly created notification: %v", err)
+		return
+	}
+	dbNotification := notifications[0]
+
+	// Create WebSocket event
 	event := events.Event{
-		Type: "group_join_request",
+		Type: events.HeaderNotificationUpdate,
 		Payload: map[string]interface{}{
-			"group": group,
-			"user":  user,
+			"id":            dbNotification.ID,
+			"type":          newNote.NotficationType,
+			"senderId":      inviterID,
+			"targetGroupId": group.ID,
+			"senderName":    inviterInfo.FirstName + " " + inviterInfo.LastName,
+			"senderAvatar":  inviterInfo.Avatar,
+			"message":       newNote.Message,
+			"createdAt":     dbNotification.CreatedAt.Format(time.RFC3339),
+			"isRead":        dbNotification.IsRead,
 		},
 	}
 
-	// Notify all admins
-	members, _ := n.repo.GetGroupMembers(group.ID, "accepted")
-	for _, member := range members {
-		if member.Role == "admin" {
-			n.wsHub.BroadcastToUser(member.UserID, event)
-		}
-	}
+	// Send to the user receiving the follow request
+	n.wsHub.BroadcastToUser(inviteeID, event)
 }
 
 // NotifyGroupJoinRequestAccepted notifies about group join request acceptance

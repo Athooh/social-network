@@ -19,7 +19,13 @@ export default function NotificationDropdown() {
     handleFriendRequest,
     DeleteNotification,
   } = useNotificationService();
-  const { acceptInvitation, rejectInvitation } = useGroupService();
+  const {
+    acceptInvitation,
+    rejectInvitation,
+    acceptJoinRequest,
+    rejectJoinRequest,
+    respondToEvent
+  } = useGroupService();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,6 +86,57 @@ export default function NotificationDropdown() {
     } catch (error) {
       console.error(`Error ${action}ing invitation:`, error);
       showToast(`Failed to ${action} invitation`, "error");
+    }
+  };
+
+  // Add new handler for join requests
+  const handleJoinRequestResponse = async (groupId, userId, notificationId, action) => {
+    try {
+
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (!userData) {
+        showToast("User data not found", "error");
+        return;
+      }
+      let success = false;
+
+      if (action === "accepted") {
+        success = await acceptJoinRequest(groupId, userId);
+      } else if (action === "rejected") {
+        success = await rejectJoinRequest(groupId, userId);
+      }
+
+      if (!success) {
+        throw new Error(`Failed to ${action} join request`);
+      }
+
+      // Delete the notification after handling
+      await DeleteNotification(notificationId);
+      fetchNotifications();
+      showToast(`Successfully ${action}ed join request`, "success");
+    } catch (error) {
+      console.error(`Error ${action}ing join request:`, error);
+      showToast(`Failed to ${action} join request`, "error");
+    }
+  };
+
+  // Add new handler for event responses
+  const handleEventResponse = async (eventId, notificationId, response) => {
+    try {
+        const success = await respondToEvent(eventId, response);
+        
+        if (!success) {
+            throw new Error(`Failed to respond to event`);
+        }
+
+        // Delete the notification after successful response
+        await DeleteNotification(notificationId);
+        fetchNotifications();
+        
+        showToast(`Successfully responded to event`, "success");
+    } catch (error) {
+        console.error('Error responding to event:', error);
+        showToast(`Failed to respond to event`, "error");
     }
   };
 
@@ -219,22 +276,68 @@ export default function NotificationDropdown() {
             </div>
             <div className={styles.textBox}>
               <span className={styles.text}>
-                You have been invited to the event <strong>{notification.contentType}</strong> by{" "}
-                <strong>{notification.sender}</strong>
+                <strong>{notification.sender}</strong> invited you to event{" "}
+                <strong>{notification.contentType}</strong>
               </span>
               <div className={styles.actions}>
                 <button
-                  onClick={() =>
-                    handleNotificationResponse(notification.eventId, notification.id, "going", "groupEvent")
-                  }
+                  onClick={() => handleEventResponse(
+                    notification.target, // eventId
+                    notification.id,    // notificationId
+                    'going'
+                  )}
+                  className={styles.acceptButton}
+                >
+                  <i className="fas fa-check"></i> Going
+                </button>
+                <button
+                  onClick={() => handleEventResponse(
+                    notification.target,
+                    notification.id,
+                    'not_going'
+                  )}
+                  className={styles.declineButton}
+                >
+                  <i className="fas fa-times"></i> Not Going
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      case "joinRequest":
+        console.log("Join Request Notification:", notification);
+        return (
+          <div className={styles.notification}>
+            <div className={styles.avatarContainer}>
+              <img
+                src={notification.avatar}
+                alt={notification.sender}
+                className={styles.avatar}
+              />
+            </div>
+            <div className={styles.textBox}>
+              <span className={styles.text}>
+                <strong>{notification.sender}</strong> wants to join your group
+              </span>
+              <div className={styles.actions}>
+                <button
+                  onClick={() => handleJoinRequestResponse(
+                    notification.target, // groupId
+                    notification.senderId, // userId
+                    notification.id, // notificationId
+                    "accepted"
+                  )}
                   className={styles.acceptButton}
                 >
                   Accept
                 </button>
                 <button
-                  onClick={() =>
-                    handleNotificationResponse(notification.eventId, notification.id, "not_going", "groupEvent")
-                  }
+                  onClick={() => handleJoinRequestResponse(
+                    notification.target,
+                    notification.senderId,
+                    notification.id,
+                    "rejected"
+                  )}
                   className={styles.declineButton}
                 >
                   Decline

@@ -347,10 +347,19 @@ func (s *GroupService) JoinGroup(groupID, userID string) error {
 		return err
 	}
 
-	// If group is not public, notify admins about join request
-	if !group.IsPublic {
-		s.notifyGroupJoinRequest(group, userID)
+	newNotification := &notifications.NewNotification{
+		UserId:          group.CreatorID,
+		SenderId:        sql.NullString{String: userID, Valid: true},
+		NotficationType: "joinRequest",
+		Message:         fmt.Sprintf("Wants to join %s", group.Name),
+		TargetGroupID:   sql.NullString{String: groupID, Valid: true},
 	}
+	requesterInfo, err := s.repo.GetUserBasicByID(userID)
+	if err != nil {
+		return err
+	}
+
+	s.notifications.NotifyGroupJoinRequest(group, userID, group.CreatorID, newNotification, requesterInfo)
 
 	return nil
 }
@@ -476,6 +485,7 @@ func (s *GroupService) AcceptJoinRequest(groupID, adminID, userID string) error 
 		return errors.New("join request not found")
 	}
 
+	fmt.Println(member.Status, member.InvitedBy)
 	if member.Status != "pending" || member.InvitedBy != "" {
 		return errors.New("no pending join request found")
 	}
@@ -877,9 +887,9 @@ func (s *GroupService) notifyGroupInvitationAccepted(group *models.Group, userID
 }
 
 // notifyGroupJoinRequest notifies about group join request
-func (s *GroupService) notifyGroupJoinRequest(group *models.Group, userID string) {
-	s.notifications.NotifyGroupJoinRequest(group, userID)
-}
+// func (s *GroupService) notifyGroupJoinRequest(group *models.Group, userID string) {
+// 	s.notifications.NotifyGroupJoinRequest(group, userID)
+// }
 
 // notifyGroupJoinRequestAccepted notifies about group join request acceptance
 func (s *GroupService) notifyGroupJoinRequestAccepted(group *models.Group, userID, adminID string) {

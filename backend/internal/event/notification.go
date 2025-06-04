@@ -31,74 +31,43 @@ func NewNotificationService(hub *websocket.Hub, repo Repository, notificationRep
 }
 
 // SendEventCreatedNotification sends a notification when a new event is created
-func (s *NotificationService) SendEventCreatedNotification(event *models.GroupEvent) {
+func (s *NotificationService) SendEventCreatedNotification( inviterID, inviteeID string, newNote *notifications.NewNotification, inviterInfo *models.UserBasic) {
 	if s.hub == nil {
-		s.log.Warn("WebSocket hub is nil, cannot send event created notification")
+		s.log.Warn("WebSocket hub is nil, cannot send follow request notification")
 		return
 	}
 
-	// Get creator info
-	creator, err := s.repo.GetUserBasicByID(event.CreatorID)
-	if err != nil {
-		s.log.Warn("Failed to get creator info for notification: %v", err)
+	// Create notification in database
+	if err := s.notificationRepo.CreateNotification(newNote); err != nil {
+		s.log.Error("Failed to create follow request notification: %v", err)
 		return
 	}
 
-	creatorName := fmt.Sprintf("%s %s", creator.FirstName, creator.LastName)
-
-	// Get group members to notify
-	members, err := s.repo.GetGroupMembers(event.GroupID, "accepted")
-	if err != nil {
-		s.log.Warn("Failed to get group members for notification: %v", err)
+	// Retrieve the newly created notification to get its ID and CreatedAt
+	notifications, err := s.notificationRepo.GetNotifications(inviteeID, 1, 0)
+	if err != nil || len(notifications) == 0 {
+		s.log.Error("Failed to retrieve newly created notification: %v", err)
 		return
 	}
+	dbNotification := notifications[0]
 
-	// Send to all group members
-	for _, member := range members {
-		if member.UserID != event.CreatorID {
-			// Create notification in database
-			notification := &notifications.NewNotification{
-				UserId:          member.UserID,
-				NotficationType: "groupEvent",
-				SenderId:        sql.NullString{String: event.CreatorID, Valid: true},
-				Message:         fmt.Sprintf("invited you to %s", event.Title),
-				TargetEventID:   sql.NullString{String: event.ID, Valid: true},
-			}
-
-			if err := s.notificationRepo.CreateNotification(notification); err != nil {
-				s.log.Error("Failed to create event notification: %v", err)
-				continue
-			}
-
-			// Retrieve the newly created notification
-			notifications, err := s.notificationRepo.GetNotifications(member.UserID, 1, 0)
-			if err != nil || len(notifications) == 0 {
-				s.log.Error("Failed to retrieve newly created notification: %v", err)
-				continue
-			}
-			dbNotification := notifications[0]
-
-			// Create WebSocket event
-			notificationEvent := events.Event{
-				Type: "notification_Update",
-				Payload: map[string]interface{}{
-					"id":           dbNotification.ID,
-					"eventId":      event.ID,
-					"groupId":      event.GroupID,
-					"type":         "groupEvent",
-					"senderId":     event.CreatorID,
-					"senderAvatar": creator.Avatar,
-					"senderName":   creatorName,
-					"message":      fmt.Sprintf("invited you to %s", event.Title),
-					"eventDate":    event.EventDate.Format(time.RFC3339),
-					"isRead":       false,
-					"createdAt":    dbNotification.CreatedAt.Format(time.RFC3339),
-				},
-			}
-
-			s.hub.BroadcastToUser(member.UserID, notificationEvent)
-		}
+	// Create WebSocket event
+	event := events.Event{
+		Type: events.HeaderNotificationUpdate,
+		Payload: map[string]interface{}{
+			"id":            dbNotification.ID,
+			"type":          newNote.NotficationType,
+			"senderId":      inviterID,
+			"senderName":    inviterInfo.FirstName + " " + inviterInfo.LastName,
+			"senderAvatar":  inviterInfo.Avatar,
+			"message":       newNote.Message,
+			"createdAt":     dbNotification.CreatedAt.Format(time.RFC3339),
+			"isRead":        dbNotification.IsRead,
+		},
 	}
+
+	// Send to the user receiving the follow request
+	s.hub.BroadcastToUser(inviteeID, event)
 }
 
 // SendEventUpdatedNotification sends a notification when an event is updated

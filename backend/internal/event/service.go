@@ -1,6 +1,7 @@
 package event
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -93,8 +94,30 @@ func (s *EventService) CreateEvent(groupID, userID, title, description string, e
 		return nil, err
 	}
 
-	// Notify group members about new event
-	s.notificationService.SendEventCreatedNotification(fullEvent)
+	//get group members for broadcasting
+	groupMembers, err := s.repo.GetGroupMembers(groupID, "accepted")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group members: %w", err)
+	}
+	eventcreator, err := s.repo.GetUserBasicByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	// Broadcast event creation to group members
+	for _, member := range groupMembers {
+		if member.UserID != userID {
+			newNotification := &notifications.NewNotification{
+				UserId:          member.UserID,
+				SenderId:        sql.NullString{String: userID, Valid: true},
+				NotficationType: "groupEvent",
+				Message:         fmt.Sprintf(event.Title),
+				TargetGroupID:   sql.NullString{String: event.ID, Valid: true},
+			}
+			// Notify group members about new event
+			s.notificationService.SendEventCreatedNotification(userID, member.UserID, newNotification, eventcreator)
+		}
+	}
+	
 
 	return fullEvent, nil
 }
