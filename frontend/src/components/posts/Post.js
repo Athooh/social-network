@@ -134,7 +134,6 @@ export default function Post({ post, onPostUpdated }) {
     setConfirmModalConfig(config);
     setShowConfirmModal(true);
   };
-
   // Update handleOptionClick to use the new confirmation approach
   const handleOptionClick = async (action) => {
     switch (action) {
@@ -149,7 +148,8 @@ export default function Post({ post, onPostUpdated }) {
         });
         break;
       case "follow":
-        await followUser(post.userId, formattedPost.authorName);
+        const userId = post.userId ?? post.UserID;
+        await followUser(userId, formattedPost.authorName);
         break;
       case "unfollow":
         await unfollowUser(post.userId, formattedPost.authorName);
