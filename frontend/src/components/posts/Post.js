@@ -52,7 +52,7 @@ export default function Post({ post, onPostUpdated }) {
       ? post.userData.avatar.startsWith("http")
         ? post.userData.avatar
         : `${BASE_URL}${post.userData.avatar}`
-      : "/avatar4.png",
+      : "/avatar.png",
     content: post.content,
     timestamp: formatRelativeTime(post.createdAt),
     privacy: post.privacy,
@@ -107,7 +107,7 @@ export default function Post({ post, onPostUpdated }) {
             ? comment.userData.avatar.startsWith("http")
               ? comment.userData.avatar
               : `${BASE_URL}/uploads/${comment.userData.avatar}`
-            : "/avatar4.png",
+            : "/avatar.png",
         }));
 
         formattedComments.forEach((comment) => {
@@ -217,7 +217,7 @@ export default function Post({ post, onPostUpdated }) {
     ? currentUser.avatar.startsWith("http")
       ? currentUser.avatar
       : `${BASE_URL}/uploads/${currentUser.avatar}`
-    : "/avatar4.png";
+    : "/avatar.png";
 
   const currentUserFullName =
     currentUser?.firstName + " " + currentUser?.lastName;
@@ -293,14 +293,14 @@ export default function Post({ post, onPostUpdated }) {
       return (
         <div key={`comment-${comment.id}`} className={styles.comment}>
           <Image
-            src={comment.authorImage || "/avatar4.png"}
+            src={comment.authorImage || "/avatar.png"}
             alt={`${comment.authorName}'s avatar`}
             height={32}
             width={32}
             className={styles.commentAvatar}
             onError={(e) => {
               // Fallback if image fails to load
-              e.target.src = "/avatar4.png";
+              e.target.src = "/avatar.png";
             }}
           />
           <div className={styles.commentContent}>
