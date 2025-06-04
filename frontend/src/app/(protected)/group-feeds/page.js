@@ -171,7 +171,7 @@ export default function GroupFeeds() {
       <CreateGroupModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onGroupCreated={fetchGroups}
+        onGroupCreated={window.location.reload}
       />
     </>
   );
