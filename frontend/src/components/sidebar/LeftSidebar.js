@@ -122,11 +122,11 @@ export default function LeftSidebar() {
   const navLinks = [
     { icon: "fas fa-home", label: "Home", path: "/home" },
     { icon: "fas fa-users", label: "Groups", path: "/groups" },
-    { icon: "fas fa-calendar-alt", label: "Events", path: "/events" },
+    // { icon: "fas fa-calendar-alt", label: "Events", path: "/events" },
     { icon: "fas fa-user-friends", label: "Friends", path: "/friends" },
     { icon: "fas fa-envelope", label: "Messages", path: "/messages" },
     { icon: "fas fa-user", label: "Profile", path: "/profile" },
-    { icon: "fa-solid fa-gear", label: "Settings", path: "/settings" },
+    // { icon: "fa-solid fa-gear", label: "Settings", path: "/settings" },
   ];
 
   return (

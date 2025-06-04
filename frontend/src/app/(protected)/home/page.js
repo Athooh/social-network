@@ -9,7 +9,7 @@ import Post from "@/components/posts/Post";
 import styles from "@/styles/page.module.css";
 import postStyles from "@/styles/Posts.module.css";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import ChatSidebarFloat from "@/components/chat/ChatSidebarFloat";
+// import ChatSidebarFloat from "@/components/chat/ChatSidebarFloat";
 import { usePostService } from "@/services/postService";
 import { showToast } from "@/components/ui/ToastContainer";
 
@@ -189,7 +189,7 @@ export default function Home() {
           <RightSidebar />
         </aside>
       </div>
-      <ChatSidebarFloat contacts={contacts} />
+      {/* <ChatSidebarFloat contacts={contacts} /> */}
     </ProtectedRoute>
   );
 }
