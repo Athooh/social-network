@@ -26,9 +26,7 @@ const ProfileBanner = ({
   // Use bannerImage or default for banner
   const bannerUrl = userData.bannerImage
     ? `${BASE_URL}/uploads/${userData.bannerImage}`
-    : "/banner3.jpg";
-
-
+    : "/banner.png";
 
   // Use the same approach as in your original code for profile image
   const profileUrl = userData.avatar
@@ -81,7 +79,7 @@ const ProfileBanner = ({
                       {[1, 2, 3].map((_, index) => (
                         <div key={index} className={styles.avatarWrapper}>
                           <Image
-                            src="/avatar4.png"
+                            src="/avatar.png"
                             alt="Follower"
                             width={24}
                             height={24}

@@ -99,13 +99,13 @@ const ProfileGroups = ({ userData }) => {
                 <img
                   src={group.BannerPath?.String ?
                     `${BASE_URL}/uploads/${group.BannerPath.String}` :
-                    "/banner5.jpg"}
+                    "/banner.png"}
                   alt=""
                   className={styles.bannerImg}
                 />
               </div>
               <div className={styles.groupInfo}>
-                <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar5.jpg"} alt="" className={styles.profilePic} />
+                <img src={group.ProfilePicPath?.String ? `${BASE_URL}/uploads/${group.ProfilePicPath.String}` : "/avatar.jpg"} alt="" className={styles.profilePic} />
                 <h3 className={styles.groupName}>{group.Name}</h3>
                 <span className={styles.groupPrivacy}>
                   <i className={`fas ${group.IsPublic ? 'fa-globe' : 'fa-lock'}`}></i>
@@ -117,7 +117,7 @@ const ProfileGroups = ({ userData }) => {
                     {group.Members.slice(0, 3).map((member, index) => (
                       <img
                         key={member.ID || member.id || `member-${index}`} // Handle both ID and id cases with fallback
-                        src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar5.jpg"}
+                        src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar.jpg"}
                         alt={`Member ${index + 1}`}
                         className={styles.memberAvatar}
                         style={{ zIndex: 3 - index }}

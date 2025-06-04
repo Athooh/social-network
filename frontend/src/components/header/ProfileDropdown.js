@@ -32,7 +32,7 @@ export default function ProfileDropdown() {
 
   // Handle avatar URL construction
   const getAvatarUrl = () => {
-    if (!currentUser?.avatar) return "/avatar4.png"; // Default avatar
+    if (!currentUser?.avatar) return "/avatar.png"; // Default avatar
 
     // If avatar is a full URL, use it directly
     if (currentUser.avatar.startsWith("http")) {

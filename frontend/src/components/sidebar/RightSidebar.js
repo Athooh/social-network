@@ -68,7 +68,7 @@ const GroupsSection = ({ groups, onJoin }) => (
           <div className={styles.groupProfile}>
             <img src={group.ProfilePicPath?.String ?
               `${BASE_URL}/uploads/${group.ProfilePicPath.String}` :
-              "/avatar5.jpg"}
+              "/avatar.jpg"}
               alt={group.Name} />
             <div className={styles.groupInfo}>
               <h3>{group.Name}</h3>
