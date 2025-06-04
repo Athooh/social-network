@@ -23,7 +23,8 @@ export default function NotificationDropdown() {
     acceptInvitation,
     rejectInvitation,
     acceptJoinRequest,
-    rejectJoinRequest
+    rejectJoinRequest,
+    respondToEvent
   } = useGroupService();
 
   // Close dropdown when clicking outside
@@ -116,6 +117,26 @@ export default function NotificationDropdown() {
     } catch (error) {
       console.error(`Error ${action}ing join request:`, error);
       showToast(`Failed to ${action} join request`, "error");
+    }
+  };
+
+  // Add new handler for event responses
+  const handleEventResponse = async (eventId, notificationId, response) => {
+    try {
+        const success = await respondToEvent(eventId, response);
+        
+        if (!success) {
+            throw new Error(`Failed to respond to event`);
+        }
+
+        // Delete the notification after successful response
+        await DeleteNotification(notificationId);
+        fetchNotifications();
+        
+        showToast(`Successfully responded to event`, "success");
+    } catch (error) {
+        console.error('Error responding to event:', error);
+        showToast(`Failed to respond to event`, "error");
     }
   };
 
@@ -255,25 +276,29 @@ export default function NotificationDropdown() {
             </div>
             <div className={styles.textBox}>
               <span className={styles.text}>
-                You have been invited to the event <strong>{notification.contentType}</strong> by{" "}
-                <strong>{notification.sender}</strong>
+                <strong>{notification.sender}</strong> invited you to event{" "}
+                <strong>{notification.contentType}</strong>
               </span>
               <div className={styles.actions}>
                 <button
-                  onClick={() =>
-                    handleNotificationResponse(notification.eventId, notification.id, "going", "groupEvent")
-                  }
+                  onClick={() => handleEventResponse(
+                    notification.target, // eventId
+                    notification.id,    // notificationId
+                    'going'
+                  )}
                   className={styles.acceptButton}
                 >
-                  Accept
+                  <i className="fas fa-check"></i> Going
                 </button>
                 <button
-                  onClick={() =>
-                    handleNotificationResponse(notification.eventId, notification.id, "not_going", "groupEvent")
-                  }
+                  onClick={() => handleEventResponse(
+                    notification.target,
+                    notification.id,
+                    'not_going'
+                  )}
                   className={styles.declineButton}
                 >
-                  Decline
+                  <i className="fas fa-times"></i> Not Going
                 </button>
               </div>
             </div>

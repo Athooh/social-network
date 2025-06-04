@@ -194,7 +194,7 @@ const GroupEvents = ({ groupId }) => {
             <CreateEventModal 
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)}
-                onSubmit={handleCreateEvent}
+                onSubmit={fetchEvents}
             />
         </div>
     );
