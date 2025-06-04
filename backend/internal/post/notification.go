@@ -74,7 +74,6 @@ func (s *NotificationService) NotifyPostCreatedToSpecificUsers(post *models.Post
 
 		s.hub.BroadcastToUser(recipientID, event)
 	}
-	s.hub.BroadcastToUser(userID, event)
 
 	return nil
 }
