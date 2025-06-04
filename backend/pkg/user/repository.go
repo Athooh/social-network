@@ -75,6 +75,7 @@ func (r *SQLiteRepository) Create(user *User) error {
 
 // GetByID retrieves a user by ID
 func (r *SQLiteRepository) GetByID(id string) (*User, error) {
+	
 	query := `
 		SELECT 
 			u.id, u.email, u.password, u.first_name, u.last_name, u.date_of_birth,
