@@ -18,7 +18,7 @@ const BASE_URL = API_URL.replace("/api", "");
 export default function Groups() {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [selectedGroupForInvite, setSelectedGroupForInvite] = useState(null);
     const [allGroups, setAllGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState(null);
@@ -186,7 +186,7 @@ export default function Groups() {
                                                     <img
                                                         key={member.ID || member.id || `member-${index}`}
                                                         src={member.Avatar ? `${BASE_URL}/uploads/${member.Avatar}` : "/avatar.jpg"}
-                                                        alt={`Member ${index + 1}`}
+                                                        alt={`${index + 1}`}
                                                         className={styles.memberAvatar}
                                                         style={{ zIndex: 3 - index }}
                                                     />
@@ -211,7 +211,10 @@ export default function Groups() {
                                                         <>
                                                             <button 
                                                                 className={styles.inviteBtn} 
-                                                                onClick={() => setShowInviteModal(true)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedGroupForInvite(group);
+                                                                }}
                                                             >
                                                                 <i className="fas fa-user-plus"></i> Invite
                                                             </button>
@@ -271,16 +274,24 @@ export default function Groups() {
                                         })()}
                                     </div>
                                 </div>
-                                <InviteModal
+                                {/* <InviteModal
                                     group={group}
-                                    isOpen={showInviteModal}
-                                    onClose={() => setShowInviteModal(false)}
-                                />
+                                    isOpen={selectedGroupForInvite === group}
+                                    onClose={() => setSelectedGroupForInvite(null)}
+                                /> */}
                             </div>
                         ))}
                     </div>
                 </main>
             </div>
+
+            {selectedGroupForInvite && (
+                <InviteModal
+                    group={selectedGroupForInvite}
+                    isOpen={!!selectedGroupForInvite}
+                    onClose={() => setSelectedGroupForInvite(null)}
+                />
+            )}
 
             <CreateGroupModal
                 isOpen={isModalOpen}
