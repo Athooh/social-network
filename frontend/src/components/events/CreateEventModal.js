@@ -137,40 +137,6 @@ const CreateEventModal = ({ groupId, isOpen, onClose, onSubmit }) => {
                 rows="3"
               />
             </div>
-
-            <div className={styles.inputEvent}>
-              <label>Privacy</label>
-              <div className={styles.privacyOptions}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="public"
-                    checked={eventData.privacy === 'public'}
-                    onChange={(e) => setEventData(prev => ({ ...prev, privacy: e.target.value }))}
-                  />
-                  <i className="fas fa-globe"></i>
-                  <div>
-                    <span>Public</span>
-                    <small>Anyone can see who&apos;s attending the event and what they post.</small>
-                  </div>
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="private"
-                    checked={eventData.privacy === 'private'}
-                    onChange={(e) => setEventData(prev => ({ ...prev, privacy: e.target.value }))}
-                  />
-                  <i className="fas fa-lock"></i>
-                  <div>
-                    <span>Private</span>
-                    <small>Only members can see who&apos;s attending the event and what they post.</small>
-                  </div>
-                </label>
-              </div>
-            </div>
           </div>
 
           <div className={styles.modalFooter}>
