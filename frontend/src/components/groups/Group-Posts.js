@@ -12,13 +12,7 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-let userdata = null;
-try {
-  const raw = localStorage.getItem("userData");
-  if (raw) userdata = JSON.parse(raw);
-} catch (e) {
-  console.error("Invalid userData in localStorage:", e);
-}
+
 
 export default function GroupPost({ currentUser, post, onPostUpdated, isDetailView = false }) {
   const {
@@ -46,7 +40,14 @@ export default function GroupPost({ currentUser, post, onPostUpdated, isDetailVi
   const [comments, setComments] = useState([]);
   const [likesCount, setLikesCount] = useState(post.LikesCount || 0);
   const router = useRouter();
-
+  
+  let userdata = null;
+  try {
+    const raw = localStorage.getItem("userData");
+    if (raw) userdata = JSON.parse(raw);
+  } catch (e) {
+    console.error("Invalid userData in localStorage:", e);
+  }
   // Format the post data
   const formattedPost = {
     id: post.ID,

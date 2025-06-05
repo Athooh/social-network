@@ -5,13 +5,7 @@ import { useGroupService } from '@/services/groupService';
 import { showToast } from "@/components/ui/ToastContainer";
 import InviteModal from '@/components/groups/InviteModal';
 
-let userdata = null;
-try {
-  const raw = localStorage.getItem("userData");
-  if (raw) userdata = JSON.parse(raw);
-} catch (e) {
-  console.error("Invalid userData in localStorage:", e);
-}
+
 
 const GroupAbout = ({ group }) => {
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
@@ -19,6 +13,14 @@ const GroupAbout = ({ group }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const { leaveGroup, deleteGroup, joinGroup } = useGroupService();
 
+
+  let userdata = null;
+try {
+  const raw = localStorage.getItem("userData");
+  if (raw) userdata = JSON.parse(raw);
+} catch (e) {
+  console.error("Invalid userData in localStorage:", e);
+}
   const handleLeaveGroup = async () => {
     try {
       success = await leaveGroup(group.ID);
