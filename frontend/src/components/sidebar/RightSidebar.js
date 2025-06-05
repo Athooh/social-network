@@ -79,7 +79,7 @@ const GroupsSection = ({ groups, onJoin }) => (
             <button
               className={styles.joinButton}
               onClick={() => onJoin(group.ID)}
-            >Join</button>
+            >Request to Join</button>
           </div>
         </div>
       ))}
@@ -127,7 +127,7 @@ export default function RightSidebar() {
 
   const handleJoinGroup = async (group) => {
     try {
-      const success = await joinGroup(group.ID);
+      const success = await joinGroup(group);
       if (success) {
         showToast("Joined group successfully", "success");
         fetchGroups(); // Refresh the groups list
