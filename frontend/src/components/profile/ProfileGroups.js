@@ -10,19 +10,19 @@ import { showToast } from '../ui/ToastContainer';
 const API_URL = process.env.API_URL || "http://localhost:8080/api";
 const BASE_URL = API_URL.replace("/api", ""); // Remove '/api' to get the base URL
 
-let viewerdata = null;
-try {
-  const raw = localStorage.getItem("viewerData");
-  if (raw) viewerdata = JSON.parse(raw);
-} catch (e) {
-  console.error("Invalid viewerData in localStorage:", e);
-}
 
 const ProfileGroups = ({ userData }) => {
   const router = useRouter();
   const [userGroups, setUserGroups] = useState([]);
   const { getusergroups, deleteGroup, leaveGroup, joinGroup } = useGroupService();
 
+  let viewerdata = null;
+  try {
+    const raw = localStorage.getItem("viewerData");
+    if (raw) viewerdata = JSON.parse(raw);
+  } catch (e) {
+    console.error("Invalid viewerData in localStorage:", e);
+  }
   const fetchGroups = async () => {
     try {
       const result = await getusergroups(userData.id)
