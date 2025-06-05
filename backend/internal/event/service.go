@@ -111,7 +111,8 @@ func (s *EventService) CreateEvent(groupID, userID, title, description string, e
 				SenderId:        sql.NullString{String: userID, Valid: true},
 				NotficationType: "groupEvent",
 				Message:         fmt.Sprintf(event.Title),
-				TargetGroupID:   sql.NullString{String: event.ID, Valid: true},
+				TargetGroupID:   sql.NullString{String: groupID, Valid: true},
+				TargetEventID:   sql.NullString{String: event.ID, Valid: true},
 			}
 			// Notify group members about new event
 			s.notificationService.SendEventCreatedNotification(userID, member.UserID, newNotification, eventcreator)

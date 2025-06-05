@@ -31,7 +31,7 @@ func NewNotificationService(hub *websocket.Hub, repo Repository, notificationRep
 }
 
 // SendEventCreatedNotification sends a notification when a new event is created
-func (s *NotificationService) SendEventCreatedNotification( inviterID, inviteeID string, newNote *notifications.NewNotification, inviterInfo *models.UserBasic) {
+func (s *NotificationService) SendEventCreatedNotification(inviterID, inviteeID string, newNote *notifications.NewNotification, inviterInfo *models.UserBasic) {
 	if s.hub == nil {
 		s.log.Warn("WebSocket hub is nil, cannot send follow request notification")
 		return
@@ -55,14 +55,15 @@ func (s *NotificationService) SendEventCreatedNotification( inviterID, inviteeID
 	event := events.Event{
 		Type: events.HeaderNotificationUpdate,
 		Payload: map[string]interface{}{
-			"id":            dbNotification.ID,
-			"type":          newNote.NotficationType,
-			"senderId":      inviterID,
-			"senderName":    inviterInfo.FirstName + " " + inviterInfo.LastName,
-			"senderAvatar":  inviterInfo.Avatar,
-			"message":       newNote.Message,
-			"createdAt":     dbNotification.CreatedAt.Format(time.RFC3339),
-			"isRead":        dbNotification.IsRead,
+			"id":           dbNotification.ID,
+			"type":         newNote.NotficationType,
+			"senderId":     inviterID,
+			"senderName":   inviterInfo.FirstName + " " + inviterInfo.LastName,
+			"senderAvatar": inviterInfo.Avatar,
+			"message":      newNote.Message,
+			"createdAt":    dbNotification.CreatedAt.Format(time.RFC3339),
+			"isRead":       dbNotification.IsRead,
+			"eventId":      newNote.TargetEventID.String,
 		},
 	}
 

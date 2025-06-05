@@ -284,7 +284,7 @@ export default function NotificationDropdown() {
               <div className={styles.actions}>
                 <button
                   onClick={() => handleEventResponse(
-                    notification.target, // eventId
+                    notification.eventId, // eventId
                     notification.id,    // notificationId
                     'going'
                   )}
@@ -294,7 +294,7 @@ export default function NotificationDropdown() {
                 </button>
                 <button
                   onClick={() => handleEventResponse(
-                    notification.target,
+                    notification.eventId,
                     notification.id,
                     'not_going'
                   )}
