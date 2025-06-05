@@ -107,11 +107,11 @@ func (r *SQLiteRepository) CreateGroup(group *models.Group) error {
 		return fmt.Errorf("failed to add creator as member: %w", err)
 	}
 
-	// Update user's group count
-	_, err = r.UpdateUserGroupCount(group.CreatorID, true)
-	if err != nil {
-		return fmt.Errorf("failed to update user group count: %w", err)
-	}
+	// // Update user's group count
+	// _, err = r.UpdateUserGroupCount(group.CreatorID, true)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to update user group count: %w", err)
+	// }
 
 	return nil
 }

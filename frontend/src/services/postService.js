@@ -23,7 +23,7 @@ export const usePostService = () => {
             UserData = {
               firstName: "Unknown",
               lastName: "User",
-              avatar: "/avatar4.png",
+              avatar: "/avatar.png",
             },
           } = payload.post;
 
