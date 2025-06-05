@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import styles from '@/styles/CreateEventModal.module.css';
 import { showToast } from '../ui/ToastContainer';
+import { useGroupService } from '@/services/groupService';
 
-const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
+const CreateEventModal = ({ groupId, isOpen, onClose, onSubmit }) => {
   const [eventData, setEventData] = useState({
     name: '',
     description: '',
@@ -14,7 +15,8 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
   });
 
   const [bannerPreview, setBannerPreview] = useState(null);
-  
+  const { createEvent } = useGroupService();
+
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];
     if (file) {
@@ -39,6 +41,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit }) => {
     }
 
     try {
+        await createEvent(groupId, eventData);
         await onSubmit(eventData);
         onClose();
         setEventData({
