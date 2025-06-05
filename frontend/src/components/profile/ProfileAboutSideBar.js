@@ -9,10 +9,12 @@ import {
   faPhone,
   faHouse,
   faLocationDot,
+  faCalendarAlt
 } from "@fortawesome/free-solid-svg-icons";
 
 const ProfileAboutSideBar = ({ userData }) => {
   // Check if sections should be displayed based on available data
+  console.log("Usersate", userData)
   const hasBio = !!userData?.aboutMe;
   const hasInfo = !!(
     userData?.work ||
@@ -98,6 +100,12 @@ const ProfileAboutSideBar = ({ userData }) => {
               <li>
                 <FontAwesomeIcon icon={faLocationDot} className={styles.icon} />
                 <span>{userData.location}</span>
+              </li>
+            )}
+            {userData?.dateOfBirth &&  (
+              <li>
+                <FontAwesomeIcon icon={faCalendarAlt} className={styles.icon} />
+                <span>{userData.dateOfBirth}</span>
               </li>
             )}
           </ul>
