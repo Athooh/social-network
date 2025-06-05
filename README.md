@@ -1,223 +1,264 @@
-# Social Network - A Facebook-like Application
+# Social Network Platform
 
-Welcome to the **Social Network** project! This is a Facebook-like social network application built using **Next.js** for the frontend and backend, **SQLite** for the database, and **Docker** for containerization. The application includes features like user profiles, followers, posts, groups, notifications, and real-time chat.
+A modern, feature-rich social networking platform built with Next.js frontend and Go backend, featuring real-time communications, group management, and comprehensive social features.
+
+## Overview
+
+This platform provides a complete social networking experience with features like user authentication, real-time chat, group management, post sharing, and more. Built with scalability and performance in mind, it uses Next.js for the frontend and Go for the backend services.
 
 ---
 
 ## Table of Contents
 
-1. [Features](#features)
-2. [Technologies Used](#technologies-used)
-3. [Project Structure](#project-structure)
-4. [Setup and Installation](#setup-and-installation)
-   - [Prerequisites](#prerequisites)
-   - [Local Development](#local-development)
-   - [Docker Setup](#docker-setup)
-5. [Running the Application](#running-the-application)
-6. [API Documentation](#api-documentation)
-7. [Contributing](#contributing)
-8. [License](#license)
+- [Social Network Platform](#social-network-platform)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [🚀 Key Features](#-key-features)
+    - [Authentication \& User Management](#authentication--user-management)
+    - [Profile \& Social Features](#profile--social-features)
+    - [Groups](#groups)
+    - [Content Sharing](#content-sharing)
+    - [Real-time Features](#real-time-features)
+    - [File Management](#file-management)
+  - [🛠 Technology Stack](#-technology-stack)
+    - [Frontend](#frontend)
+    - [Backend](#backend)
+    - [DevOps \& Infrastructure](#devops--infrastructure)
+  - [📁 Project Structure](#-project-structure)
+    - [Frontend Architecture](#frontend-architecture)
+    - [Backend Architecture](#backend-architecture)
+  - [🚀 Getting Started](#-getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Local Development Setup](#local-development-setup)
+    - [Docker Deployment](#docker-deployment)
+  - [📜 API Documentation](#-api-documentation)
+    - [Authentication Endpoints](#authentication-endpoints)
+    - [User \& Profile Endpoints](#user--profile-endpoints)
+    - [Groups Endpoints](#groups-endpoints)
+    - [Posts Endpoints](#posts-endpoints)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Acknowledgments](#acknowledgments)
 
 ---
 
-## Features
+## 🚀 Key Features
 
-The Social Network application includes the following features:
+### Authentication & User Management
+- Secure JWT-based authentication
+- User registration and login
+- Session management
+- Real-time user status tracking
 
-1. **User Authentication**:
+### Profile & Social Features
+- Customizable user profiles with media uploads
+- Follow/Unfollow functionality
+- Activity feed
+- Friend connections
+- Privacy settings
 
-   - Register and login with email, password, and optional fields like avatar, nickname, and bio.
-   - Session management using cookies.
+### Groups
+- Member management
+- Group content sharing
+- Invitation system
+- Event organization
 
-2. **Profiles**:
+### Content Sharing
+- Rich text posts
+- Media upload support (images, videos)
+- Privacy controls
+- Comments and reactions
 
-   - Public and private profiles.
-   - Display user information, posts, followers, and following.
+### Real-time Features
+- WebSocket-powered live chat
+- Instant notifications
+- Online status indicators
+- Live content updates
 
-3. **Followers**:
-
-   - Follow and unfollow other users.
-   - Follow requests for private profiles.
-
-4. **Posts**:
-
-   - Create posts with text, images, or GIFs.
-   - Set post privacy (public, followers-only, or private).
-
-5. **Groups**:
-
-   - Create and join groups.
-   - Post and comment within groups.
-   - Create and RSVP to group events.
-
-6. **Real-Time Chat**:
-
-   - Private messaging between users.
-   - Group chat for members of a group.
-
-7. **Notifications**:
-   - Notifications for follow requests, group invitations, and event updates.
-
----
-
-## Technologies Used
-
-- **Frontend**:
-
-  - Next.js (React framework)
-  - Tailwind CSS (for styling)
-  - Socket.IO (for real-time chat)
-
-- **Backend**:
-
-  - Next.js API Routes
-  - SQLite (database)
-  - Bcrypt (password hashing)
-  - Express-session (session management)
-
-- **DevOps**:
-
-  - Docker (containerization)
-  - Docker Compose (orchestration)
-
-- **Other Tools**:
-  - Turbopack (Next.js dev bundler for faster builds)
-  - SQLite3 (database library)
-  - UUID (for generating unique IDs)
+### File Management
+- Secure file upload system
+- Multiple media type support
+- Organized storage structure
+- Image processing
 
 ---
 
-## Project Structure
+## 🛠 Technology Stack
 
+### Frontend
+- **Framework**: Next.js 13+ with App Router
+- **State Management**: React Context API
+- **Real-time Communication**: WebSocket
+- **Styling**: CSS Modules
+- **Development Tools**: ESLint, Prettier
+
+### Backend
+- **Language**: Go
+- **Database**: SQLite
+- **Authentication**: JWT
+- **File Storage**: Local filesystem
+- **API**: RESTful + WebSocket
+- **Libraries**: 
+  - `gorilla/websocket` for WebSocket
+  - `jwt-go` for authentication
+  - Built-in SQLite support
+  - Custom middleware
+
+### DevOps & Infrastructure
+- **Containerization**: Docker
+- **Orchestration**: Docker Compose
+- **Logging**: Structured logging with rotation
+- **Development**: Hot-reloading for both frontend and backend
+
+---
+
+## 📁 Project Structure
+
+### Frontend Architecture
 ```
-social-network/
-├── frontend/                # Frontend application
-│   ├── public/             # Static assets (images, fonts, etc.)
-│   ├── src/
-│   │   ├── app/           # Next.js 13+ App Router pages
-│   │   │   ├── auth/      # Authentication pages (login, register)
-│   │   │   ├── profile/   # User profile pages
-│   │   │   ├── posts/     # Post-related pages
-│   │   │   ├── groups/    # Group-related pages
-│   │   │   ├── messages/  # Chat/messages pages
-│   │   │   ├── layout.js  # Root layout component
-│   │   │   └── page.js    # Home page
-│   │   ├── components/    # Reusable UI components
-│   │   │   ├── header/    # Header components
-│   │   │   ├── chat/      # Chat components
-│   │   │   ├── events/    # Event components
-│   │   │   ├── groups/    # Group components
-│   │   │   └── sideBar/   # Sidebar components
-│   │   ├── styles/        # CSS files and modules
-│   │   ├── utils/         # Utility functions
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── context/       # React context providers
-│   │   ├── lib/           # Library functions
-│   │   └── types/         # TypeScript types
-│   ├── .env.local         # Environment variables
-│   ├── next.config.mjs    # Next.js configuration
-│   ├── package.json       # Frontend dependencies
-│   └── eslint.config.mjs  # ESLint configuration
-├── backend/               # Backend application (to be implemented)
-└── README.md             # Project documentation
+frontend/
+├── src/
+│   ├── app/                # Next.js 13+ App Router
+│   │   ├── (protected)/   # Protected routes
+│   │   ├── register/      # Authentication pages
+│   │   ├── layout.js      # Root layout
+│   │   └── page.js        # Home page
+│   ├── components/        # UI Components
+│   │   ├── auth/         # Authentication components
+│   │   ├── chat/         # Chat interface
+│   │   ├── groups/       # Group management
+│   │   ├── posts/        # Post creation/display
+│   │   └── ui/           # Common UI elements
+│   ├── context/          # React contexts
+│   ├── services/         # API services
+│   ├── styles/           # CSS modules
+│   └── utils/            # Utility functions
+```
+
+### Backend Architecture
+```
+backend/
+├── cmd/
+│   └── api/              # Application entry point
+├── internal/
+│   ├── auth/            # Authentication
+│   ├── chat/            # Real-time chat
+│   ├── event/           # Event handling
+│   ├── follow/          # Follow system
+│   ├── group/           # Group management
+│   ├── post/            # Post handling
+│   ├── profile/         # User profiles
+│   └── websocket/       # WebSocket handling
+├── pkg/
+│   ├── db/              # Database operations
+│   ├── filestore/       # File handling
+│   ├── logger/          # Logging system
+│   ├── middleware/      # HTTP middleware
+│   └── models/          # Data models
+└── data/
+    ├── social_network.db # SQLite database
+    └── uploads/         # User uploads
 ```
 
 ---
 
-## Setup and Installation
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- npm (Node Package Manager)
-- Docker (optional, for containerization)
-- SQLite (for the database)
+- Go 1.24 or higher
+- Node.js 18 or higher
+- Docker and Docker Compose (optional)
+- Git
+
+### Local Development Setup
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/Athooh/social-network.git
+cd social-network
+```
+
+2. **Backend Setup**
+```bash
+cd backend
+go run cmd/api/main.go
+```
+
+3. **Frontend Setup**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+4. **Environment Configuration**
+
+Frontend (.env.local):
+```
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
+```
+
+Backend (environment or .env):
+```
+PORT=8080
+JWT_SECRET=your-secret-key
+DB_PATH=./data/social_network.db
+UPLOAD_DIR=./data/uploads
+```
+
+### Docker Deployment
+
+1. **Build and Run with Docker Compose**
+```bash
+docker-compose up --build
+```
+
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
 
 ---
 
-### Local Development
+## 📜 API Documentation
 
-1. **Clone the Repository**:
+### Authentication Endpoints
+```
+POST /api/auth/register     # User registration
+POST /api/auth/login        # User login
+POST /api/auth/logout       # User logout
+GET  /api/auth/verify      # Verify JWT token
+```
 
-   ```bash
-   git clone https://github.com/your-username/social-network.git
-   cd social-network
-   ```
+### User & Profile Endpoints
+```
+GET    /api/users/profile      # Get user profile
+PUT    /api/users/profile      # Update profile
+GET    /api/users/status       # Get online status
+POST   /api/users/follow       # Follow user
+DELETE /api/users/follow       # Unfollow user
+```
 
-2. **Install Dependencies**:
+### Groups Endpoints
+```
+POST   /api/groups            # Create group
+GET    /api/groups            # List groups
+GET    /api/groups/:id        # Get group details
+PUT    /api/groups/:id        # Update group
+DELETE /api/groups/:id        # Delete group
+POST   /api/groups/:id/invite # Invite to group
+```
 
-   - For the frontend:
-     ```bash
-     cd frontend
-     npm install
-     ```
-   - For the backend:
-     ```bash
-     cd backend
-     npm install
-     ```
-
-3. **Set Up the Database**:
-
-   - Run the SQLite migrations to create the necessary tables:
-     ```bash
-     cd backend
-     npm run migrate
-     ```
-
-4. **Start the Development Server**:
-
-   - For the frontend:
-     ```bash
-     cd frontend
-     npm run build
-     npm start
-     ```
-   - For the backend:
-     ```bash
-     cd backend
-     npm start
-     ```
-
-5. **Access the Application**:
-   - Open your browser and navigate to `http://localhost:3000`.
-
----
-
-### Docker Setup
-
-1. **Build and Run the Docker Containers**:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-2. **Access the Application**:
-   - Open your browser and navigate to `http://localhost:3000`.
-
----
-
-## Running the Application
-
-- **Development Mode**:
-
-  - Use `npm run dev` in the `frontend` folder to start the Next.js development server with Turbopack.
-  - Use `npm start` in the `backend` folder to start the backend server.
-
-- **Production Mode**:
-  - Build the application using `npm run build` in the `frontend` folder.
-  - Start the production server using `npm start`.
-
----
-
-## API Documentation
-
-The backend API routes are documented using Swagger. To access the API documentation:
-
-1. Start the backend server.
-2. Navigate to `http://localhost:3000/api-docs`.
-
----
+### Posts Endpoints
+```
+POST   /api/posts            # Create post
+GET    /api/posts            # List posts
+GET    /api/posts/:id        # Get post details
+PUT    /api/posts/:id        # Update post
+DELETE /api/posts/:id        # Delete post
+POST   /api/posts/:id/like   # Like post
+```
 
 ## Contributing
 
