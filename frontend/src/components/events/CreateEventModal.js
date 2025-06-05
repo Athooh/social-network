@@ -12,6 +12,7 @@ const CreateEventModal = ({ groupId, isOpen, onClose, onSubmit }) => {
     date: '',
     privacy: 'public',
     banner: null,
+    attendance_status: 'going' // Add default attendance status
   });
 
   const [bannerPreview, setBannerPreview] = useState(null);
@@ -50,6 +51,7 @@ const CreateEventModal = ({ groupId, isOpen, onClose, onSubmit }) => {
             date: '',
             privacy: 'public',
             banner: null,
+            attendance_status: 'going' // Reset to default
         });
         setBannerPreview(null);
     } catch (error) {
@@ -136,6 +138,34 @@ const CreateEventModal = ({ groupId, isOpen, onClose, onSubmit }) => {
                 placeholder="What's your event about?"
                 rows="3"
               />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label>Attendance Status</label>
+              <div className={styles.attendanceOptions}>
+                <label className={`${styles.attendanceOption} ${eventData.attendance_status === 'going' ? styles.selected : ''}`}>
+                  <input
+                    type="radio"
+                    name="attendance"
+                    value="going"
+                    checked={eventData.attendance_status === 'going'}
+                    onChange={(e) => setEventData(prev => ({ ...prev, attendance_status: e.target.value }))}
+                  />
+                  <i className="fas fa-check"></i>
+                  Going
+                </label>
+                <label className={`${styles.attendanceOption} ${eventData.attendance_status === 'not_going' ? styles.selected : ''}`}>
+                  <input
+                    type="radio"
+                    name="attendance"
+                    value="not_going"
+                    checked={eventData.attendance_status === 'not_going'}
+                    onChange={(e) => setEventData(prev => ({ ...prev, attendance_status: e.target.value }))}
+                  />
+                  <i className="fas fa-times"></i>
+                  Not Going
+                </label>
+              </div>
             </div>
           </div>
 

@@ -18,7 +18,7 @@ import (
 // Service defines the interface for event business logic
 type Service interface {
 	// Event operations
-	CreateEvent(groupID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error)
+	CreateEvent(groupID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader, response string) (*models.GroupEvent, error)
 	GetEvent(eventID, userID string) (*models.GroupEvent, error)
 	GetGroupEvents(groupID, userID string) ([]*models.GroupEvent, error)
 	UpdateEvent(eventID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error)
@@ -52,7 +52,7 @@ func NewService(repo Repository, fileStore *filestore.FileStore, log *logger.Log
 }
 
 // CreateEvent creates a new event in a group
-func (s *EventService) CreateEvent(groupID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader) (*models.GroupEvent, error) {
+func (s *EventService) CreateEvent(groupID, userID, title, description string, eventDate time.Time, banner *multipart.FileHeader, response string) (*models.GroupEvent, error) {
 	// Check if user is a member of the group
 	isMember, err := s.repo.IsGroupMember(groupID, userID)
 	if err != nil {
@@ -103,6 +103,8 @@ func (s *EventService) CreateEvent(groupID, userID, title, description string, e
 	if err != nil {
 		return nil, err
 	}
+
+	
 	// Broadcast event creation to group members
 	for _, member := range groupMembers {
 		if member.UserID != userID {
@@ -119,6 +121,10 @@ func (s *EventService) CreateEvent(groupID, userID, title, description string, e
 		}
 	}
 	
+	err = s.RespondToEvent(event.ID, userID, response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to respond to event: %w", err)
+	}
 
 	return fullEvent, nil
 }

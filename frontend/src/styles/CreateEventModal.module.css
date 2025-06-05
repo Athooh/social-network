@@ -281,4 +281,49 @@
   
   .inputGroup input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
-  } 
+  }
+  
+  .attendanceOptions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .attendanceOption {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .attendanceOption input[type="radio"] {
+    display: none;
+  }
+  
+  .attendanceOption i {
+    font-size: 1rem;
+  }
+  
+  .attendanceOption.selected {
+    background-color: #1a73e8;
+    color: white;
+    border-color: #1a73e8;
+  }
+  
+  .attendanceOption:hover:not(.selected) {
+    background-color: #f5f5f5;
+  }
+  
+  .attendanceOption:first-child.selected {
+    background-color: #34a853;
+    border-color: #34a853;
+  }
+  
+  .attendanceOption:last-child.selected {
+    background-color: #ea4335;
+    border-color: #ea4335;
+  }

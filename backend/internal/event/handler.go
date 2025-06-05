@@ -51,6 +51,7 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	description := r.FormValue("description")
 	eventDateStr := r.FormValue("eventDate")
+	response := r.FormValue("attendance")
 
 	if groupID == "" || title == "" || eventDateStr == "" {
 		http.Error(w, "Group ID, title, and event date are required", http.StatusBadRequest)
@@ -71,7 +72,7 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create event
-	event, err := h.service.CreateEvent(groupID, userID, title, description, eventDate, banner)
+	event, err := h.service.CreateEvent(groupID, userID, title, description, eventDate, banner, response)
 	if err != nil {
 		h.log.Error("Failed to create event: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

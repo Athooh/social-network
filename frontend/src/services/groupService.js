@@ -306,6 +306,7 @@ export const useGroupService = () => {
             // Format the date to RFC3339 format as required by the backend
             const formattedDate = new Date(eventData.date).toISOString();
             formData.append('eventDate', formattedDate);
+            formData.append('attendance', eventData.attendance_status)
 
             if (eventData.banner) {
                 formData.append('banner', eventData.banner);
