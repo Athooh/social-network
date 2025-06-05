@@ -5,6 +5,7 @@ import styles from "@/styles/NotificationDropdown.module.css";
 import { formatDistanceToNow } from "date-fns";
 import { useNotificationService } from "@/services/notificationService";
 import { useGroupService } from "@/services/groupService";
+import { showToast } from "@/components/ui/ToastContainer";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -82,7 +83,8 @@ export default function NotificationDropdown() {
 
       // Delete the notification after handling
       await DeleteNotification(notificationId);
-      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+      fetchNotifications();
+      showToast(`Successfully ${action}ed request`, "success");
     } catch (error) {
       console.error(`Error ${action}ing invitation:`, error);
       showToast(`Failed to ${action} invitation`, "error");

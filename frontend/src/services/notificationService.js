@@ -226,6 +226,7 @@ export const useNotificationService = () => {
             ? `${BASE_URL}/uploads/${payload.senderAvatar}`
             : "/avatar.png",
           timestamp: payload.createdAt,
+          target: payload.targetGroupId,
           read: payload.isRead,
           action: payload.type === "reaction" ? payload.message.split(" ")[0] : undefined,
           contentType:
