@@ -17,11 +17,15 @@
     "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
     "build": "npm run frontend:build && npm run backend:build",
     "start": "concurrently \"npm run frontend:start\" \"npm run backend:run\"",
-    "setup": "npm install -g concurrently && cd frontend && npm install",
+    "desktop:dev": "cd desktop && npm run dev",
+    "desktop:build": "cd desktop && npm run build",
+    "desktop:start": "cd desktop && npm start",
+    "setup": "npm install && cd frontend && npm install && cd ../desktop && npm install",
+    "dev:all": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\" \"npm run desktop:dev\"",
     "clean": "npm run backend:clean"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.2"
   },
   "engines": {
     "node": ">=18.0.0"
