@@ -559,33 +559,3 @@ class MessengerApp {
         }
     }
 }
-
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        // Include services
-        const authScript = document.createElement('script');
-        authScript.src = 'renderer/js/auth.js';
-        document.head.appendChild(authScript);
-
-        const wsScript = document.createElement('script');
-        wsScript.src = 'renderer/js/websocket.js';
-        document.head.appendChild(wsScript);
-
-        const chatScript = document.createElement('script');
-        chatScript.src = 'renderer/js/chat.js';
-        document.head.appendChild(chatScript);
-
-        // Wait for scripts to load
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Initialize messenger app
-        window.messengerApp = new MessengerApp();
-        window.messengerUI = window.messengerApp; // Alias for router
-        await window.messengerApp.init();
-
-    } catch (error) {
-        console.error('Failed to initialize app:', error);
-        window.showToast('Failed to initialize application', 'error');
-    }
-});
