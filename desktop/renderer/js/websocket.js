@@ -47,7 +47,7 @@ class WebSocketService {
         try {
             const token = window.authService.token;
             const baseUrl = 'http://localhost:8080'; // Your Go backend URL
-            const wsUrl = `ws://localhost:8080/ws?token=${token}&tabId=${this.tabId}`;
+            const wsUrl = `ws://localhost:8080/ws?token=${token}&tabId=${this.tabId}&clientType=electron`;
 
             console.log('Connecting to WebSocket:', wsUrl);
             this.socket = new WebSocket(wsUrl);
@@ -260,14 +260,17 @@ class WebSocketService {
     updateConnectionStatus(isConnected) {
         const statusElement = document.getElementById('connection-status');
         if (statusElement) {
-            if (isConnected) {
-                statusElement.classList.remove('offline');
-                statusElement.classList.add('online');
-                statusElement.querySelector('span').textContent = 'Online';
-            } else {
-                statusElement.classList.remove('online');
-                statusElement.classList.add('offline');
-                statusElement.querySelector('span').textContent = 'Offline';
+            const statusText = statusElement.querySelector('span');
+            if (statusText) {
+                if (isConnected) {
+                    statusElement.classList.remove('offline');
+                    statusElement.classList.add('online');
+                    statusText.textContent = 'Online';
+                } else {
+                    statusElement.classList.remove('online');
+                    statusElement.classList.add('offline');
+                    statusText.textContent = 'Offline';
+                }
             }
         }
     }
