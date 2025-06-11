@@ -28,11 +28,22 @@ function createWindow() {
             nodeIntegration: false,
             contextIsolation: true,
             enableRemoteModule: false,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            webSecurity: true,
+            allowRunningInsecureContent: false
         },
         icon: path.join(__dirname, 'assets', 'icon.png'), // Add your app icon
         show: false, // Don't show until ready
         titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default'
+    });
+
+    // Set up session to handle cookies properly
+    const session = mainWindow.webContents.session;
+
+    // Enable cookie support for your domain
+    session.webRequest.onBeforeSendHeaders((details, callback) => {
+        // Add any additional headers if needed
+        callback({ requestHeaders: details.requestHeaders });
     });
 
     // Load the app
@@ -178,6 +189,17 @@ ipcMain.handle('set-badge-count', (event, count) => {
     if (process.platform === 'darwin') {
         app.dock.setBadge(count > 0 ? count.toString() : '');
     }
+});
+
+ipcMain.handle('clear-cookies', async () => {
+    if (mainWindow) {
+        const session = mainWindow.webContents.session;
+        await session.clearStorageData({
+            storages: ['cookies']
+        });
+        return true;
+    }
+    return false;
 });
 
 ipcMain.handle('check-online-status', () => {
