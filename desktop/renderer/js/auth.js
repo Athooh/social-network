@@ -42,10 +42,10 @@ class AuthService {
         try {
             const response = await fetch(`${this.API_URL}/auth/validate_token`, {
                 method: 'GET',
-                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Client-Type': 'electron'
                 }
             });
 
@@ -71,8 +71,10 @@ class AuthService {
 
             const response = await fetch(`${this.API_URL}/auth/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Client-Type': 'electron'
+                },
                 body: JSON.stringify({
                     email: formData.email,
                     password: formData.password
@@ -126,10 +128,10 @@ class AuthService {
                 try {
                     await fetch(`${this.API_URL}/auth/logout`, {
                         method: 'POST',
-                        credentials: 'include',
                         headers: {
                             'Authorization': `Bearer ${this.token}`,
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-Client-Type': 'electron'
                         }
                     });
                 } catch (error) {
@@ -147,13 +149,18 @@ class AuthService {
 
             this.notifyListeners();
 
-            if (sendRequest) {
+            if (sendRequest && window.router) {
                 window.router.navigate('auth');
             }
         } catch (error) {
             console.error('Logout error:', error);
             this.loading = false;
             this.notifyListeners();
+
+            // Force navigation to auth even if there's an error
+            if (sendRequest && window.router) {
+                window.router.navigate('auth');
+            }
         }
     }
 
@@ -166,7 +173,8 @@ class AuthService {
 
             const authHeaders = {
                 'Authorization': `Bearer ${this.token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Client-Type': 'electron' // Identify as Electron client
             };
 
             const response = await fetch(`${this.API_URL}/${url}`, {
@@ -174,8 +182,7 @@ class AuthService {
                 headers: {
                     ...authHeaders,
                     ...options.headers
-                },
-                credentials: 'include'
+                }
             });
 
             if (response.status === 401) {
