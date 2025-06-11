@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
         delete: (key) => ipcRenderer.invoke('store-delete', key)
     },
 
+    // Cookie methods
+    clearCookies: () => ipcRenderer.invoke('clear-cookies'),
+
     // Notification methods
     showNotification: (options) => ipcRenderer.invoke('show-notification', options),
     setBadgeCount: (count) => ipcRenderer.invoke('set-badge-count', count),
