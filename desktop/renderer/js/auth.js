@@ -229,7 +229,7 @@ class AuthService {
     // Redirect to social network website for registration
     redirectToRegister() {
         const registerUrl = 'http://localhost:3000/register'; // Your Next.js frontend URL
-        require('electron').shell.openExternal(registerUrl);
+        window.electronAPI.openExternal(registerUrl);
     }
 }
 
