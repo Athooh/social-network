@@ -19,16 +19,22 @@ class Router {
         // Show loading screen
         this.showSection('loading');
 
-        // Wait for auth service to initialize
+        // Wait for auth service to initialize with retries
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 20;
 
         while (attempts < maxAttempts) {
             if (window.authService && !window.authService.loading) {
                 break;
             }
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 250));
             attempts++;
+        }
+
+        if (attempts >= maxAttempts) {
+            console.error('Auth service failed to initialize');
+            this.navigate('auth');
+            return;
         }
 
         // Navigate based on authentication status
