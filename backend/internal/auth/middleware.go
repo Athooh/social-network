@@ -26,15 +26,22 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 		var userID string
 		var err error
 
-		fmt.Println("hello", r.Header.Get("X-Client-Type"), r.URL.String())
+		// Check if it's an Electron client - check both header and query parameter
+		clientType := r.Header.Get("X-Client-Type")
+		if clientType == "" {
+			// Fallback to query parameter for WebSocket connections
+			clientType = r.URL.Query().Get("clientType")
+		}
 
-		// Check if it's an Electron client
-		if r.Header.Get("X-Client-Type") == "electron" {
+		if clientType == "electron" {
 			// Use JWT authentication for Electron
 			tokenString, tokenErr := ExtractTokenFromRequest(r)
 			if tokenErr != nil {
-				httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(ExtractTokenFromRequest) Unauthorized: %s", tokenErr.Error()), true)
-				return
+				// For WebSocket, try to get token from query parameter
+				if tokenString = r.URL.Query().Get("token"); tokenString == "" {
+					httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(ExtractTokenFromRequest) Unauthorized: %s", tokenErr.Error()), true)
+					return
+				}
 			}
 
 			claims, validateErr := ValidateToken(tokenString, s.jwtConfig)
