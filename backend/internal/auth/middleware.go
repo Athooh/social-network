@@ -14,7 +14,7 @@ type contextKey string
 // UserIDKey is the key for storing the user ID in the request context
 const UserIDKey contextKey = "userID"
 
-// RequireAuth is a middleware that requires authentication
+// RequireAuth now handles both session and JWT authentication automatically
 func (s *Service) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip authentication for OPTIONS requests
@@ -23,11 +23,34 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		// Get user ID from session
-		userID, err := s.sessionManager.GetUserFromSession(r)
-		if err != nil {
-			httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(GetUserFromSession) Unauthorized: %s", err.Error()), true)
-			return
+		var userID string
+		var err error
+
+		fmt.Println("hello", r.Header.Get("X-Client-Type"), r.URL.String())
+
+		// Check if it's an Electron client
+		if r.Header.Get("X-Client-Type") == "electron" {
+			// Use JWT authentication for Electron
+			tokenString, tokenErr := ExtractTokenFromRequest(r)
+			if tokenErr != nil {
+				httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(ExtractTokenFromRequest) Unauthorized: %s", tokenErr.Error()), true)
+				return
+			}
+
+			claims, validateErr := ValidateToken(tokenString, s.jwtConfig)
+			if validateErr != nil {
+				httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(ValidateToken) Unauthorized: %s", validateErr.Error()), true)
+				return
+			}
+
+			userID = claims.UserID
+		} else {
+			// Use session authentication for web clients
+			userID, err = s.sessionManager.GetUserFromSession(r)
+			if err != nil {
+				httputil.SendError(w, http.StatusUnauthorized, fmt.Sprintf("(GetUserFromSession) Unauthorized: %s", err.Error()), true)
+				return
+			}
 		}
 
 		// Store user ID in request context
