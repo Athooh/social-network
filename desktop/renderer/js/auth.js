@@ -229,7 +229,14 @@ class AuthService {
     // Redirect to social network website for registration
     redirectToRegister() {
         const registerUrl = 'http://localhost:3000/register'; // Your Next.js frontend URL
-        window.electronAPI.openExternal(registerUrl);
+
+        if (window.electronAPI && window.electronAPI.openExternal) {
+            window.electronAPI.openExternal(registerUrl);
+        } else {
+            // Fallback - try to open in same window (will be blocked but shows intent)
+            console.log('Would open registration URL:', registerUrl);
+            window.showToast('Please restart the app and try again', 'error');
+        }
     }
 }
 
