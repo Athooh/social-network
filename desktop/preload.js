@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, shell } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -13,8 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Cookie methods
     clearCookies: () => ipcRenderer.invoke('clear-cookies'),
 
-    // External URL opening
-    openExternal: (url) => shell.openExternal(url),
+    // External URL opening (secured through main process)
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
 
     // Notification methods
     showNotification: (options) => ipcRenderer.invoke('show-notification', options),
