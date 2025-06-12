@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, Notification, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const Store = require('electron-store');
 const path = require('path');
@@ -188,6 +188,19 @@ ipcMain.handle('show-notification', (event, options) => {
 ipcMain.handle('set-badge-count', (event, count) => {
     if (process.platform === 'darwin') {
         app.dock.setBadge(count > 0 ? count.toString() : '');
+    }
+});
+
+ipcMain.handle('open-external', (event, url) => {
+    // Security check - only allow specific domains
+    const allowedDomains = ['localhost:3000', 'localhost:8080'];
+    const urlObj = new URL(url);
+
+    if (allowedDomains.some(domain => urlObj.host === domain)) {
+        return shell.openExternal(url);
+    } else {
+        console.warn('Blocked external URL:', url);
+        return false;
     }
 });
 
