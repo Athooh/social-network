@@ -31,11 +31,13 @@
       "index.html"
     ]
   },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.6.2"
+  },
   "devDependencies": {
     "electron": "^36.4.0",
-    "electron-builder": "^26.0.12"
-  },
-  "dependencies": {
-    "electron-store": "^10.0.1"
+    "electron-builder": "^26.0.12",
+    "electron-reload": "^1.5.0"
   }
 }
