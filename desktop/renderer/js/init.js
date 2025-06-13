@@ -77,6 +77,7 @@ class AppInitializer {
         const requiredServices = [
             'authService',
             'websocketService',
+            'userStatusService',
             'chatService',
             'router'
         ];
@@ -97,6 +98,12 @@ class AppInitializer {
             if (attempts >= maxAttempts) {
                 throw new Error(`Service ${serviceName} failed to load`);
             }
+        }
+
+        // Initialize user status service
+        if (window.userStatusService && typeof window.userStatusService.init === 'function') {
+            window.userStatusService.init();
+            console.log('✓ User status service initialized');
         }
 
         // Wait a bit more for services to fully initialize
