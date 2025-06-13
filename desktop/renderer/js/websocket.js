@@ -17,13 +17,17 @@ class WebSocketService {
         this.listeners = {};
         this.reconnectTimeout = null;
         this.pingInterval = null;
+        this.heartbeatInterval = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.baseReconnectDelay = 3000;
-        this.tabId = `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        this.tabId = `tab_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         this.statusMessageTimeout = null;
         this.statusDebounceDelay = 500;
         this.lastStatus = null;
+        this.isOnline = navigator.onLine;
+        this.connectionQuality = 'good';
+        this.lastPongTime = Date.now();
 
         // Bind methods
         this.connect = this.connect.bind(this);
@@ -31,9 +35,88 @@ class WebSocketService {
         this.subscribe = this.subscribe.bind(this);
         this.unsubscribe = this.unsubscribe.bind(this);
         this.sendMessage = this.sendMessage.bind(this);
+        this.handleNetworkChange = this.handleNetworkChange.bind(this);
+        this.checkConnectionQuality = this.checkConnectionQuality.bind(this);
+
+        // Setup network event listeners
+        this.setupNetworkListeners();
+    }
+
+    setupNetworkListeners() {
+        // Listen for online/offline events
+        window.addEventListener('online', this.handleNetworkChange);
+        window.addEventListener('offline', this.handleNetworkChange);
+
+        // Listen for connection type changes (if available)
+        if ('connection' in navigator) {
+            navigator.connection.addEventListener('change', this.handleNetworkChange);
+        }
+    }
+
+    handleNetworkChange() {
+        const wasOnline = this.isOnline;
+        this.isOnline = navigator.onLine;
+
+        console.log(`Network status changed: ${wasOnline ? 'online' : 'offline'} -> ${this.isOnline ? 'online' : 'offline'}`);
+
+        if (!wasOnline && this.isOnline) {
+            // Just came back online, attempt to reconnect
+            console.log('Network restored, attempting to reconnect...');
+            this.reconnectAttempts = 0; // Reset attempts on network recovery
+            window.showToast('Network restored, reconnecting...', 'success');
+            if (!this.isConnected()) {
+                this.connect();
+            }
+        } else if (wasOnline && !this.isOnline) {
+            // Just went offline
+            console.log('Network lost');
+            window.showToast('Network connection lost', 'error');
+            this.updateConnectionStatus(false);
+            // Notify listeners immediately
+            this.notifyListeners('connection', { connected: false, reason: 'network_offline' });
+        }
+
+        this.updateConnectionQuality();
+
+        // Always notify listeners of network status change
+        this.notifyListeners('network_change', {
+            online: this.isOnline,
+            wasOnline: wasOnline,
+            connectionQuality: this.connectionQuality
+        });
+    }
+
+    updateConnectionQuality() {
+        if (!navigator.onLine) {
+            this.connectionQuality = 'offline';
+            return;
+        }
+
+        if ('connection' in navigator) {
+            const connection = navigator.connection;
+            const effectiveType = connection.effectiveType;
+
+            if (effectiveType === '4g') {
+                this.connectionQuality = 'good';
+            } else if (effectiveType === '3g') {
+                this.connectionQuality = 'fair';
+            } else {
+                this.connectionQuality = 'poor';
+            }
+        }
     }
 
     connect() {
+        if (!navigator.onLine) {
+            console.log('Cannot connect: device is offline');
+            this.updateConnectionStatus(false);
+            this.notifyListeners('connection', { connected: false, reason: 'device_offline' });
+            return;
+        }
+
+        // Show connecting state
+        this.updateConnectingStatus();
+
         if (!window.authService || !window.authService.isAuthenticated()) {
             console.warn('Cannot connect WebSocket: not authenticated');
             return;
@@ -44,9 +127,13 @@ class WebSocketService {
             return;
         }
 
+        if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
+            console.log('WebSocket connection in progress');
+            return;
+        }
+
         try {
             const token = window.authService.token;
-            const baseUrl = 'http://localhost:8080'; // Your Go backend URL
             const wsUrl = `ws://localhost:8080/ws?token=${token}&tabId=${this.tabId}&clientType=electron`;
 
             console.log('Connecting to WebSocket:', wsUrl);
@@ -66,12 +153,13 @@ class WebSocketService {
     handleOpen() {
         console.log('WebSocket connected');
         this.reconnectAttempts = 0;
+        this.lastPongTime = Date.now();
         window.showToast('Connected to server', 'success');
 
         // Update connection status
         this.updateConnectionStatus(true);
 
-        // Start ping interval
+        // Start ping interval (every 30 seconds)
         if (this.pingInterval) clearInterval(this.pingInterval);
         this.pingInterval = setInterval(() => {
             if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -79,8 +167,14 @@ class WebSocketService {
             }
         }, 30000);
 
+        // Start heartbeat monitoring (check every 45 seconds)
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        this.heartbeatInterval = setInterval(() => {
+            this.checkConnectionQuality();
+        }, 45000);
+
         // Notify listeners
-        this.notifyListeners('connection', { connected: true });
+        this.notifyListeners('connection', { connected: true, quality: this.connectionQuality });
     }
 
     handleClose(event) {
@@ -88,10 +182,14 @@ class WebSocketService {
         this.updateConnectionStatus(false);
         this.socket = null;
 
-        // Clear ping interval
+        // Clear intervals
         if (this.pingInterval) {
             clearInterval(this.pingInterval);
             this.pingInterval = null;
+        }
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
         }
 
         // Handle different close codes
@@ -104,7 +202,12 @@ class WebSocketService {
 
         // Attempt reconnect if not normal closure
         if (event.code !== 1000) {
-            this.scheduleReconnect();
+            if (navigator.onLine) {
+                this.scheduleReconnect();
+            } else {
+                console.log('Not attempting reconnect: device is offline');
+                this.notifyListeners('connection', { connected: false, reason: 'device_offline' });
+            }
         }
 
         // Notify listeners
@@ -129,10 +232,15 @@ class WebSocketService {
                     const data = JSON.parse(message);
 
                     // Handle ping/pong
-                    if (data.type === 'ping' || data.type === 'pong') {
+                    if (data.type === 'ping') {
                         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
                             this.socket.send(JSON.stringify({ type: 'pong' }));
                         }
+                        continue;
+                    }
+
+                    if (data.type === 'pong') {
+                        this.lastPongTime = Date.now();
                         continue;
                     }
 
@@ -149,6 +257,11 @@ class WebSocketService {
     }
 
     scheduleReconnect() {
+        if (!navigator.onLine) {
+            console.log('Not scheduling reconnect: device is offline');
+            return;
+        }
+
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.log('Maximum reconnection attempts reached');
             window.showToast('Connection lost. Please refresh to reconnect.', 'error');
@@ -161,10 +274,33 @@ class WebSocketService {
         console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay / 1000} seconds`);
 
         this.reconnectTimeout = setTimeout(() => {
-            if (window.authService && window.authService.isAuthenticated()) {
+            if (navigator.onLine && window.authService && window.authService.isAuthenticated()) {
                 this.connect();
+            } else if (!navigator.onLine) {
+                console.log('Skipping reconnect: device is offline');
             }
         }, delay);
+    }
+
+    checkConnectionQuality() {
+        if (!this.isConnected()) {
+            return;
+        }
+
+        const now = Date.now();
+        const timeSinceLastPong = now - this.lastPongTime;
+
+        // If we haven't received a pong in over 60 seconds, connection might be poor
+        if (timeSinceLastPong > 60000) {
+            console.warn('Poor connection detected - no pong received in', timeSinceLastPong / 1000, 'seconds');
+            this.connectionQuality = 'poor';
+
+            // If no pong for over 90 seconds, force reconnect
+            if (timeSinceLastPong > 90000) {
+                console.warn('Connection appears dead, forcing reconnect');
+                this.socket.close();
+            }
+        }
     }
 
     disconnect() {
@@ -177,6 +313,11 @@ class WebSocketService {
         if (this.pingInterval) {
             clearInterval(this.pingInterval);
             this.pingInterval = null;
+        }
+
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
         }
 
         if (this.statusMessageTimeout) {
@@ -258,20 +399,35 @@ class WebSocketService {
     }
 
     updateConnectionStatus(isConnected) {
-        const statusElement = document.getElementById('connection-status');
-        if (statusElement) {
-            const statusText = statusElement.querySelector('span');
-            if (statusText) {
-                if (isConnected) {
-                    statusElement.classList.remove('offline');
-                    statusElement.classList.add('online');
-                    statusText.textContent = 'Online';
-                } else {
-                    statusElement.classList.remove('online');
-                    statusElement.classList.add('offline');
-                    statusText.textContent = 'Offline';
-                }
+        const networkIndicator = document.getElementById('network-indicator');
+        if (networkIndicator) {
+            const statusText = networkIndicator.querySelector('span');
+            const statusIcon = networkIndicator.querySelector('i');
+
+            if (isConnected) {
+                networkIndicator.classList.remove('offline');
+                networkIndicator.classList.add('online');
+                if (statusText) statusText.textContent = 'Online';
+                if (statusIcon) statusIcon.className = 'fas fa-wifi';
+            } else {
+                networkIndicator.classList.remove('online');
+                networkIndicator.classList.add('offline');
+                if (statusText) statusText.textContent = 'Offline';
+                if (statusIcon) statusIcon.className = 'fas fa-wifi-slash';
             }
+        }
+    }
+
+    updateConnectingStatus() {
+        const networkIndicator = document.getElementById('network-indicator');
+        if (networkIndicator) {
+            const statusText = networkIndicator.querySelector('span');
+            const statusIcon = networkIndicator.querySelector('i');
+
+            networkIndicator.classList.remove('online', 'offline');
+            networkIndicator.classList.add('connecting');
+            if (statusText) statusText.textContent = 'Connecting...';
+            if (statusIcon) statusIcon.className = 'fas fa-wifi';
         }
     }
 
