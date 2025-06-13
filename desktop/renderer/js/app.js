@@ -5,6 +5,7 @@ class MessengerApp {
         this.selectedChat = null;
         this.searchQuery = '';
         this.typingTimeout = null;
+        this.searchTimeout = null;
         this.lastTypingTime = 0;
         this.isInitialized = false;
 
@@ -41,7 +42,7 @@ class MessengerApp {
         let attempts = 0;
 
         while (attempts < maxAttempts) {
-            if (window.authService && window.websocketService && window.chatService && window.router) {
+            if (window.authService && window.websocketService && window.chatService && window.userStatusService && window.router) {
                 break;
             }
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -151,13 +152,19 @@ class MessengerApp {
             settingsBtn.addEventListener('click', this.showSettings.bind(this));
         }
 
-        // Click outside to close emoji picker
+        // Click outside to close emoji picker and search results
         document.addEventListener('click', (e) => {
             const emojiPicker = document.getElementById('emoji-picker');
             const emojiButton = document.getElementById('emoji-button');
+            const searchResults = document.getElementById('search-results');
+            const globalSearch = document.getElementById('global-search');
 
             if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiButton) {
                 window.emojiPicker.hide();
+            }
+
+            if (searchResults && !searchResults.contains(e.target) && e.target !== globalSearch) {
+                this.clearSearchResults();
             }
         });
     }
@@ -178,12 +185,32 @@ class MessengerApp {
             this.updateMessages(chatState.messages);
             this.updateTypingIndicators(chatState.typingUsers);
             this.updateUnreadCounts(chatState.unreadCounts);
+
+            // Initialize user statuses when contacts are loaded
+            if (chatState.contacts && chatState.contacts.length > 0) {
+                window.userStatusService.initializeStatuses(chatState.contacts);
+            }
+        });
+
+        // User status service listener
+        window.userStatusService.addListener((statusState) => {
+            this.updateUserStatuses(statusState.onlineUsers);
         });
 
         // WebSocket connection listener
         window.websocketService.subscribe('connection', (payload) => {
             console.log('WebSocket connection status:', payload.connected);
+            this.updateConnectionUI(payload.connected);
         });
+
+        // Network change listener
+        window.websocketService.subscribe('network_change', (payload) => {
+            console.log('Network status changed:', payload);
+            this.updateNetworkStatus(payload.online);
+        });
+
+        // Initialize network status
+        this.updateNetworkStatus(navigator.onLine);
     }
 
     async handleLogin(e) {
@@ -276,7 +303,7 @@ class MessengerApp {
         if (!this.selectedChat) return;
 
         const now = Date.now();
-        const wasTyping = now - this.lastTypingTime < 3000;
+        const wasTyping = now - this.lastTypingTime < 2000; // Reduced from 3000 to 2000
 
         if (!wasTyping) {
             window.chatService.sendTypingIndicator(this.selectedChat.userId);
@@ -289,10 +316,10 @@ class MessengerApp {
             clearTimeout(this.typingTimeout);
         }
 
-        // Set new timeout
+        // Set new timeout - reduced to match server timeout
         this.typingTimeout = setTimeout(() => {
             this.lastTypingTime = 0;
-        }, 3000);
+        }, 2000);
     }
 
     handleConversationSearch(e) {
@@ -300,11 +327,205 @@ class MessengerApp {
         this.updateConversationsList(window.chatService.contacts);
     }
 
-    handleGlobalSearch(e) {
-        // Implement global message search
-        const query = e.target.value;
-        console.log('Global search:', query);
-        // TODO: Implement message search across all conversations
+    async handleGlobalSearch(e) {
+        const query = e.target.value.trim();
+
+        // Clear existing timeout
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
+        if (query.length < 2) {
+            this.clearSearchResults();
+            return;
+        }
+
+        // Debounce search requests
+        this.searchTimeout = setTimeout(async () => {
+            await this.performSearch(query);
+        }, 300);
+    }
+
+    async performSearch(query) {
+        console.log('Searching for:', query);
+
+        try {
+            const searchUrl = `chat/search?q=${encodeURIComponent(query)}&limit=20`;
+            console.log('Search URL:', searchUrl);
+
+            const response = await window.authService.authenticatedFetch(searchUrl);
+            console.log('Search response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Search response error:', errorText);
+                throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('Search results:', data);
+
+            if (data.messages && data.messages.length > 0) {
+                console.log('First message structure:', data.messages[0]);
+                console.log('Sender data:', data.messages[0].sender);
+                console.log('Receiver data:', data.messages[0].receiver);
+                this.displaySearchResults(data.messages, query);
+            } else {
+                this.displaySearchResults([], query);
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+
+            // Don't show error for network issues or auth issues (those are handled elsewhere)
+            if (!error.message.includes('Unauthorized') && !error.message.includes('No token')) {
+                window.showToast(`Search failed: ${error.message}`, 'error');
+            }
+
+            // Clear search results on error
+            this.clearSearchResults();
+        }
+    }
+
+    displaySearchResults(messages, query) {
+        const searchResults = document.getElementById('search-results');
+        if (!searchResults) return;
+
+        if (messages.length === 0) {
+            searchResults.innerHTML = '<div class="no-results">No messages found</div>';
+            searchResults.style.display = 'block';
+            return;
+        }
+
+        const resultsHTML = messages.map(message => {
+            const isFromCurrentUser = message.senderId === window.authService.currentUser?.id;
+
+            // Determine contact name and ID
+            let contactName, contactId;
+            if (isFromCurrentUser) {
+                // Current user sent the message, show receiver's name and use receiver's ID for navigation
+                const receiverName = `${message.receiver?.firstName || 'Unknown'} ${message.receiver?.lastName || 'User'}`.trim();
+                contactName = `You → ${receiverName}`;
+                contactId = message.receiverId;
+            } else {
+                // Other user sent the message, show sender's name and use sender's ID for navigation
+                const senderName = `${message.sender?.firstName || 'Unknown'} ${message.sender?.lastName || 'User'}`.trim();
+                contactName = `${senderName} → You`;
+                contactId = message.senderId;
+            }
+
+            // Highlight search term (escape special regex characters)
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const highlightedContent = message.content.replace(
+                new RegExp(`(${escapedQuery})`, 'gi'),
+                '<mark>$1</mark>'
+            );
+
+            return `
+                <div class="search-result-item" data-contact-id="${contactId}" data-message-id="${message.id}">
+                    <div class="search-result-contact">${contactName}</div>
+                    <div class="search-result-content">${highlightedContent}</div>
+                    <div class="search-result-time">${this.formatMessageTime(message.createdAt)}</div>
+                </div>
+            `;
+        }).join('');
+
+        searchResults.innerHTML = resultsHTML;
+        searchResults.style.display = 'block';
+
+        // Add click handlers to search results
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const contactId = item.dataset.contactId;
+                const messageId = item.dataset.messageId;
+
+                console.log('Search result clicked:', { contactId, messageId });
+
+                if (!contactId) {
+                    console.error('No contact ID found in search result');
+                    return;
+                }
+
+                // Find contact in the contacts list
+                const contact = window.chatService.contacts.find(c => c.userId === contactId);
+
+                if (contact) {
+                    console.log('Found contact:', contact);
+                    this.selectChat(contact);
+                    this.clearSearchResults();
+
+                    // Optionally scroll to the specific message if messageId is available
+                    if (messageId) {
+                        setTimeout(() => {
+                            this.scrollToMessage(messageId);
+                        }, 500); // Wait for messages to load
+                    }
+                } else {
+                    console.error('Contact not found in contacts list:', contactId);
+                    console.log('Available contacts:', window.chatService.contacts);
+
+                    // Try to create a basic contact object if we have the data from the message
+                    const messageData = messages.find(m =>
+                        (m.senderId === contactId || m.receiverId === contactId) &&
+                        m.id === messageId
+                    );
+
+                    if (messageData) {
+                        const isFromCurrentUser = messageData.senderId === window.authService.currentUser?.id;
+                        const contactData = isFromCurrentUser ? messageData.receiver : messageData.sender;
+
+                        if (contactData) {
+                            const tempContact = {
+                                userId: contactId,
+                                firstName: contactData.firstName || 'Unknown',
+                                lastName: contactData.lastName || 'User',
+                                avatar: contactData.avatar || null,
+                                isOnline: false
+                            };
+
+                            console.log('Creating temporary contact:', tempContact);
+                            this.selectChat(tempContact);
+                            this.clearSearchResults();
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    clearSearchResults() {
+        const searchResults = document.getElementById('search-results');
+        if (searchResults) {
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+        }
+    }
+
+    formatMessageTime(timestamp) {
+        if (!timestamp) return 'Unknown time';
+
+        const date = new Date(timestamp);
+
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            console.warn('Invalid timestamp:', timestamp);
+            return 'Invalid date';
+        }
+
+        const now = new Date();
+        const diffInHours = (now - date) / (1000 * 60 * 60);
+
+        try {
+            if (diffInHours < 24) {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else if (diffInHours < 24 * 7) {
+                return date.toLocaleDateString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+            } else {
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            }
+        } catch (error) {
+            console.warn('Error formatting date:', error, timestamp);
+            return date.toLocaleDateString();
+        }
     }
 
     selectChat(contact) {
@@ -377,12 +598,15 @@ class MessengerApp {
             chatName.textContent = `${this.selectedChat.firstName} ${this.selectedChat.lastName}`;
         }
 
+        // Use real-time status from user status service
+        const isOnline = window.userStatusService.isUserOnline(this.selectedChat.userId, this.selectedChat.isOnline);
+
         if (chatStatus) {
-            chatStatus.className = `status-indicator ${this.selectedChat.isOnline ? 'online' : 'offline'}`;
+            chatStatus.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
         }
 
         if (chatUserStatus) {
-            chatUserStatus.textContent = this.selectedChat.isOnline ? 'Online' : 'Offline';
+            chatUserStatus.textContent = isOnline ? 'Online' : 'Offline';
         }
     }
 
@@ -485,12 +709,16 @@ class MessengerApp {
         const typingIndicator = document.getElementById('typing-indicator');
         if (!typingIndicator || !this.selectedChat) return;
 
-        const isTyping = typingUsers[this.selectedChat.userId];
+        const typingData = typingUsers[this.selectedChat.userId];
+        const isTyping = typingData && typingData.timestamp;
 
         if (isTyping) {
             typingIndicator.style.display = 'flex';
+            // Add a subtle animation class if available
+            typingIndicator.classList.add('typing-active');
         } else {
             typingIndicator.style.display = 'none';
+            typingIndicator.classList.remove('typing-active');
         }
     }
 
@@ -502,11 +730,108 @@ class MessengerApp {
         // Update conversation list will be handled in updateConversationsList
     }
 
+    updateUserStatuses(onlineUsers) {
+        console.log('Updating user statuses:', onlineUsers);
+
+        // Update conversation list to reflect new statuses
+        this.updateConversationsList(window.chatService.contacts);
+
+        // Update chat header if a chat is selected
+        if (this.selectedChat) {
+            this.updateChatHeader();
+        }
+    }
+
+    updateConnectionUI(isConnected) {
+        // Update network indicator (this is now handled by WebSocket service)
+        // Just update chat-specific connection status
+        this.updateChatConnectionStatus(isConnected);
+    }
+
+    updateNetworkStatus(isOnline) {
+        console.log('Updating network status UI:', isOnline);
+
+        // Update the main network indicator
+        const networkIndicator = document.getElementById('network-indicator');
+        if (networkIndicator) {
+            const statusText = networkIndicator.querySelector('span');
+            const statusIcon = networkIndicator.querySelector('i');
+
+            if (isOnline) {
+                networkIndicator.classList.remove('offline');
+                networkIndicator.classList.add('online');
+                if (statusText) statusText.textContent = 'Online';
+                if (statusIcon) statusIcon.className = 'fas fa-wifi';
+            } else {
+                networkIndicator.classList.remove('online');
+                networkIndicator.classList.add('offline');
+                if (statusText) statusText.textContent = 'Offline';
+                if (statusIcon) statusIcon.className = 'fas fa-wifi-slash';
+            }
+        }
+
+        // Update connection-dependent UI elements
+        this.updateConnectionUI(isOnline);
+
+        // Update chat header status if a chat is selected
+        if (this.selectedChat) {
+            this.updateChatHeader();
+        }
+    }
+
+    updateChatConnectionStatus(isConnected) {
+        // Update any chat-specific connection indicators
+        const chatContainer = document.getElementById('chat-container');
+        if (chatContainer) {
+            if (isConnected) {
+                chatContainer.classList.remove('disconnected');
+            } else {
+                chatContainer.classList.add('disconnected');
+            }
+        }
+
+        // Disable/enable message input based on connection
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+            messageInput.disabled = !isConnected;
+            messageInput.placeholder = isConnected
+                ? 'Type a message...'
+                : 'Reconnecting...';
+        }
+    }
+
     scrollToBottom() {
         setTimeout(() => {
             const messagesList = document.getElementById('messages-list');
             if (messagesList) {
                 messagesList.scrollTop = messagesList.scrollHeight;
+            }
+        }, 100);
+    }
+
+    scrollToMessage(messageId) {
+        if (!messageId) return;
+
+        setTimeout(() => {
+            // Try to find the message element by ID or data attribute
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`) ||
+                                 document.getElementById(`message-${messageId}`);
+
+            if (messageElement) {
+                messageElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                // Highlight the message briefly
+                messageElement.classList.add('highlighted-message');
+                setTimeout(() => {
+                    messageElement.classList.remove('highlighted-message');
+                }, 3000);
+            } else {
+                console.log('Message element not found for ID:', messageId);
+                // Fallback to scrolling to bottom
+                this.scrollToBottom();
             }
         }, 100);
     }
