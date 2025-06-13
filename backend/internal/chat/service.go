@@ -21,6 +21,9 @@ type Service interface {
 
 	// Typing indicator
 	SendTypingIndicator(senderID, receiverID string) error
+
+	// Message search
+	SearchMessages(userID, query string, limit int) ([]*models.PrivateMessage, error)
 }
 
 // ChatService implements the Service interface
@@ -149,4 +152,9 @@ func (s *ChatService) SendTypingIndicator(senderID, receiverID string) error {
 	go s.notificationSvc.NotifyTyping(senderID, receiverID)
 
 	return nil
+}
+
+// SearchMessages searches for messages containing the query string
+func (s *ChatService) SearchMessages(userID, query string, limit int) ([]*models.PrivateMessage, error) {
+	return s.repo.SearchMessages(userID, query, limit)
 }
