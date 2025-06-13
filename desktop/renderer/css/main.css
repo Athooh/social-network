@@ -142,6 +142,16 @@ body {
     animation: pulse 1.5s infinite;
 }
 
+.network-status.server-down {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.network-status.server-down i {
+    animation: pulse 2s infinite;
+}
+
 /* Loading Screen */
 .loading-screen {
     position: fixed;
