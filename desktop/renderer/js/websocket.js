@@ -71,7 +71,7 @@ class WebSocketService {
             // Just went offline
             console.log('Network lost');
             window.showToast('Network connection lost', 'error');
-            this.updateConnectionStatus(false);
+            this.updateConnectionStatus(false, 'network_offline');
             // Notify listeners immediately
             this.notifyListeners('connection', { connected: false, reason: 'network_offline' });
         }
@@ -109,7 +109,7 @@ class WebSocketService {
     connect() {
         if (!navigator.onLine) {
             console.log('Cannot connect: device is offline');
-            this.updateConnectionStatus(false);
+            this.updateConnectionStatus(false, 'device_offline');
             this.notifyListeners('connection', { connected: false, reason: 'device_offline' });
             return;
         }
@@ -178,8 +178,7 @@ class WebSocketService {
     }
 
     handleClose(event) {
-        console.log('WebSocket disconnected', event.code);
-        this.updateConnectionStatus(false);
+        console.log('WebSocket disconnected', event.code, event.reason);
         this.socket = null;
 
         // Clear intervals
@@ -194,14 +193,30 @@ class WebSocketService {
 
         // Handle different close codes
         if (event.code === 1006) {
-            console.warn('WebSocket closed due to unauthorized access');
+            // Code 1006 can mean many things: server down, network issues, etc.
+            // Don't automatically log out - just show connection lost message
+            console.warn('WebSocket closed unexpectedly (server may be down)');
+
+            // Only log out if we get a specific unauthorized message
+            if (event.reason && event.reason.includes('unauthorized')) {
+                console.warn('WebSocket closed due to unauthorized access');
+                window.showToast('Session expired. Please log in again.', 'error');
+                window.authService.logout(false);
+                return;
+            } else {
+                // Server is likely down - show helpful message
+                window.showToast('Server is unavailable. Your login is saved and will reconnect automatically.', 'warning');
+            }
+        } else if (event.code === 1008) {
+            // Code 1008 is specifically for policy violations (like auth failures)
+            console.warn('WebSocket closed due to authentication failure');
             window.showToast('Session expired. Please log in again.', 'error');
             window.authService.logout(false);
             return;
         }
 
-        // Attempt reconnect if not normal closure
-        if (event.code !== 1000) {
+        // Attempt reconnect if not normal closure and user is still authenticated
+        if (event.code !== 1000 && window.authService && window.authService.isAuthenticated()) {
             if (navigator.onLine) {
                 this.scheduleReconnect();
             } else {
@@ -210,8 +225,9 @@ class WebSocketService {
             }
         }
 
-        // Notify listeners
-        this.notifyListeners('connection', { connected: false });
+        // Notify listeners and update status with reason
+        this.updateConnectionStatus(false, 'server_disconnected');
+        this.notifyListeners('connection', { connected: false, reason: 'server_disconnected' });
     }
 
     handleError(error) {
@@ -262,22 +278,27 @@ class WebSocketService {
             return;
         }
 
+        // Don't give up on reconnecting when server is down - keep trying
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.log('Maximum reconnection attempts reached');
-            window.showToast('Connection lost. Please refresh to reconnect.', 'error');
-            return;
+            console.log('Maximum reconnection attempts reached, but continuing to retry...');
+            // Reset attempts to continue trying, but with longer delays
+            this.reconnectAttempts = this.maxReconnectAttempts - 1;
+            window.showToast('Server appears to be down. Will keep trying to reconnect...', 'warning');
         }
 
         this.reconnectAttempts++;
-        const delay = this.baseReconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
+        // Cap the delay at 30 seconds for server downtime scenarios
+        const delay = Math.min(this.baseReconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1), 30000);
 
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay / 1000} seconds`);
+        console.log(`Attempting to reconnect (${this.reconnectAttempts}) in ${delay / 1000} seconds`);
 
         this.reconnectTimeout = setTimeout(() => {
             if (navigator.onLine && window.authService && window.authService.isAuthenticated()) {
                 this.connect();
             } else if (!navigator.onLine) {
                 console.log('Skipping reconnect: device is offline');
+            } else if (!window.authService || !window.authService.isAuthenticated()) {
+                console.log('Skipping reconnect: user not authenticated');
             }
         }, delay);
     }
@@ -398,22 +419,32 @@ class WebSocketService {
         return this.socket && this.socket.readyState === WebSocket.OPEN;
     }
 
-    updateConnectionStatus(isConnected) {
+    updateConnectionStatus(isConnected, reason = null) {
         const networkIndicator = document.getElementById('network-indicator');
         if (networkIndicator) {
             const statusText = networkIndicator.querySelector('span');
             const statusIcon = networkIndicator.querySelector('i');
 
             if (isConnected) {
-                networkIndicator.classList.remove('offline');
+                networkIndicator.classList.remove('offline', 'connecting', 'server-down');
                 networkIndicator.classList.add('online');
-                if (statusText) statusText.textContent = 'Online';
+                if (statusText) statusText.textContent = 'Connected';
                 if (statusIcon) statusIcon.className = 'fas fa-wifi';
             } else {
-                networkIndicator.classList.remove('online');
-                networkIndicator.classList.add('offline');
-                if (statusText) statusText.textContent = 'Offline';
-                if (statusIcon) statusIcon.className = 'fas fa-wifi-slash';
+                networkIndicator.classList.remove('online', 'connecting');
+
+                // Show different states based on the reason
+                if (reason === 'server_disconnected' && window.authService && window.authService.isAuthenticated()) {
+                    networkIndicator.classList.remove('offline');
+                    networkIndicator.classList.add('server-down');
+                    if (statusText) statusText.textContent = 'Server unavailable';
+                    if (statusIcon) statusIcon.className = 'fas fa-exclamation-triangle';
+                } else {
+                    networkIndicator.classList.remove('server-down');
+                    networkIndicator.classList.add('offline');
+                    if (statusText) statusText.textContent = 'Cannot connect to server';
+                    if (statusIcon) statusIcon.className = 'fas fa-wifi-slash';
+                }
             }
         }
     }
