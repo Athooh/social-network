@@ -219,6 +219,8 @@ ipcMain.handle('check-online-status', () => {
     return mainWindow.webContents.session.netLog ? true : false;
 });
 
+
+
 // Auto-updater events
 autoUpdater.on('checking-for-update', () => {
     console.log('Checking for update...');
