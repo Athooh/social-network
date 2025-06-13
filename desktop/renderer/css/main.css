@@ -104,8 +104,8 @@ body {
     background: rgba(0, 0, 0, 0.3);
 }
 
-/* Connection Status */
-.connection-status {
+/* Network & Connection Status */
+.network-status {
     position: fixed;
     top: 10px;
     right: 10px;
@@ -120,16 +120,26 @@ body {
     transition: var(--transition-normal);
 }
 
-.connection-status.online {
+.network-status.online {
     background-color: rgba(39, 174, 96, 0.1);
     color: var(--success-color);
     border: 1px solid rgba(39, 174, 96, 0.2);
 }
 
-.connection-status.offline {
+.network-status.offline {
     background-color: rgba(231, 76, 60, 0.1);
     color: var(--error-color);
     border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.network-status.connecting {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.network-status.connecting i {
+    animation: pulse 1.5s infinite;
 }
 
 /* Loading Screen */
