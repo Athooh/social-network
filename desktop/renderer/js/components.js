@@ -220,7 +220,7 @@ window.conversationComponents = {
                 <img src="${avatarSrc}" 
                      alt="${contact.firstName} ${contact.lastName}" 
                      class="avatar">
-                <span class="status-indicator ${contact.isOnline ? 'online' : 'offline'}"></span>
+                <span class="status-indicator ${window.userStatusService ? window.userStatusService.isUserOnline(contact.userId, contact.isOnline) ? 'online' : 'offline' : contact.isOnline ? 'online' : 'offline'}"></span>
             </div>
             <div class="preview-content">
                 <h4 class="${contact.unreadCount > 0 ? 'bold-name' : ''}">
