@@ -152,14 +152,14 @@
     font-size: var(--font-size-sm);
 }
 
-.search-icon {
+/* .search-icon {
     position: absolute;
     left: var(--spacing-md);
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-secondary);
     pointer-events: none;
-}
+} */
 
 .header-right {
     display: flex;
@@ -858,7 +858,9 @@
     margin-bottom: var(--spacing-sm);
     animation: spin 1s linear infinite;
 }
-
+.search-icon-container{
+    right: 10px;
+}
 /* Password Container */
 .password-container {
     position: relative;
