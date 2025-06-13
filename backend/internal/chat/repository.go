@@ -18,6 +18,9 @@ type Repository interface {
 	GetChatContacts(userID string) ([]*models.ChatContact, error)
 	CanSendMessage(senderID, receiverID string) (bool, error)
 	GetUserBasicByID(userID string) (*models.UserBasic, error)
+
+	// Search operations
+	SearchMessages(userID, query string, limit int) ([]*models.PrivateMessage, error)
 }
 
 // SQLiteRepository implements the Repository interface for SQLite
@@ -237,11 +240,11 @@ func (r *SQLiteRepository) GetChatContacts(userID string) ([]*models.ChatContact
 		query,
 		userID, userID, userID, // for private_messages
 		userID, userID, userID, // for followers union
-		userID, userID,         // for follow-check condition
-		userID, userID,         // for last_message
-		userID, userID,         // for last_message_sender_id
-		userID, userID,         // for last_sent
-		userID,                 // for unread_count
+		userID, userID, // for follow-check condition
+		userID, userID, // for last_message
+		userID, userID, // for last_message_sender_id
+		userID, userID, // for last_sent
+		userID, // for unread_count
 	)
 	if err != nil {
 		return nil, err
@@ -324,4 +327,61 @@ func (r *SQLiteRepository) GetUserBasicByID(userID string) (*models.UserBasic, e
 	}
 
 	return &user, nil
+}
+
+// SearchMessages searches for messages containing the query string for a specific user
+func (r *SQLiteRepository) SearchMessages(userID, query string, limit int) ([]*models.PrivateMessage, error) {
+	sqlQuery := `
+		SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
+		FROM private_messages
+		WHERE (sender_id = ? OR receiver_id = ?)
+		AND content LIKE ?
+		ORDER BY created_at DESC
+		LIMIT ?
+	`
+
+	searchPattern := "%" + query + "%"
+	rows, err := r.db.Query(sqlQuery, userID, userID, searchPattern, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []*models.PrivateMessage
+	for rows.Next() {
+		var msg models.PrivateMessage
+		var readAt sql.NullTime
+
+		err := rows.Scan(
+			&msg.ID,
+			&msg.SenderID,
+			&msg.ReceiverID,
+			&msg.Content,
+			&msg.CreatedAt,
+			&readAt,
+			&msg.IsRead,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if readAt.Valid {
+			msg.ReadAt = readAt.Time
+		}
+
+		// Get sender and receiver info
+		sender, err := r.GetUserBasicByID(msg.SenderID)
+		if err == nil {
+			msg.Sender = sender
+		}
+
+		receiver, err := r.GetUserBasicByID(msg.ReceiverID)
+		if err == nil {
+			msg.Receiver = receiver
+		}
+
+		messages = append(messages, &msg)
+	}
+
+	return messages, nil
 }

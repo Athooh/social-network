@@ -238,6 +238,7 @@ func Router(config RouterConfig) http.Handler {
 	chatGroup.HandleFunc("/mark-read", config.ChatHandler.MarkAsRead)
 	chatGroup.HandleFunc("/contacts", config.ChatHandler.GetContacts)
 	chatGroup.HandleFunc("/typing", config.ChatHandler.SendTypingIndicator)
+	chatGroup.HandleFunc("/search", config.ChatHandler.SearchMessages)
 
 	// Norificarion group routes
 	protectedNotificationGroup := NewRouteGroup("/api/notification", authenticatedRouteMiddleware)

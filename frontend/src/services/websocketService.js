@@ -35,6 +35,8 @@ const STORAGE_KEY = "ws_connection_info";
 // Add debounce variables for status messages
 let statusMessageTimeout = null;
 const STATUS_DEBOUNCE_DELAY = 500; // 500ms debounce
+let isOnline = navigator.onLine;
+let lastPongTime = Date.now();
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -170,6 +172,30 @@ if (isAuthenticated && token && !loading && !globalSocket) {
   connectWebSocket();
 }
 
+    // Handle network changes
+    const handleNetworkChange = () => {
+      const wasOnline = isOnline;
+      isOnline = navigator.onLine;
+
+      console.log(`Network status changed: ${wasOnline ? 'online' : 'offline'} -> ${isOnline ? 'online' : 'offline'}`);
+
+      if (!wasOnline && isOnline) {
+        // Just came back online, attempt to reconnect
+        console.log('Network restored, attempting to reconnect...');
+        reconnectAttempts = 0; // Reset attempts on network recovery
+        if (isAuthenticated && token && !loading && (!globalSocket || globalSocket.readyState !== WebSocket.OPEN)) {
+          connectWebSocket();
+        }
+      } else if (wasOnline && !isOnline) {
+        // Just went offline
+        console.log('Network lost');
+        setIsConnected(false);
+      }
+    };
+
+    // Add network event listeners
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
 
     // Function to send status message with debouncing
     const sendStatusMessage = (statusType) => {
@@ -224,6 +250,8 @@ if (isAuthenticated && token && !loading && !globalSocket) {
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
       // Clear any pending status message timeout on unmount
       if (statusMessageTimeout) {
         clearTimeout(statusMessageTimeout);

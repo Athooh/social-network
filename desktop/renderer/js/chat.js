@@ -154,17 +154,25 @@ class ChatService {
         if (!payload) return;
 
         const { senderId, timestamp } = payload;
+        const timestampNum = parseInt(timestamp);
 
-        // Set typing status
-        this.typingUsers[senderId] = parseInt(timestamp);
+        // Clear any existing timeout for this user
+        if (this.typingUsers[senderId] && this.typingUsers[senderId].timeout) {
+            clearTimeout(this.typingUsers[senderId].timeout);
+        }
 
-        // Clear typing status after 3 seconds
-        setTimeout(() => {
-            if (this.typingUsers[senderId] === parseInt(timestamp)) {
+        // Set typing status with timestamp and timeout
+        const timeout = setTimeout(() => {
+            if (this.typingUsers[senderId] && this.typingUsers[senderId].timestamp === timestampNum) {
                 delete this.typingUsers[senderId];
                 this.notifyListeners();
             }
-        }, 3000);
+        }, 2000); // Reduced from 3 seconds to 2 seconds for faster response
+
+        this.typingUsers[senderId] = {
+            timestamp: timestampNum,
+            timeout: timeout
+        };
 
         this.notifyListeners();
     }

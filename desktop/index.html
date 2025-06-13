@@ -24,8 +24,8 @@
 </head>
 
 <body>
-    <!-- Connection Status Indicator -->
-    <div id="connection-status" class="connection-status offline">
+    <!-- Network & Connection Status Indicator -->
+    <div id="network-indicator" class="network-status offline">
         <i class="fas fa-wifi"></i>
         <span>Connecting...</span>
     </div>
@@ -57,9 +57,9 @@
                     <input type="email" id="email" name="email" placeholder="Email" required>
                     <div class="password-container">
                         <input type="password" id="password" name="password" placeholder="Password" required>
-                        <button type="button" class="password-toggle" id="password-toggle">
+                        <div class="password-toggle" id="password-toggle">
                             <i class="fas fa-eye"></i>
-                        </button>
+                        </div>
                     </div>
                     <button type="submit" class="btn-tertiary" id="login-btn">
                         <span class="btn-text">Login</span>
@@ -88,7 +88,10 @@
                 <div class="header-center">
                     <div class="search-container">
                         <input type="text" id="global-search" placeholder="Search messages..." class="global-search">
-                        <i class="fas fa-search search-icon"></i>
+                        <div class="search-icon-container">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        <div id="search-results" class="search-results"></div>
                     </div>
                 </div>
                 <div class="header-right">
@@ -253,6 +256,7 @@
     <script src="renderer/js/components.js"></script>
     <script src="renderer/js/auth.js"></script>
     <script src="renderer/js/websocket.js"></script>
+    <script src="renderer/js/userStatus.js"></script>
     <script src="renderer/js/chat.js"></script>
     <script src="renderer/js/router.js"></script>
     <script src="renderer/js/app.js"></script>

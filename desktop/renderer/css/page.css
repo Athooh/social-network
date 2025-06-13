@@ -60,7 +60,6 @@
     font-family: inherit;
     font-size: var(--font-size-md);
     transition: var(--transition-normal);
-    background-color: rgba(255, 255, 255, 0.95);
 }
 
 .auth-form input:focus {

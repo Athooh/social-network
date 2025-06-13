@@ -231,6 +231,61 @@ func (h *Handler) SendTypingIndicator(w http.ResponseWriter, r *http.Request) {
 	h.sendJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
+// SearchMessages handles searching for messages
+func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("SearchMessages endpoint called")
+
+	// Only allow GET method
+	if r.Method != http.MethodGet {
+		h.log.Warn("Invalid method for search: %s", r.Method)
+		h.sendError(w, http.StatusMethodNotAllowed, fmt.Sprintf("Method not allowed %s", r.Method))
+		return
+	}
+
+	// Get user ID from context
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok || userID == "" {
+		h.log.Warn("Search request without valid user ID")
+		h.sendError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Get query parameters
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		h.log.Warn("Search request without query parameter")
+		h.sendError(w, http.StatusBadRequest, "Search query is required")
+		return
+	}
+
+	h.log.Info("Searching messages for user %s with query: %s", userID, query)
+
+	// Get optional limit parameter
+	limit := 50 // default limit
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	// Search messages
+	messages, err := h.service.SearchMessages(userID, query, limit)
+	if err != nil {
+		h.log.Error("Failed to search messages: %v", err)
+		h.sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.log.Info("Search completed successfully. Found %d messages", len(messages))
+
+	// Return messages
+	h.sendJSON(w, http.StatusOK, map[string]interface{}{
+		"messages": messages,
+		"query":    query,
+		"count":    len(messages),
+	})
+}
+
 // Helper method to send JSON responses
 func (h *Handler) sendJSON(w http.ResponseWriter, status int, data interface{}) {
 	httputil.SendJSON(w, status, data)
