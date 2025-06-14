@@ -219,25 +219,6 @@
     margin: 0;
 }
 
-.new-message-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: 20px;
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    border: none;
-    cursor: pointer;
-    font-size: var(--font-size-sm);
-    transition: var(--transition-fast);
-}
-
-.new-message-btn:hover {
-    background-color: #1464cf;
-    transform: translateY(-1px);
-}
-
 .conversations-sidebar .search-container {
     padding: var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
