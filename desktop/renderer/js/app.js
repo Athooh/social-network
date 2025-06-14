@@ -334,6 +334,12 @@ class MessengerApp {
             return;
         }
 
+        // Only search if a chat is selected
+        if (!this.selectedChat) {
+            this.clearSearchResults();
+            return;
+        }
+
         // Debounce search requests
         this.searchTimeout = setTimeout(async () => {
             await this.performSearch(query);
@@ -344,7 +350,9 @@ class MessengerApp {
         console.log('Searching for:', query);
 
         try {
-            const searchUrl = `chat/search?q=${encodeURIComponent(query)}&limit=20`;
+            // Include the selected chat user ID in the search
+            const otherUserId = this.selectedChat.userId;
+            const searchUrl = `chat/search?q=${encodeURIComponent(query)}&otherUserId=${encodeURIComponent(otherUserId)}&limit=20`;
             console.log('Search URL:', searchUrl);
 
             const response = await window.authService.authenticatedFetch(searchUrl);
@@ -393,19 +401,9 @@ class MessengerApp {
         const resultsHTML = messages.map(message => {
             const isFromCurrentUser = message.senderId === window.authService.currentUser?.id;
 
-            // Determine contact name and ID
-            let contactName, contactId;
-            if (isFromCurrentUser) {
-                // Current user sent the message, show receiver's name and use receiver's ID for navigation
-                const receiverName = `${message.receiver?.firstName || 'Unknown'} ${message.receiver?.lastName || 'User'}`.trim();
-                contactName = `You → ${receiverName}`;
-                contactId = message.receiverId;
-            } else {
-                // Other user sent the message, show sender's name and use sender's ID for navigation
-                const senderName = `${message.sender?.firstName || 'Unknown'} ${message.sender?.lastName || 'User'}`.trim();
-                contactName = `${senderName} → You`;
-                contactId = message.senderId;
-            }
+            // For conversation-specific search, we just show who sent the message
+            const senderName = isFromCurrentUser ? 'You' :
+                `${message.sender?.firstName || 'Unknown'} ${message.sender?.lastName || 'User'}`.trim();
 
             // Highlight search term (escape special regex characters)
             const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -415,8 +413,8 @@ class MessengerApp {
             );
 
             return `
-                <div class="search-result-item" data-contact-id="${contactId}" data-message-id="${message.id}">
-                    <div class="search-result-contact">${contactName}</div>
+                <div class="search-result-item" data-message-id="${message.id}">
+                    <div class="search-result-contact">${senderName}</div>
                     <div class="search-result-content">${highlightedContent}</div>
                     <div class="search-result-time">${this.formatMessageTime(message.createdAt)}</div>
                 </div>
@@ -429,58 +427,17 @@ class MessengerApp {
         // Add click handlers to search results
         searchResults.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
-                const contactId = item.dataset.contactId;
                 const messageId = item.dataset.messageId;
 
-                console.log('Search result clicked:', { contactId, messageId });
+                console.log('Search result clicked:', { messageId });
 
-                if (!contactId) {
-                    console.error('No contact ID found in search result');
-                    return;
-                }
+                this.clearSearchResults();
 
-                // Find contact in the contacts list
-                const contact = window.chatService.contacts.find(c => c.userId === contactId);
-
-                if (contact) {
-                    console.log('Found contact:', contact);
-                    this.selectChat(contact);
-                    this.clearSearchResults();
-
-                    // Optionally scroll to the specific message if messageId is available
-                    if (messageId) {
-                        setTimeout(() => {
-                            this.scrollToMessage(messageId);
-                        }, 500); // Wait for messages to load
-                    }
-                } else {
-                    console.error('Contact not found in contacts list:', contactId);
-                    console.log('Available contacts:', window.chatService.contacts);
-
-                    // Try to create a basic contact object if we have the data from the message
-                    const messageData = messages.find(m =>
-                        (m.senderId === contactId || m.receiverId === contactId) &&
-                        m.id === messageId
-                    );
-
-                    if (messageData) {
-                        const isFromCurrentUser = messageData.senderId === window.authService.currentUser?.id;
-                        const contactData = isFromCurrentUser ? messageData.receiver : messageData.sender;
-
-                        if (contactData) {
-                            const tempContact = {
-                                userId: contactId,
-                                firstName: contactData.firstName || 'Unknown',
-                                lastName: contactData.lastName || 'User',
-                                avatar: contactData.avatar || null,
-                                isOnline: false
-                            };
-
-                            console.log('Creating temporary contact:', tempContact);
-                            this.selectChat(tempContact);
-                            this.clearSearchResults();
-                        }
-                    }
+                // Scroll to the specific message if messageId is available
+                if (messageId) {
+                    setTimeout(() => {
+                        this.scrollToMessage(messageId);
+                    }, 100); // Small delay to ensure search results are cleared
                 }
             });
         });
@@ -530,6 +487,13 @@ class MessengerApp {
 
         this.selectedChat = contact;
         this.updateChatView();
+
+        // Clear global search input and results when switching chats
+        const globalSearch = document.getElementById('global-search');
+        if (globalSearch) {
+            globalSearch.value = '';
+        }
+        this.clearSearchResults();
 
         // Load messages
         window.chatService.loadMessages(contact.userId);
