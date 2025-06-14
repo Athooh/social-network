@@ -143,14 +143,7 @@
     width: 100%;
 }
 
-.global-search {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 40px;
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    background-color: var(--background-hover);
-    font-size: var(--font-size-sm);
-}
+
 
 /* .search-icon {
     position: absolute;
@@ -217,25 +210,6 @@
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
-}
-
-.new-message-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: 20px;
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    border: none;
-    cursor: pointer;
-    font-size: var(--font-size-sm);
-    transition: var(--transition-fast);
-}
-
-.new-message-btn:hover {
-    background-color: #1464cf;
-    transform: translateY(-1px);
 }
 
 .conversations-sidebar .search-container {
@@ -443,31 +417,6 @@
 .user-status {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
-}
-
-.chat-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-}
-
-.action-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-full);
-    color: var(--text-secondary);
-    transition: var(--transition-fast);
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.action-button:hover {
-    background-color: var(--background-hover);
-    color: var(--text-primary);
 }
 
 /* Messages Area */
@@ -858,9 +807,11 @@
     margin-bottom: var(--spacing-sm);
     animation: spin 1s linear infinite;
 }
-.search-icon-container{
+
+.search-icon-container {
     right: 10px;
 }
+
 /* Password Container */
 .password-container {
     position: relative;
@@ -942,16 +893,6 @@
 
     .conversations-header h2 {
         font-size: var(--font-size-md);
-    }
-
-    .chat-actions {
-        gap: var(--spacing-xs);
-    }
-
-    .action-button {
-        width: 32px;
-        height: 32px;
-        padding: var(--spacing-xs);
     }
 }
 

@@ -86,18 +86,8 @@
                     <h1 class="forum-name">Notebook</h1>
                 </div>
                 <div class="header-center">
-                    <div class="search-container">
-                        <input type="text" id="global-search" placeholder="Search messages..." class="global-search">
-                        <div class="search-icon-container">
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-                        <div id="search-results" class="search-results"></div>
-                    </div>
                 </div>
                 <div class="header-right">
-                    <button class="header-btn" id="settings-btn" title="Settings">
-                        <i class="fas fa-cog"></i>
-                    </button>
                     <button class="header-btn" id="logout-btn" title="Logout">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
@@ -110,10 +100,6 @@
                 <aside class="conversations-sidebar" id="conversations-sidebar">
                     <div class="conversations-header">
                         <h2>Messages</h2>
-                        <button class="new-message-btn" id="new-message-btn">
-                            <i class="fas fa-plus"></i>
-                            <span>New</span>
-                        </button>
                     </div>
 
                     <div class="search-container">
@@ -156,16 +142,13 @@
                                     <span class="user-status" id="chat-user-status">Offline</span>
                                 </div>
                             </div>
-                            <div class="chat-actions">
-                                <button class="action-button" title="Call">
-                                    <i class="fas fa-phone"></i>
-                                </button>
-                                <button class="action-button" title="Video Call">
-                                    <i class="fas fa-video"></i>
-                                </button>
-                                <button class="action-button" title="Info">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
+                            <div class="search-container">
+                                <input type="text" id="global-search" placeholder="Search in this conversation..."
+                                    class="global-search">
+                                <div class="search-icon-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                </div>
+                                <div id="search-results" class="search-results"></div>
                             </div>
                         </div>
 

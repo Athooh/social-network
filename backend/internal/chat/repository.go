@@ -20,7 +20,7 @@ type Repository interface {
 	GetUserBasicByID(userID string) (*models.UserBasic, error)
 
 	// Search operations
-	SearchMessages(userID, query string, limit int) ([]*models.PrivateMessage, error)
+	SearchMessages(userID, query, otherUserID string, limit int) ([]*models.PrivateMessage, error)
 }
 
 // SQLiteRepository implements the Repository interface for SQLite
@@ -330,18 +330,36 @@ func (r *SQLiteRepository) GetUserBasicByID(userID string) (*models.UserBasic, e
 }
 
 // SearchMessages searches for messages containing the query string for a specific user
-func (r *SQLiteRepository) SearchMessages(userID, query string, limit int) ([]*models.PrivateMessage, error) {
-	sqlQuery := `
-		SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
-		FROM private_messages
-		WHERE (sender_id = ? OR receiver_id = ?)
-		AND content LIKE ?
-		ORDER BY created_at DESC
-		LIMIT ?
-	`
-
+func (r *SQLiteRepository) SearchMessages(userID, query, otherUserID string, limit int) ([]*models.PrivateMessage, error) {
+	var sqlQuery string
+	var args []interface{}
 	searchPattern := "%" + query + "%"
-	rows, err := r.db.Query(sqlQuery, userID, userID, searchPattern, limit)
+
+	if otherUserID != "" {
+		// Search only in conversation between userID and otherUserID
+		sqlQuery = `
+			SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
+			FROM private_messages
+			WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))
+			AND content LIKE ?
+			ORDER BY created_at DESC
+			LIMIT ?
+		`
+		args = []interface{}{userID, otherUserID, otherUserID, userID, searchPattern, limit}
+	} else {
+		// Search in all conversations involving userID (fallback to original behavior)
+		sqlQuery = `
+			SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
+			FROM private_messages
+			WHERE (sender_id = ? OR receiver_id = ?)
+			AND content LIKE ?
+			ORDER BY created_at DESC
+			LIMIT ?
+		`
+		args = []interface{}{userID, userID, searchPattern, limit}
+	}
+
+	rows, err := r.db.Query(sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}
