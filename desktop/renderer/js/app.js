@@ -145,13 +145,7 @@ class MessengerApp {
                 this.switchEmojiCategory(category);
             });
         });
-
-        // Settings button
-        const settingsBtn = document.getElementById('settings-btn');
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', this.showSettings.bind(this));
-        }
-
+        
         // Click outside to close emoji picker and search results
         document.addEventListener('click', (e) => {
             const emojiPicker = document.getElementById('emoji-picker');
