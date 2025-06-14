@@ -258,7 +258,10 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.log.Info("Searching messages for user %s with query: %s", userID, query)
+	// Get optional otherUserId parameter for conversation-specific search
+	otherUserID := r.URL.Query().Get("otherUserId")
+
+	h.log.Info("Searching messages for user %s with query: %s, otherUserId: %s", userID, query, otherUserID)
 
 	// Get optional limit parameter
 	limit := 50 // default limit
@@ -269,7 +272,7 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search messages
-	messages, err := h.service.SearchMessages(userID, query, limit)
+	messages, err := h.service.SearchMessages(userID, query, otherUserID, limit)
 	if err != nil {
 		h.log.Error("Failed to search messages: %v", err)
 		h.sendError(w, http.StatusInternalServerError, err.Error())
