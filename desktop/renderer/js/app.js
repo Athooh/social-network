@@ -329,7 +329,7 @@ class MessengerApp {
             clearTimeout(this.searchTimeout);
         }
 
-        if (query.length < 2) {
+        if (query.length < 1) {
             this.clearSearchResults();
             return;
         }
