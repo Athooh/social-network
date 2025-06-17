@@ -64,6 +64,13 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Mark messages from receiver as read when sending a message
+	// This ensures that when you send a message, you've implicitly read all previous messages
+	if err := h.service.MarkAsRead(request.ReceiverID, userID); err != nil {
+		// Log the error but don't fail the request since the message was sent successfully
+		h.log.Error("Failed to mark messages as read after sending: %v", err)
+	}
+
 	// Return response
 	h.sendJSON(w, http.StatusCreated, message)
 }
