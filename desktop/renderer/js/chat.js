@@ -194,7 +194,7 @@ class ChatService {
         }
     }
 
-    async loadMessages(contactId, limit = 50, offset = 0) {
+    async loadMessages(contactId, limit = 100, offset = 0) {
         try {
             const response = await window.authService.authenticatedFetch(
                 `chat/messages?userId=${contactId}&limit=${limit}&offset=${offset}`

@@ -100,7 +100,7 @@ func (h *Handler) GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := 50
+	limit := 100
 	offset := 0
 
 	if limitStr != "" {
@@ -271,7 +271,7 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Searching messages for user %s with query: %s, otherUserId: %s", userID, query, otherUserID)
 
 	// Get optional limit parameter
-	limit := 50 // default limit
+	limit := 100 // default limit
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
 			limit = parsedLimit
