@@ -59,7 +59,7 @@ func (r *SQLiteRepository) GetMessagesBetweenUsers(userID1, userID2 string, limi
 		SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
 		FROM private_messages
 		WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-		ORDER BY created_at ASC
+		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
 	`
 
