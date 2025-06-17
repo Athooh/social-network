@@ -27,7 +27,7 @@ export const useChatService = () => {
 
   // Load messages for a specific contact
   const loadMessages = useCallback(
-    async (contactId, limit = 50, offset = 0) => {
+    async (contactId, limit = 100, offset = 0) => {
       try {
         const response = await authenticatedFetch(
           `chat/messages?userId=${contactId}&limit=${limit}&offset=${offset}`
