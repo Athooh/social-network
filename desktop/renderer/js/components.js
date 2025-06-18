@@ -65,27 +65,72 @@ class ToastManager {
 
         const toast = this.toasts[toastIndex];
 
+        // Prevent multiple removals of the same toast
+        if (toast.removing) return;
+        toast.removing = true;
+
         // Clear timeout if exists
         if (toast.timeout) {
             clearTimeout(toast.timeout);
+            toast.timeout = null;
         }
 
         // Add removing class for animation
-        toast.element.classList.add('removing');
+        if (toast.element && toast.element.classList) {
+            toast.element.classList.add('removing');
+        }
 
-        // Remove after animation
+        // Remove from array immediately to prevent race conditions
+        this.toasts.splice(toastIndex, 1);
+
+        // Remove DOM element after animation
         setTimeout(() => {
-            if (toast.element.parentNode) {
-                toast.element.parentNode.removeChild(toast.element);
+            if (toast.element && toast.element.parentNode) {
+                try {
+                    toast.element.parentNode.removeChild(toast.element);
+                } catch (error) {
+                    console.warn('Error removing toast element:', error);
+                }
             }
-            this.toasts.splice(toastIndex, 1);
         }, 300);
+    }
+
+    // Clear all toasts
+    clearAll() {
+        // Clear all timeouts
+        this.toasts.forEach(toast => {
+            if (toast.timeout) {
+                clearTimeout(toast.timeout);
+            }
+        });
+
+        // Remove all DOM elements
+        this.toasts.forEach(toast => {
+            if (toast.element && toast.element.parentNode) {
+                try {
+                    toast.element.parentNode.removeChild(toast.element);
+                } catch (error) {
+                    console.warn('Error removing toast element:', error);
+                }
+            }
+        });
+
+        // Clear the array
+        this.toasts = [];
+    }
+
+    // Get count of active toasts
+    getCount() {
+        return this.toasts.length;
     }
 }
 
 // Initialize toast manager
 window.toastManager = new ToastManager();
 window.showToast = (message, type, duration) => window.toastManager.show(message, type, duration);
+
+// Add cleanup function for toasts
+window.clearAllToasts = () => window.toastManager.clearAll();
 
 // Date Utilities
 window.dateUtils = {
@@ -166,7 +211,7 @@ window.messageComponents = {
         messageDiv.dataset.messageId = message.id;
 
         const baseUrl = 'http://localhost:8080'; // Your Go backend URL
-        const avatarSrc = avatar ? `${baseUrl}/uploads/${avatar}` : '/avatar.png';
+        const avatarSrc = avatar ? `${baseUrl}/uploads/${avatar}` : './avatar.png';
 
         messageDiv.innerHTML = `
             ${!isOwnMessage ? `
@@ -204,7 +249,7 @@ window.messageComponents = {
 window.conversationComponents = {
     createConversationElement(contact, isSelected, currentUser) {
         const baseUrl = 'http://localhost:8080';
-        const avatarSrc = contact.avatar ? `${baseUrl}/uploads/${contact.avatar}` : '/avatar.png';
+        const avatarSrc = contact.avatar ? `${baseUrl}/uploads/${contact.avatar}` : './avatar.png';
 
         const conversationDiv = document.createElement('div');
         conversationDiv.className = `conversation-item ${isSelected ? 'selected' : ''} ${contact.unreadCount > 0 ? 'unread' : ''}`;
@@ -265,7 +310,7 @@ window.conversationComponents = {
 window.contactComponents = {
     createContactElement(contact) {
         const baseUrl = 'http://localhost:8080';
-        const avatarSrc = contact.image || '/avatar.png';
+        const avatarSrc = contact.image || './avatar.png';
 
         const contactDiv = document.createElement('div');
         contactDiv.className = 'contact-item';
