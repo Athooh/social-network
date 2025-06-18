@@ -56,28 +56,36 @@ func (r *SQLiteStatusRepository) GetUserStatus(userID string) (bool, error) {
 	return isOnline, err
 }
 
-// GetFollowersForStatusUpdate gets the list of followers who should be notified of status changes
+// GetFollowersForStatusUpdate gets the list of users who should be notified of status changes
+// This includes both followers and users that the user is following (bidirectional relationship)
 func (r *SQLiteStatusRepository) GetFollowersForStatusUpdate(userID string) ([]string, error) {
 	query := `
-		SELECT follower_id FROM followers
-		WHERE following_id = ?
+		SELECT DISTINCT user_id FROM (
+			-- Users who follow this user (followers)
+			SELECT follower_id as user_id FROM followers
+			WHERE following_id = ?
+			UNION
+			-- Users that this user follows (following)
+			SELECT following_id as user_id FROM followers
+			WHERE follower_id = ?
+		)
 	`
-	rows, err := r.db.Query(query, userID)
+	rows, err := r.db.Query(query, userID, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var followerIDs []string
+	var userIDs []string
 	for rows.Next() {
-		var followerID string
-		if err := rows.Scan(&followerID); err != nil {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
 			return nil, err
 		}
-		followerIDs = append(followerIDs, followerID)
+		userIDs = append(userIDs, userID)
 	}
 
-	return followerIDs, nil
+	return userIDs, nil
 }
 
 // GetAllOnlineUsers returns the IDs of all users currently marked as online
