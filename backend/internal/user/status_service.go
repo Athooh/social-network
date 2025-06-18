@@ -34,10 +34,10 @@ func (s *StatusService) SetUserOnline(userID string) error {
 		return err
 	}
 
-	// Get followers to notify
-	followerIDs, err := s.statusRepo.GetFollowersForStatusUpdate(userID)
+	// Get users to notify (both followers and following)
+	userIDs, err := s.statusRepo.GetFollowersForStatusUpdate(userID)
 	if err != nil {
-		s.log.Error("Failed to get followers for status update: %v", err)
+		s.log.Error("Failed to get users for status update: %v", err)
 		return err
 	}
 
@@ -50,9 +50,9 @@ func (s *StatusService) SetUserOnline(userID string) error {
 		},
 	}
 
-	// Notify followers
-	for _, followerID := range followerIDs {
-		s.hub.BroadcastToUser(followerID, event)
+	// Notify users (both followers and following)
+	for _, userID := range userIDs {
+		s.hub.BroadcastToUser(userID, event)
 	}
 
 	return nil
@@ -66,10 +66,10 @@ func (s *StatusService) SetUserOffline(userID string) error {
 		return err
 	}
 
-	// Get followers to notify
-	followerIDs, err := s.statusRepo.GetFollowersForStatusUpdate(userID)
+	// Get users to notify (both followers and following)
+	userIDs, err := s.statusRepo.GetFollowersForStatusUpdate(userID)
 	if err != nil {
-		s.log.Error("Failed to get followers for status update: %v", err)
+		s.log.Error("Failed to get users for status update: %v", err)
 		return err
 	}
 
@@ -82,9 +82,9 @@ func (s *StatusService) SetUserOffline(userID string) error {
 		},
 	}
 
-	// Notify followers
-	for _, followerID := range followerIDs {
-		s.hub.BroadcastToUser(followerID, event)
+	// Notify users (both followers and following)
+	for _, userID := range userIDs {
+		s.hub.BroadcastToUser(userID, event)
 	}
 
 	s.log.Info("User %s is offline", userID)
