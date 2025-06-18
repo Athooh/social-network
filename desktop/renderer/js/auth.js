@@ -143,6 +143,16 @@ class AuthService {
             await window.electronAPI.store.delete('userData');
             await window.electronAPI.store.delete('token');
 
+            // Clear all toasts
+            if (window.clearAllToasts) {
+                window.clearAllToasts();
+            }
+
+            // Clear user status notifications
+            if (window.userStatusService && window.userStatusService.recentNotifications) {
+                window.userStatusService.recentNotifications.clear();
+            }
+
             this.currentUser = null;
             this.token = null;
             this.loading = false;

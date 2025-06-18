@@ -549,7 +549,7 @@ class MessengerApp {
         if (chatAvatar) {
             chatAvatar.src = this.selectedChat.avatar
                 ? `${baseUrl}/uploads/${this.selectedChat.avatar}`
-                : '/avatar.png';
+                : './avatar.png';
         }
 
         if (chatName) {

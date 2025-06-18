@@ -5,6 +5,8 @@ class UserStatusService {
         this.onlineUsers = {};
         this.listeners = new Set();
         this.isInitialized = false;
+        this.recentNotifications = new Map(); // Track recent notifications to prevent spam
+        this.notificationCooldown = 5000; // 5 seconds cooldown between notifications for same user
 
         // Bind methods
         this.init = this.init.bind(this);
@@ -39,15 +41,50 @@ class UserStatusService {
         const { userId, isOnline } = payload;
         console.log(`User status update: ${userId} is now ${isOnline ? 'online' : 'offline'}`);
 
+        // Check if this is actually a status change
+        const previousStatus = this.onlineUsers[userId];
+        if (previousStatus === isOnline) {
+            console.log(`Status unchanged for ${userId}, skipping notification`);
+            return;
+        }
+
         // Update the status
         this.setUserStatus(userId, isOnline);
 
-        // Show toast notification for status changes
+        // Show toast notification for status changes (with cooldown)
         if (window.authService.currentUser && userId !== window.authService.currentUser.id) {
-            // Only show notifications for other users, not yourself
-            const user = this.getUserDisplayName(userId);
-            const statusText = isOnline ? 'came online' : 'went offline';
-            window.showToast(`${user} ${statusText}`, isOnline ? 'success' : 'info');
+            this.showStatusNotification(userId, isOnline);
+        }
+    }
+
+    showStatusNotification(userId, isOnline) {
+        const now = Date.now();
+        const lastNotification = this.recentNotifications.get(userId);
+
+        // Check if we're in cooldown period
+        if (lastNotification && (now - lastNotification) < this.notificationCooldown) {
+            console.log(`Notification cooldown active for ${userId}, skipping toast`);
+            return;
+        }
+
+        // Show the notification
+        const user = this.getUserDisplayName(userId);
+        const statusText = isOnline ? 'came online' : 'went offline';
+        window.showToast(`${user} ${statusText}`, isOnline ? 'success' : 'info', 4000);
+
+        // Update the last notification time
+        this.recentNotifications.set(userId, now);
+
+        // Clean up old entries (older than cooldown period)
+        this.cleanupNotificationHistory();
+    }
+
+    cleanupNotificationHistory() {
+        const now = Date.now();
+        for (const [userId, timestamp] of this.recentNotifications.entries()) {
+            if (now - timestamp > this.notificationCooldown) {
+                this.recentNotifications.delete(userId);
+            }
         }
     }
 

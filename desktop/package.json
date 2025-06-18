@@ -43,7 +43,8 @@
       "renderer/**/*",
       "assets/**/*",
       "index.html",
-      "package.json"
+      "package.json",
+      "*.png"
     ],
     "compression": "maximum",
     "removePackageScripts": true,

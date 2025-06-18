@@ -59,7 +59,7 @@ func (r *SQLiteRepository) GetMessagesBetweenUsers(userID1, userID2 string, limi
 		SELECT id, sender_id, receiver_id, content, created_at, read_at, is_read
 		FROM private_messages
 		WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-		ORDER BY created_at ASC
+		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
 	`
 
@@ -103,6 +103,12 @@ func (r *SQLiteRepository) GetMessagesBetweenUsers(userID1, userID2 string, limi
 		}
 
 		messages = append(messages, &msg)
+	}
+
+	// Reverse the messages slice to display oldest to newest in UI
+	// (since we fetched newest to oldest to get the most recent messages)
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
 	}
 
 	return messages, nil

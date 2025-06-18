@@ -716,7 +716,7 @@ updateCurrentUserDisplay(authState) {
         // Set avatar source
         const avatarSrc = user.avatar
             ? `${baseUrl}/uploads/${user.avatar}`
-            : '/avatar.png';
+            : './avatar.png';
         currentUserAvatar.src = avatarSrc;
 
         // Set tooltip with user's full name
@@ -739,7 +739,7 @@ updateCurrentUserDisplay(authState) {
 <!-- Header with current user info -->
 <div class="header-right">
     <div class="current-user-info" id="current-user-info" style="display: none;">
-        <img id="current-user-avatar" src="/avatar.png" alt="Current User" class="current-user-avatar" title="">
+        <img id="current-user-avatar" src="./avatar.png" alt="Current User" class="current-user-avatar" title="">
     </div>
     <button class="header-btn" id="logout-btn" title="Logout">
         <i class="fas fa-sign-out-alt"></i>
